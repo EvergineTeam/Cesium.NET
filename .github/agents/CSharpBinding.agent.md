@@ -596,7 +596,6 @@ jobs:
       binding-project: "Evergine.Bindings.FooLib/Evergine.Bindings.FooLib.csproj"
       target-framework: "net8.0"
       dotnet-version: "8.x"
-      nuget-version: "6.x"
       runtime-identifier: "linux-x64"
       build-configuration: "Release"
       nuget-artifacts: ${{ inputs.publish-artifacts || false }}
