@@ -9,7 +9,7 @@ This binding is generated from the CesiumNativeC API header.
 
 ## Purpose
 
-Cesium Native is a set of C++ libraries for 3D geospatial applications, powering the runtime of [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal), [Cesium for Unity](https://github.com/CesiumGS/cesium-unity), and [Cesium for O3DE](https://github.com/CesiumGS/cesium-o3de). It provides:
+Cesium Native is a set of C++ libraries for 3D geospatial applications. It provides:
 
 - 3D Tiles streaming and rendering
 - Cesium Ion asset access and authentication
