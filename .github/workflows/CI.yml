@@ -1,0 +1,34 @@
+# Binding CI - Simple Template
+
+# This template is for .NET bindings.
+# Copy this file to your repository as `.github/workflows/CI.yml` and customize the inputs below.
+
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish-artifacts:
+        description: 'Publish artifacts'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  ci:
+    uses: EvergineTeam/evergine-standards/.github/workflows/binding-common-ci.yml@v2
+    with:
+      generator-project: "CesiumGen/CesiumGen.csproj"
+      generator-name: "CesiumGen"
+      binding-project: "Evergine.Bindings.CesiumNative/Evergine.Bindings.CesiumNative.csproj"
+      target-framework: "net8.0"
+      dotnet-version: "8.x"
+      nuget-version: "6.x"
+      runtime-identifier: "linux-x64"
+      build-configuration: "Release"
+      nuget-artifacts: ${{ inputs.publish-artifacts || false }}
+      revision: ${{ github.run_number }}
