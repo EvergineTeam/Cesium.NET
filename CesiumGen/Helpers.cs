@@ -1,6 +1,7 @@
 using CppAst;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace CesiumGen
 {
@@ -195,5 +196,14 @@ namespace CesiumGen
 			}
 			writer.WriteLine($"{tabs}/// </summary>");
 		}
-	}
+
+		public static string ClearFunctionName(string name)
+		{
+			if (name.StartsWith("cesium_"))
+				name = name.Substring(7);
+			name = string.Concat(name.Split("_").Select(word => char.ToUpper(word[0]) + word.Substring(1)));
+
+			return name;
+        }
+    }
 }

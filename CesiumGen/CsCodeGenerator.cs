@@ -12,7 +12,7 @@ namespace CesiumGen
 
 		private const string Namespace = "Evergine.Bindings.CesiumNative";
 		private const string DllName = "CesiumNativeC";
-		private const string NativeClass = "CesiumNativeAPI";
+		private const string NativeClass = "CesiumAPI";
 
 		public void Generate(CppCompilation compilation, string outputPath)
 		{
@@ -337,12 +337,14 @@ namespace CesiumGen
 				var f = functions[i];
 
 				Helpers.PrintComments(writer, f.Comment, "\t\t");
-				writer.WriteLine($"\t\t[DllImport(\"{DllName}\", CallingConvention = CallingConvention.Cdecl)]");
+				writer.WriteLine($"\t\t[DllImport(\"{DllName}\", CallingConvention = CallingConvention.Cdecl, EntryPoint = \"{f.Name}\")]");
 
 				var returnType = Helpers.ConvertToCSharpType(f.ReturnType);
 				var parameters = BuildFunctionParameters(f);
 
-				writer.Write($"\t\tpublic static extern {returnType} {f.Name}(");
+				var cleanedFunctionName = Helpers.ClearFunctionName(f.Name);
+
+                writer.Write($"\t\tpublic static extern {returnType} {cleanedFunctionName}(");
 				writer.Write(string.Join(", ", parameters));
 				writer.WriteLine(");");
 
