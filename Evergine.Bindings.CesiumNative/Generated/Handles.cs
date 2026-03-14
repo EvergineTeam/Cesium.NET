@@ -3,7 +3,7 @@
 // -------------------------------------------------------------------------------------------------
 using System;
 
-namespace Evergine.Bindings.CesiumNative
+namespace Evergine.Bindings.CesiumNative.Geospatial
 {
 	public partial struct CesiumEllipsoid : IEquatable<CesiumEllipsoid>
 	{
@@ -19,7 +19,10 @@ namespace Evergine.Bindings.CesiumNative
 		public override int GetHashCode() => Handle.GetHashCode();
 		public override string ToString() => $"CesiumEllipsoid[0x{Handle:x}]";
 	}
+}
 
+namespace Evergine.Bindings.CesiumNative.Gltf
+{
 	public partial struct CesiumCGltfReader : IEquatable<CesiumCGltfReader>
 	{
 		public readonly IntPtr Handle;
@@ -64,7 +67,91 @@ namespace Evergine.Bindings.CesiumNative
 		public override int GetHashCode() => Handle.GetHashCode();
 		public override string ToString() => $"CesiumCGltfReaderResult[0x{Handle:x}]";
 	}
+}
 
+namespace Evergine.Bindings.CesiumNative.Ion
+{
+	public partial struct CesiumIonConnection : IEquatable<CesiumIonConnection>
+	{
+		public readonly IntPtr Handle;
+		public CesiumIonConnection(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumIonConnection Null => new CesiumIonConnection(IntPtr.Zero);
+		public static implicit operator CesiumIonConnection(IntPtr handle) => new CesiumIonConnection(handle);
+		public static implicit operator IntPtr(CesiumIonConnection handle) => handle.Handle;
+		public static bool operator ==(CesiumIonConnection left, CesiumIonConnection right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumIonConnection left, CesiumIonConnection right) => left.Handle != right.Handle;
+		public bool Equals(CesiumIonConnection h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumIonConnection h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumIonConnection[0x{Handle:x}]";
+	}
+
+	public partial struct CesiumIonAssetList : IEquatable<CesiumIonAssetList>
+	{
+		public readonly IntPtr Handle;
+		public CesiumIonAssetList(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumIonAssetList Null => new CesiumIonAssetList(IntPtr.Zero);
+		public static implicit operator CesiumIonAssetList(IntPtr handle) => new CesiumIonAssetList(handle);
+		public static implicit operator IntPtr(CesiumIonAssetList handle) => handle.Handle;
+		public static bool operator ==(CesiumIonAssetList left, CesiumIonAssetList right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumIonAssetList left, CesiumIonAssetList right) => left.Handle != right.Handle;
+		public bool Equals(CesiumIonAssetList h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumIonAssetList h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumIonAssetList[0x{Handle:x}]";
+	}
+
+	public partial struct CesiumIonTokenList : IEquatable<CesiumIonTokenList>
+	{
+		public readonly IntPtr Handle;
+		public CesiumIonTokenList(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumIonTokenList Null => new CesiumIonTokenList(IntPtr.Zero);
+		public static implicit operator CesiumIonTokenList(IntPtr handle) => new CesiumIonTokenList(handle);
+		public static implicit operator IntPtr(CesiumIonTokenList handle) => handle.Handle;
+		public static bool operator ==(CesiumIonTokenList left, CesiumIonTokenList right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumIonTokenList left, CesiumIonTokenList right) => left.Handle != right.Handle;
+		public bool Equals(CesiumIonTokenList h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumIonTokenList h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumIonTokenList[0x{Handle:x}]";
+	}
+}
+
+namespace Evergine.Bindings.CesiumNative.RasterOverlays
+{
+	public partial struct CesiumRasterOverlay : IEquatable<CesiumRasterOverlay>
+	{
+		public readonly IntPtr Handle;
+		public CesiumRasterOverlay(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumRasterOverlay Null => new CesiumRasterOverlay(IntPtr.Zero);
+		public static implicit operator CesiumRasterOverlay(IntPtr handle) => new CesiumRasterOverlay(handle);
+		public static implicit operator IntPtr(CesiumRasterOverlay handle) => handle.Handle;
+		public static bool operator ==(CesiumRasterOverlay left, CesiumRasterOverlay right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumRasterOverlay left, CesiumRasterOverlay right) => left.Handle != right.Handle;
+		public bool Equals(CesiumRasterOverlay h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumRasterOverlay h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumRasterOverlay[0x{Handle:x}]";
+	}
+
+	public partial struct CesiumRasterOverlayCollection : IEquatable<CesiumRasterOverlayCollection>
+	{
+		public readonly IntPtr Handle;
+		public CesiumRasterOverlayCollection(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumRasterOverlayCollection Null => new CesiumRasterOverlayCollection(IntPtr.Zero);
+		public static implicit operator CesiumRasterOverlayCollection(IntPtr handle) => new CesiumRasterOverlayCollection(handle);
+		public static implicit operator IntPtr(CesiumRasterOverlayCollection handle) => handle.Handle;
+		public static bool operator ==(CesiumRasterOverlayCollection left, CesiumRasterOverlayCollection right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumRasterOverlayCollection left, CesiumRasterOverlayCollection right) => left.Handle != right.Handle;
+		public bool Equals(CesiumRasterOverlayCollection h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumRasterOverlayCollection h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumRasterOverlayCollection[0x{Handle:x}]";
+	}
+}
+
+namespace Evergine.Bindings.CesiumNative.Tileset
+{
 	public partial struct CesiumAsyncSystem : IEquatable<CesiumAsyncSystem>
 	{
 		public readonly IntPtr Handle;
@@ -198,80 +285,5 @@ namespace Evergine.Bindings.CesiumNative
 		public override bool Equals(object o) => o is CesiumTile h && Equals(h);
 		public override int GetHashCode() => Handle.GetHashCode();
 		public override string ToString() => $"CesiumTile[0x{Handle:x}]";
-	}
-
-	public partial struct CesiumRasterOverlay : IEquatable<CesiumRasterOverlay>
-	{
-		public readonly IntPtr Handle;
-		public CesiumRasterOverlay(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumRasterOverlay Null => new CesiumRasterOverlay(IntPtr.Zero);
-		public static implicit operator CesiumRasterOverlay(IntPtr handle) => new CesiumRasterOverlay(handle);
-		public static implicit operator IntPtr(CesiumRasterOverlay handle) => handle.Handle;
-		public static bool operator ==(CesiumRasterOverlay left, CesiumRasterOverlay right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumRasterOverlay left, CesiumRasterOverlay right) => left.Handle != right.Handle;
-		public bool Equals(CesiumRasterOverlay h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumRasterOverlay h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumRasterOverlay[0x{Handle:x}]";
-	}
-
-	public partial struct CesiumRasterOverlayCollection : IEquatable<CesiumRasterOverlayCollection>
-	{
-		public readonly IntPtr Handle;
-		public CesiumRasterOverlayCollection(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumRasterOverlayCollection Null => new CesiumRasterOverlayCollection(IntPtr.Zero);
-		public static implicit operator CesiumRasterOverlayCollection(IntPtr handle) => new CesiumRasterOverlayCollection(handle);
-		public static implicit operator IntPtr(CesiumRasterOverlayCollection handle) => handle.Handle;
-		public static bool operator ==(CesiumRasterOverlayCollection left, CesiumRasterOverlayCollection right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumRasterOverlayCollection left, CesiumRasterOverlayCollection right) => left.Handle != right.Handle;
-		public bool Equals(CesiumRasterOverlayCollection h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumRasterOverlayCollection h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumRasterOverlayCollection[0x{Handle:x}]";
-	}
-
-	public partial struct CesiumIonConnection : IEquatable<CesiumIonConnection>
-	{
-		public readonly IntPtr Handle;
-		public CesiumIonConnection(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumIonConnection Null => new CesiumIonConnection(IntPtr.Zero);
-		public static implicit operator CesiumIonConnection(IntPtr handle) => new CesiumIonConnection(handle);
-		public static implicit operator IntPtr(CesiumIonConnection handle) => handle.Handle;
-		public static bool operator ==(CesiumIonConnection left, CesiumIonConnection right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumIonConnection left, CesiumIonConnection right) => left.Handle != right.Handle;
-		public bool Equals(CesiumIonConnection h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumIonConnection h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumIonConnection[0x{Handle:x}]";
-	}
-
-	public partial struct CesiumIonAssetList : IEquatable<CesiumIonAssetList>
-	{
-		public readonly IntPtr Handle;
-		public CesiumIonAssetList(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumIonAssetList Null => new CesiumIonAssetList(IntPtr.Zero);
-		public static implicit operator CesiumIonAssetList(IntPtr handle) => new CesiumIonAssetList(handle);
-		public static implicit operator IntPtr(CesiumIonAssetList handle) => handle.Handle;
-		public static bool operator ==(CesiumIonAssetList left, CesiumIonAssetList right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumIonAssetList left, CesiumIonAssetList right) => left.Handle != right.Handle;
-		public bool Equals(CesiumIonAssetList h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumIonAssetList h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumIonAssetList[0x{Handle:x}]";
-	}
-
-	public partial struct CesiumIonTokenList : IEquatable<CesiumIonTokenList>
-	{
-		public readonly IntPtr Handle;
-		public CesiumIonTokenList(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumIonTokenList Null => new CesiumIonTokenList(IntPtr.Zero);
-		public static implicit operator CesiumIonTokenList(IntPtr handle) => new CesiumIonTokenList(handle);
-		public static implicit operator IntPtr(CesiumIonTokenList handle) => handle.Handle;
-		public static bool operator ==(CesiumIonTokenList left, CesiumIonTokenList right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumIonTokenList left, CesiumIonTokenList right) => left.Handle != right.Handle;
-		public bool Equals(CesiumIonTokenList h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumIonTokenList h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumIonTokenList[0x{Handle:x}]";
 	}
 }

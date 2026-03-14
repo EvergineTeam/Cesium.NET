@@ -3,8 +3,14 @@
 // -------------------------------------------------------------------------------------------------
 using System;
 using System.Runtime.InteropServices;
+using Evergine.Bindings.CesiumNative.Common;
+using Evergine.Bindings.CesiumNative.Geospatial;
+using Evergine.Bindings.CesiumNative.Gltf;
+using Evergine.Bindings.CesiumNative.Ion;
+using Evergine.Bindings.CesiumNative.RasterOverlays;
+using Evergine.Bindings.CesiumNative.Tileset;
 
-namespace Evergine.Bindings.CesiumNative
+namespace Evergine.Bindings.CesiumNative.Common
 {
 	/// <summary>
 	/// @brief A 2D vector (x, y).
@@ -114,7 +120,10 @@ namespace Evergine.Bindings.CesiumNative
 
 		public CesiumBoundingVolume_volume volume;
 	}
+}
 
+namespace Evergine.Bindings.CesiumNative.Tileset
+{
 	/// <summary>
 	/// @brief A set of function pointers implementing IPrepareRendererResources.
 	/// All callbacks receive userData as the first argument. Any callback may be

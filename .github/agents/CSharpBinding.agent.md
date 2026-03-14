@@ -448,12 +448,14 @@ dotnet pack Evergine.Bindings.FooLib/Evergine.Bindings.FooLib.csproj -c Release
 
 ## Code Style Guidelines
 
-- **Namespace**: `Evergine.Bindings.{LibraryName}` (PascalCase)
-- **Native class**: `{LibraryName}Native` — static partial class holding `[DllImport]` methods and constants
+- **Base namespace**: `Evergine.Bindings.{LibraryName}` (PascalCase)
+- **Per-header sub-namespaces**: when the API is split across multiple header files, each header maps to a sub-namespace, e.g. `cesium_geospatial.h` → `Evergine.Bindings.CesiumNative.Geospatial`. The `GetNamespaceForFile(filePath)` helper in `CsCodeGenerator` drives this mapping.
+- **Cross-namespace `using` statements**: generated files that span multiple namespaces add `using` directives for all sub-namespaces at the top of the file so types resolve across namespace boundaries without requiring the consumer to add extra `using` statements.
+- **Native class**: `{LibraryName}Native` — static partial class holding `[DllImport]` methods and constants; when functions are split by header, each namespace gets its own `partial class` block with the same class name.
 - **Keep original C names** for functions, struct fields, and enum members (do not rename to PascalCase)
 - **Use `unsafe`** for all pointer types — never wrap in `IntPtr` unless it's an opaque handle
 - **Use `partial` classes** so hand-written extensions can coexist with generated code
-- **One file per category**: `Enums.cs`, `Structs.cs`, `Functions.cs`, `Constants.cs`, `Delegates.cs`, `Handles.cs`
+- **One file per category**: `Enums.cs`, `Structs.cs`, `Functions.cs`, `Constants.cs`, `Delegates.cs`, `Handles.cs` — each file may contain multiple namespace blocks when types come from different headers
 - **XML doc comments** are auto-generated from C header comments using `/// <summary>` format
 - **Tabs for indentation** (one tab per indentation level, matching the existing codebases)
 
