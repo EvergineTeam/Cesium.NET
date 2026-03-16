@@ -73,6 +73,7 @@ namespace CesiumGen
 		private HashSet<string> _borrowedHandleTypes = new();
 		// Handle types that have a destroy function — get IDisposable
 		private HashSet<string> _ownableHandleTypes = new();
+		private Dictionary<string, string> _structNamespaces = new();
 
 		private static readonly string[] SubNamespaceUsings = new[]
 		{
@@ -108,6 +109,12 @@ namespace CesiumGen
 				.ToHashSet();
 
 			Helpers.DefinedStructNames = definedStructNames.ToList();
+
+			// Build struct-name-to-namespace mapping
+			_structNamespaces = compilation.Classes
+				.Where(c => c.ClassKind == CppClassKind.Struct && c.IsDefinition && !string.IsNullOrEmpty(c.Name))
+				.GroupBy(c => c.Name)
+				.ToDictionary(g => g.Key, g => GetNamespaceForFile(g.First().Span.Start.File));
 
 			// Collect opaque handle types (forward-declared structs with no definition)
 			_opaqueHandles = compilation.Classes
@@ -885,6 +892,7 @@ namespace CesiumGen
 			using var writer = new StreamWriter(Path.Combine(outputPath, "Handles.cs"));
 			WriteHeader(writer);
 			writer.WriteLine("using System;");
+			writer.WriteLine("using System.Collections.Concurrent;");
 			writer.WriteLine("using System.Runtime.InteropServices;");
 			WriteSubNamespaceUsings(writer);
 			writer.WriteLine();
@@ -904,6 +912,14 @@ namespace CesiumGen
 					bool isOwnable = _ownableHandleTypes.Contains(name);
 					var interfaces = isOwnable ? $"IEquatable<{name}>, IDisposable" : $"IEquatable<{name}>";
 
+					// Get all functions belonging to this handle type
+					var handleFunctions = _analyzedFunctions
+						.Where(f => f.OwnerType == name)
+						.ToList();
+
+					// Check if any method on this handle accepts delegate parameters
+					bool hasDelegateParams = handleFunctions.Any(f => HasDelegateParameters(f.CppFunction));
+
 					writer.WriteLine($"\tpublic unsafe partial struct {name} : {interfaces}");
 					writer.WriteLine("\t{");
 
@@ -920,10 +936,12 @@ namespace CesiumGen
 					writer.WriteLine($"\t\tpublic override int GetHashCode() => Handle.GetHashCode();");
 					writer.WriteLine($"\t\tpublic override string ToString() => $\"{name}[0x{{Handle:x}}]\";");
 
-					// Get all functions belonging to this handle type
-					var handleFunctions = _analyzedFunctions
-						.Where(f => f.OwnerType == name)
-						.ToList();
+					// Static dictionary to prevent delegate garbage collection
+					if (hasDelegateParams)
+					{
+						writer.WriteLine();
+						writer.WriteLine($"\t\tprivate static readonly ConcurrentDictionary<IntPtr, Delegate[]> _pinnedDelegates = new();");
+					}
 
 					// --- IDisposable ---
 					if (isOwnable)
@@ -934,7 +952,18 @@ namespace CesiumGen
 							var apiRef = GetApiRef(destroyFunc.CppFunction);
 							writer.WriteLine();
 							writer.WriteLine($"\t\t/// <summary>Releases the native resource.</summary>");
-							writer.WriteLine($"\t\tpublic void Dispose() => {apiRef}.{Helpers.ClearFunctionName(destroyFunc.CppFunction.Name)}(this);");
+							if (hasDelegateParams)
+							{
+								writer.WriteLine($"\t\tpublic void Dispose()");
+								writer.WriteLine($"\t\t{{");
+								writer.WriteLine($"\t\t\t_pinnedDelegates.TryRemove(Handle, out _);");
+								writer.WriteLine($"\t\t\t{apiRef}.{Helpers.ClearFunctionName(destroyFunc.CppFunction.Name)}(this);");
+								writer.WriteLine($"\t\t}}");
+							}
+							else
+							{
+								writer.WriteLine($"\t\tpublic void Dispose() => {apiRef}.{Helpers.ClearFunctionName(destroyFunc.CppFunction.Name)}(this);");
+							}
 						}
 					}
 
@@ -1030,6 +1059,17 @@ namespace CesiumGen
 			writer.WriteLine($"{indent}\t=> {apiRef}.{cleanedName}({string.Join(", ", callArgs)});");
 		}
 
+		private bool HasDelegateParameters(CppFunction f)
+		{
+			for (int i = 0; i < f.Parameters.Count; i++)
+			{
+				var paramType = Helpers.ConvertToCSharpType(f.Parameters[i].Type);
+				if (Helpers.DelegateNames.Contains(paramType))
+					return true;
+			}
+			return false;
+		}
+
 		private void WriteInstanceMethod(StreamWriter writer, FunctionInfo info, string handleName, string indent)
 		{
 			var f = info.CppFunction;
@@ -1044,8 +1084,40 @@ namespace CesiumGen
 
 			var returnType = Helpers.ConvertToCSharpType(f.ReturnType);
 
+			// Detect delegate parameters that need pinning
+			var delegateParamNames = new List<string>();
+			for (int pi = 1; pi < f.Parameters.Count; pi++)
+			{
+				var paramType = Helpers.ConvertToCSharpType(f.Parameters[pi].Type);
+				if (Helpers.DelegateNames.Contains(paramType))
+				{
+					var paramName = string.IsNullOrEmpty(f.Parameters[pi].Name) ? $"arg{pi}" : f.Parameters[pi].Name;
+					delegateParamNames.Add(Helpers.EscapeReservedKeyword(paramName));
+				}
+			}
+
+			if (delegateParamNames.Count > 0)
+			{
+				// Generate multi-line method body with delegate pinning
+				if (returnType == "void")
+				{
+					writer.WriteLine($"{indent}public void {info.MethodName}({string.Join(", ", csParams)})");
+					writer.WriteLine($"{indent}{{");
+					writer.WriteLine($"{indent}\t_pinnedDelegates[Handle] = new Delegate[] {{ {string.Join(", ", delegateParamNames)} }};");
+					writer.WriteLine($"{indent}\t{apiRef}.{cleanedName}({string.Join(", ", callArgs)});");
+					writer.WriteLine($"{indent}}}");
+				}
+				else
+				{
+					writer.WriteLine($"{indent}public {returnType} {info.MethodName}({string.Join(", ", csParams)})");
+					writer.WriteLine($"{indent}{{");
+					writer.WriteLine($"{indent}\t_pinnedDelegates[Handle] = new Delegate[] {{ {string.Join(", ", delegateParamNames)} }};");
+					writer.WriteLine($"{indent}\treturn {apiRef}.{cleanedName}({string.Join(", ", callArgs)});");
+					writer.WriteLine($"{indent}}}");
+				}
+			}
 			// Bool return conversion
-			if (info.IsBoolReturn)
+			else if (info.IsBoolReturn)
 			{
 				writer.WriteLine($"{indent}public bool {info.MethodName}({string.Join(", ", csParams)})");
 				writer.WriteLine($"{indent}\t=> {apiRef}.{cleanedName}({string.Join(", ", callArgs)}) != 0;");
@@ -1288,13 +1360,13 @@ namespace CesiumGen
 			WriteSubNamespaceUsings(writer);
 			writer.WriteLine();
 
-			// Group by namespace
+			// Group by namespace — use the struct's own definition namespace, not the function's file
 			var nsGroups = structFunctions
 				.GroupBy(g =>
 				{
-					// Find where this struct was defined to determine namespace
-					var firstFunc = g.First();
-					return GetNamespaceForFile(firstFunc.CppFunction.Span.Start.File);
+					return _structNamespaces.TryGetValue(g.Key, out var ns)
+						? ns
+						: GetNamespaceForFile(g.First().CppFunction.Span.Start.File);
 				})
 				.OrderBy(g => g.Key)
 				.ToList();

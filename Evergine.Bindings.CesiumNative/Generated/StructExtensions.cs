@@ -10,7 +10,7 @@ using Evergine.Bindings.CesiumNative.Ion;
 using Evergine.Bindings.CesiumNative.RasterOverlays;
 using Evergine.Bindings.CesiumNative.Tileset;
 
-namespace Evergine.Bindings.CesiumNative.Geospatial
+namespace Evergine.Bindings.CesiumNative.Common
 {
 	public unsafe partial struct CesiumCartographic
 	{

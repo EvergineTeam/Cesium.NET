@@ -3,7 +3,6 @@ using Evergine.Bindings.CesiumNative.Common;
 using Evergine.Bindings.CesiumNative.Geospatial;
 using Evergine.Bindings.CesiumNative.Tileset;
 using System.Runtime.InteropServices;
-using CesiumCartographic = Evergine.Bindings.CesiumNative.Geospatial.CesiumCartographic;
 
 namespace Example;
 
@@ -14,7 +13,7 @@ internal unsafe static class Program
     public static CesiumViewState createViewState()
     {
         CesiumEllipsoid wgs84 = CesiumEllipsoid.Wgs84();
-        CesiumCartographic cam = CesiumCartographic.FromDegrees(-74.006, 40.7128, 1000.0); // New york city at 1000m height
+        CesiumCartographic cam = CesiumCartographic.FromDegrees(-74.006, 40.7128, 1000.0);
 
         CesiumVec3 position = wgs84.CartographicToCartesian(cam);
 
