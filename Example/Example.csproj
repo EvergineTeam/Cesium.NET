@@ -15,12 +15,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <None Include="..\Evergine.Bindings.CesiumNative\runtimes\win-x64\native\CesiumNativeC.dll"
-          Link="CesiumNativeC.dll"
+    <None Include="..\Evergine.Bindings.CesiumNative\runtimes\win-x64\native\*.*"
+          Link="%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest"
           Condition="'$(RuntimeIdentifier)' == '' or '$(RuntimeIdentifier)' == 'win-x64'" />
-    <None Include="..\Evergine.Bindings.CesiumNative\runtimes\win-arm64\native\CesiumNativeC.dll"
-          Link="CesiumNativeC.dll"
+    <None Include="..\Evergine.Bindings.CesiumNative\runtimes\win-arm64\native\*.*"
+          Link="%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest"
           Condition="'$(RuntimeIdentifier)' == 'win-arm64'" />
   </ItemGroup>

@@ -10,9 +10,36 @@ namespace CesiumGen
 	{
 		public static readonly CsCodeGenerator Instance = new CsCodeGenerator();
 
-		private const string Namespace = "Evergine.Bindings.CesiumNative";
+		private const string BaseNamespace = "Evergine.Bindings.CesiumNative";
 		private const string DllName = "CesiumNativeC";
 		private const string NativeClass = "CesiumAPI";
+
+		private List<(string Name, string File)> _opaqueHandles = new();
+
+		private static readonly string[] SubNamespaceUsings = new[]
+		{
+			"Evergine.Bindings.CesiumNative.Common",
+			"Evergine.Bindings.CesiumNative.Geospatial",
+			"Evergine.Bindings.CesiumNative.Gltf",
+			"Evergine.Bindings.CesiumNative.Ion",
+			"Evergine.Bindings.CesiumNative.RasterOverlays",
+			"Evergine.Bindings.CesiumNative.Tileset",
+		};
+
+		private string GetNamespaceForFile(string filePath)
+		{
+			var fileName = Path.GetFileNameWithoutExtension(filePath ?? "").ToLowerInvariant();
+			return fileName switch
+			{
+				"cesium_common" => $"{BaseNamespace}.Common",
+				"cesium_geospatial" => $"{BaseNamespace}.Geospatial",
+				"cesium_gltf" => $"{BaseNamespace}.Gltf",
+				"cesium_ion" => $"{BaseNamespace}.Ion",
+				"cesium_raster_overlays" => $"{BaseNamespace}.RasterOverlays",
+				"cesium_tileset" => $"{BaseNamespace}.Tileset",
+				_ => BaseNamespace,
+			};
+		}
 
 		public void Generate(CppCompilation compilation, string outputPath)
 		{
@@ -23,14 +50,16 @@ namespace CesiumGen
 				.ToHashSet();
 
 			// Collect opaque handle types (forward-declared structs with no definition)
-			Helpers.OpaqueHandleTypes = compilation.Classes
+			_opaqueHandles = compilation.Classes
 				.Where(c => c.ClassKind == CppClassKind.Struct
 					&& !c.IsDefinition
 					&& !string.IsNullOrEmpty(c.Name)
 					&& !definedStructNames.Contains(c.Name))
-				.Select(c => c.Name)
-				.Distinct()
+				.GroupBy(c => c.Name)
+				.Select(g => (Name: g.Key, File: g.First().Span.Start.File))
 				.ToList();
+
+			Helpers.OpaqueHandleTypes = _opaqueHandles.Select(h => h.Name).ToList();
 
 			// Collect delegate names (function pointer typedefs)
 			Helpers.DelegateNames = compilation.Typedefs
@@ -38,9 +67,9 @@ namespace CesiumGen
 				.Select(t => t.Name)
 				.ToList();
 
-			Console.WriteLine($"Found {Helpers.OpaqueHandleTypes.Count} opaque handle types:");
-			foreach (var h in Helpers.OpaqueHandleTypes)
-				Console.WriteLine($"  {h}");
+			Console.WriteLine($"Found {_opaqueHandles.Count} opaque handle types:");
+			foreach (var h in _opaqueHandles)
+				Console.WriteLine($"  {h.Name} ({Path.GetFileName(h.File)})");
 
 			Console.WriteLine($"Found {Helpers.DelegateNames.Count} delegates:");
 			foreach (var d in Helpers.DelegateNames)
@@ -50,7 +79,7 @@ namespace CesiumGen
 			GenerateDelegates(compilation, outputPath);
 			GenerateStructs(compilation, outputPath);
 			GenerateFunctions(compilation, outputPath);
-			GenerateHandles(compilation, outputPath);
+			GenerateHandles(outputPath);
 		}
 
 		private bool IsFunctionPointerTypedef(CppTypedef typedef)
@@ -75,40 +104,53 @@ namespace CesiumGen
 
 			Console.WriteLine($"Generating {enums.Count} enums...");
 
+			var groups = enums
+				.GroupBy(e => GetNamespaceForFile(e.Span.Start.File))
+				.OrderBy(g => g.Key)
+				.ToList();
+
 			using var writer = new StreamWriter(Path.Combine(outputPath, "Enums.cs"));
 			WriteHeader(writer);
 			writer.WriteLine("using System;");
 			writer.WriteLine();
-			writer.WriteLine($"namespace {Namespace}");
-			writer.WriteLine("{");
 
-			for (int i = 0; i < enums.Count; i++)
+			for (int gi = 0; gi < groups.Count; gi++)
 			{
-				var e = enums[i];
+				var group = groups[gi];
+				if (gi > 0) writer.WriteLine();
 
-				Helpers.PrintComments(writer, e.Comment, "\t");
+				writer.WriteLine($"namespace {group.Key}");
+				writer.WriteLine("{");
 
-				// Detect [Flags] by checking for a typedef named EnumNameFlags
-				bool isFlags = compilation.Typedefs.Any(t => t.Name == e.Name + "Flags");
-				if (isFlags)
-					writer.WriteLine("\t[Flags]");
-
-				writer.WriteLine($"\tpublic enum {e.Name}");
-				writer.WriteLine("\t{");
-
-				foreach (var item in e.Items)
+				var groupList = group.ToList();
+				for (int i = 0; i < groupList.Count; i++)
 				{
-					Helpers.PrintComments(writer, item.Comment, "\t\t");
-					writer.WriteLine($"\t\t{item.Name} = {item.Value},");
+					var e = groupList[i];
+
+					Helpers.PrintComments(writer, e.Comment, "\t");
+
+					// Detect [Flags] by checking for a typedef named EnumNameFlags
+					bool isFlags = compilation.Typedefs.Any(t => t.Name == e.Name + "Flags");
+					if (isFlags)
+						writer.WriteLine("\t[Flags]");
+
+					writer.WriteLine($"\tpublic enum {e.Name}");
+					writer.WriteLine("\t{");
+
+					foreach (var item in e.Items)
+					{
+						Helpers.PrintComments(writer, item.Comment, "\t\t");
+						writer.WriteLine($"\t\t{item.Name} = {item.Value},");
+					}
+
+					writer.WriteLine("\t}");
+
+					if (i < groupList.Count - 1)
+						writer.WriteLine();
 				}
 
-				writer.WriteLine("\t}");
-
-				if (i < enums.Count - 1)
-					writer.WriteLine();
+				writer.WriteLine("}");
 			}
-
-			writer.WriteLine("}");
 		}
 
 		// =====================================================================
@@ -125,35 +167,49 @@ namespace CesiumGen
 
 			Console.WriteLine($"Generating {delegates.Count} delegates...");
 
+			var groups = delegates
+				.GroupBy(d => GetNamespaceForFile(d.Span.Start.File))
+				.OrderBy(g => g.Key)
+				.ToList();
+
 			using var writer = new StreamWriter(Path.Combine(outputPath, "Delegates.cs"));
 			WriteHeader(writer);
 			writer.WriteLine("using System;");
 			writer.WriteLine("using System.Runtime.InteropServices;");
+			WriteSubNamespaceUsings(writer);
 			writer.WriteLine();
-			writer.WriteLine($"namespace {Namespace}");
-			writer.WriteLine("{");
 
-			for (int i = 0; i < delegates.Count; i++)
+			for (int gi = 0; gi < groups.Count; gi++)
 			{
-				var d = delegates[i];
-				var ptrType = (CppPointerType)d.ElementType;
-				var funcType = (CppFunctionType)ptrType.ElementType;
+				var group = groups[gi];
+				if (gi > 0) writer.WriteLine();
 
-				Helpers.PrintComments(writer, d.Comment, "\t");
-				writer.WriteLine("\t[UnmanagedFunctionPointer(CallingConvention.Cdecl)]");
+				writer.WriteLine($"namespace {group.Key}");
+				writer.WriteLine("{");
 
-				var returnType = Helpers.ConvertToCSharpType(funcType.ReturnType);
-				var parameters = BuildDelegateParameters(funcType);
+				var groupList = group.ToList();
+				for (int i = 0; i < groupList.Count; i++)
+				{
+					var d = groupList[i];
+					var ptrType = (CppPointerType)d.ElementType;
+					var funcType = (CppFunctionType)ptrType.ElementType;
 
-				writer.Write($"\tpublic unsafe delegate {returnType} {d.Name}(");
-				writer.Write(string.Join(", ", parameters));
-				writer.WriteLine(");");
+					Helpers.PrintComments(writer, d.Comment, "\t");
+					writer.WriteLine("\t[UnmanagedFunctionPointer(CallingConvention.Cdecl)]");
 
-				if (i < delegates.Count - 1)
-					writer.WriteLine();
+					var returnType = Helpers.ConvertToCSharpType(funcType.ReturnType);
+					var parameters = BuildDelegateParameters(funcType);
+
+					writer.Write($"\tpublic unsafe delegate {returnType} {d.Name}(");
+					writer.Write(string.Join(", ", parameters));
+					writer.WriteLine(");");
+
+					if (i < groupList.Count - 1)
+						writer.WriteLine();
+				}
+
+				writer.WriteLine("}");
 			}
-
-			writer.WriteLine("}");
 		}
 
 		private List<string> BuildDelegateParameters(CppFunctionType funcType)
@@ -189,24 +245,38 @@ namespace CesiumGen
 
 			Console.WriteLine($"Generating {structs.Count} structs...");
 
+			var groups = structs
+				.GroupBy(s => GetNamespaceForFile(s.Span.Start.File))
+				.OrderBy(g => g.Key)
+				.ToList();
+
 			using var writer = new StreamWriter(Path.Combine(outputPath, "Structs.cs"));
 			WriteHeader(writer);
 			writer.WriteLine("using System;");
 			writer.WriteLine("using System.Runtime.InteropServices;");
+			WriteSubNamespaceUsings(writer);
 			writer.WriteLine();
-			writer.WriteLine($"namespace {Namespace}");
-			writer.WriteLine("{");
 
-			for (int i = 0; i < structs.Count; i++)
+			for (int gi = 0; gi < groups.Count; gi++)
 			{
-				var s = structs[i];
-				WriteStruct(writer, s, "\t");
+				var group = groups[gi];
+				if (gi > 0) writer.WriteLine();
 
-				if (i < structs.Count - 1)
-					writer.WriteLine();
+				writer.WriteLine($"namespace {group.Key}");
+				writer.WriteLine("{");
+
+				var groupList = group.ToList();
+				for (int i = 0; i < groupList.Count; i++)
+				{
+					var s = groupList[i];
+					WriteStruct(writer, s, "\t");
+
+					if (i < groupList.Count - 1)
+						writer.WriteLine();
+				}
+
+				writer.WriteLine("}");
 			}
-
-			writer.WriteLine("}");
 		}
 
 		private void WriteStruct(StreamWriter writer, CppClass s, string indent)
@@ -322,25 +392,38 @@ namespace CesiumGen
 
 			Console.WriteLine($"Generating {functions.Count} functions...");
 
+			var groups = functions
+				.GroupBy(f => GetNamespaceForFile(f.Span.Start.File))
+				.OrderBy(g => g.Key)
+				.ToList();
+
 			using var writer = new StreamWriter(Path.Combine(outputPath, "Functions.cs"));
 			WriteHeader(writer);
 			writer.WriteLine("using System;");
 			writer.WriteLine("using System.Runtime.InteropServices;");
+			WriteSubNamespaceUsings(writer);
 			writer.WriteLine();
-			writer.WriteLine($"namespace {Namespace}");
-			writer.WriteLine("{");
-			writer.WriteLine($"\tpublic static unsafe partial class {NativeClass}");
-			writer.WriteLine("\t{");
 
-			for (int i = 0; i < functions.Count; i++)
+			for (int gi = 0; gi < groups.Count; gi++)
 			{
-				var f = functions[i];
+				var group = groups[gi];
+				if (gi > 0) writer.WriteLine();
+
+				writer.WriteLine($"namespace {group.Key}");
+				writer.WriteLine("{");
+				writer.WriteLine($"\tpublic static unsafe partial class {NativeClass}");
+				writer.WriteLine("\t{");
+
+				var groupList = group.ToList();
+				for (int i = 0; i < groupList.Count; i++)
+				{
+					var f = groupList[i];
 
 				Helpers.PrintComments(writer, f.Comment, "\t\t");
 				writer.WriteLine($"\t\t[DllImport(\"{DllName}\", CallingConvention = CallingConvention.Cdecl, EntryPoint = \"{f.Name}\")]");
 
-				var returnType = Helpers.ConvertToCSharpType(f.ReturnType);
-				var parameters = BuildFunctionParameters(f);
+					var returnType = Helpers.ConvertToCSharpType(f.ReturnType);
+					var parameters = BuildFunctionParameters(f);
 
 				var cleanedFunctionName = Helpers.ClearFunctionName(f.Name);
 
@@ -348,12 +431,13 @@ namespace CesiumGen
 				writer.Write(string.Join(", ", parameters));
 				writer.WriteLine(");");
 
-				if (i < functions.Count - 1)
-					writer.WriteLine();
-			}
+					if (i < groupList.Count - 1)
+						writer.WriteLine();
+				}
 
-			writer.WriteLine("\t}");
-			writer.WriteLine("}");
+				writer.WriteLine("\t}");
+				writer.WriteLine("}");
+			}
 		}
 
 		private List<string> BuildFunctionParameters(CppFunction function)
@@ -385,43 +469,56 @@ namespace CesiumGen
 		// Handles (opaque pointer wrappers)
 		// =====================================================================
 
-		private void GenerateHandles(CppCompilation compilation, string outputPath)
+		private void GenerateHandles(string outputPath)
 		{
-			if (Helpers.OpaqueHandleTypes.Count == 0) return;
+			if (_opaqueHandles.Count == 0) return;
 
-			Console.WriteLine($"Generating {Helpers.OpaqueHandleTypes.Count} handles...");
+			Console.WriteLine($"Generating {_opaqueHandles.Count} handles...");
+
+			var groups = _opaqueHandles
+				.GroupBy(h => GetNamespaceForFile(h.File))
+				.OrderBy(g => g.Key)
+				.ToList();
 
 			using var writer = new StreamWriter(Path.Combine(outputPath, "Handles.cs"));
 			WriteHeader(writer);
 			writer.WriteLine("using System;");
 			writer.WriteLine();
-			writer.WriteLine($"namespace {Namespace}");
-			writer.WriteLine("{");
 
-			for (int i = 0; i < Helpers.OpaqueHandleTypes.Count; i++)
+			for (int gi = 0; gi < groups.Count; gi++)
 			{
-				var name = Helpers.OpaqueHandleTypes[i];
+				var group = groups[gi];
+				if (gi > 0) writer.WriteLine();
 
-				writer.WriteLine($"\tpublic partial struct {name} : IEquatable<{name}>");
-				writer.WriteLine("\t{");
-				writer.WriteLine($"\t\tpublic readonly IntPtr Handle;");
-				writer.WriteLine($"\t\tpublic {name}(IntPtr existingHandle) {{ Handle = existingHandle; }}");
-				writer.WriteLine($"\t\tpublic static {name} Null => new {name}(IntPtr.Zero);");
-				writer.WriteLine($"\t\tpublic static implicit operator {name}(IntPtr handle) => new {name}(handle);");
-				writer.WriteLine($"\t\tpublic static implicit operator IntPtr({name} handle) => handle.Handle;");
-				writer.WriteLine($"\t\tpublic static bool operator ==({name} left, {name} right) => left.Handle == right.Handle;");
-				writer.WriteLine($"\t\tpublic static bool operator !=({name} left, {name} right) => left.Handle != right.Handle;");
-				writer.WriteLine($"\t\tpublic bool Equals({name} h) => Handle == h.Handle;");
-				writer.WriteLine($"\t\tpublic override bool Equals(object o) => o is {name} h && Equals(h);");
-				writer.WriteLine($"\t\tpublic override int GetHashCode() => Handle.GetHashCode();");
-				writer.WriteLine($"\t\tpublic override string ToString() => $\"{name}[0x{{Handle:x}}]\";");
-				writer.WriteLine("\t}");
+				writer.WriteLine($"namespace {group.Key}");
+				writer.WriteLine("{");
 
-				if (i < Helpers.OpaqueHandleTypes.Count - 1)
-					writer.WriteLine();
+				var groupList = group.ToList();
+				for (int i = 0; i < groupList.Count; i++)
+				{
+					var name = groupList[i].Name;
+
+					writer.WriteLine($"\tpublic partial struct {name} : IEquatable<{name}>");
+					writer.WriteLine("\t{");
+					writer.WriteLine($"\t\tpublic readonly IntPtr Handle;");
+					writer.WriteLine($"\t\tpublic {name}(IntPtr existingHandle) {{ Handle = existingHandle; }}");
+					writer.WriteLine($"\t\tpublic static {name} Null => new {name}(IntPtr.Zero);");
+					writer.WriteLine($"\t\tpublic static implicit operator {name}(IntPtr handle) => new {name}(handle);");
+					writer.WriteLine($"\t\tpublic static implicit operator IntPtr({name} handle) => handle.Handle;");
+					writer.WriteLine($"\t\tpublic static bool operator ==({name} left, {name} right) => left.Handle == right.Handle;");
+					writer.WriteLine($"\t\tpublic static bool operator !=({name} left, {name} right) => left.Handle != right.Handle;");
+					writer.WriteLine($"\t\tpublic bool Equals({name} h) => Handle == h.Handle;");
+					writer.WriteLine($"\t\tpublic override bool Equals(object o) => o is {name} h && Equals(h);");
+					writer.WriteLine($"\t\tpublic override int GetHashCode() => Handle.GetHashCode();");
+					writer.WriteLine($"\t\tpublic override string ToString() => $\"{name}[0x{{Handle:x}}]\";");
+					writer.WriteLine("\t}");
+
+					if (i < groupList.Count - 1)
+						writer.WriteLine();
+				}
+
+				writer.WriteLine("}");
 			}
-
-			writer.WriteLine("}");
 		}
 
 		// =====================================================================
@@ -433,6 +530,12 @@ namespace CesiumGen
 			writer.WriteLine("// -------------------------------------------------------------------------------------------------");
 			writer.WriteLine("// This file was auto-generated by CesiumGen. Do not edit manually.");
 			writer.WriteLine("// -------------------------------------------------------------------------------------------------");
+		}
+
+		private void WriteSubNamespaceUsings(StreamWriter writer)
+		{
+			foreach (var ns in SubNamespaceUsings)
+				writer.WriteLine($"using {ns};");
 		}
 	}
 }
