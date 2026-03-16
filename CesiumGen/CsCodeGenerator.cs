@@ -75,29 +75,11 @@ namespace CesiumGen
 		private HashSet<string> _ownableHandleTypes = new();
 		private Dictionary<string, string> _structNamespaces = new();
 
-		private static readonly string[] SubNamespaceUsings = new[]
-		{
-			"Evergine.Bindings.CesiumNative.Common",
-			"Evergine.Bindings.CesiumNative.Geospatial",
-			"Evergine.Bindings.CesiumNative.Gltf",
-			"Evergine.Bindings.CesiumNative.Ion",
-			"Evergine.Bindings.CesiumNative.RasterOverlays",
-			"Evergine.Bindings.CesiumNative.Tileset",
-		};
+		private static readonly string[] SubNamespaceUsings = Array.Empty<string>();
 
 		private string GetNamespaceForFile(string filePath)
 		{
-			var fileName = Path.GetFileNameWithoutExtension(filePath ?? "").ToLowerInvariant();
-			return fileName switch
-			{
-				"cesium_common" => $"{BaseNamespace}.Common",
-				"cesium_geospatial" => $"{BaseNamespace}.Geospatial",
-				"cesium_gltf" => $"{BaseNamespace}.Gltf",
-				"cesium_ion" => $"{BaseNamespace}.Ion",
-				"cesium_raster_overlays" => $"{BaseNamespace}.RasterOverlays",
-				"cesium_tileset" => $"{BaseNamespace}.Tileset",
-				_ => BaseNamespace,
-			};
+			return BaseNamespace;
 		}
 
 		public void Generate(CppCompilation compilation, string outputPath)

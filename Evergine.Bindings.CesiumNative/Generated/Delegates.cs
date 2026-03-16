@@ -3,14 +3,8 @@
 // -------------------------------------------------------------------------------------------------
 using System;
 using System.Runtime.InteropServices;
-using Evergine.Bindings.CesiumNative.Common;
-using Evergine.Bindings.CesiumNative.Geospatial;
-using Evergine.Bindings.CesiumNative.Gltf;
-using Evergine.Bindings.CesiumNative.Ion;
-using Evergine.Bindings.CesiumNative.RasterOverlays;
-using Evergine.Bindings.CesiumNative.Tileset;
 
-namespace Evergine.Bindings.CesiumNative.Common
+namespace Evergine.Bindings.CesiumNative
 {
 	/// <summary>
 	/// @brief Generic callback for log messages.
@@ -20,10 +14,22 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public unsafe delegate void CesiumLogCallback(void* userData, int level, byte* message);
-}
 
-namespace Evergine.Bindings.CesiumNative.Ion
-{
+	/// <summary>
+	/// @brief Callback invoked when a tileset resource fails to load.
+	/// @param userData User-provided context.
+	/// @param message Error description.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate void CesiumTilesetLoadErrorCallback(void* userData, byte* message);
+
+	/// <summary>
+	/// @brief Callback invoked when the root tile becomes available.
+	/// @param userData User-provided context.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate void CesiumRootTileAvailableCallback(void* userData);
+
 	/// <summary>
 	/// @brief Callback invoked when asset listing completes.
 	/// @param userData User-provided context.
@@ -56,22 +62,4 @@ namespace Evergine.Bindings.CesiumNative.Ion
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public unsafe delegate void CesiumIonAuthorizeCompleteCallback(void* userData, CesiumIonConnection connection);
-}
-
-namespace Evergine.Bindings.CesiumNative.Tileset
-{
-	/// <summary>
-	/// @brief Callback invoked when a tileset resource fails to load.
-	/// @param userData User-provided context.
-	/// @param message Error description.
-	/// </summary>
-	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumTilesetLoadErrorCallback(void* userData, byte* message);
-
-	/// <summary>
-	/// @brief Callback invoked when the root tile becomes available.
-	/// @param userData User-provided context.
-	/// </summary>
-	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumRootTileAvailableCallback(void* userData);
 }

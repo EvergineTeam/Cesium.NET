@@ -1,7 +1,4 @@
 ﻿using Evergine.Bindings.CesiumNative;
-using Evergine.Bindings.CesiumNative.Common;
-using Evergine.Bindings.CesiumNative.Geospatial;
-using Evergine.Bindings.CesiumNative.Tileset;
 using System.Runtime.InteropServices;
 
 namespace Example;

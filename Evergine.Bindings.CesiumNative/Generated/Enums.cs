@@ -3,7 +3,7 @@
 // -------------------------------------------------------------------------------------------------
 using System;
 
-namespace Evergine.Bindings.CesiumNative.Common
+namespace Evergine.Bindings.CesiumNative
 {
 	/// <summary>
 	/// @brief Type discriminator for CesiumBoundingVolume.
@@ -14,10 +14,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 		CESIUM_BOUNDING_VOLUME_ORIENTED_BOX = 1,
 		CESIUM_BOUNDING_VOLUME_REGION = 2,
 	}
-}
 
-namespace Evergine.Bindings.CesiumNative.Tileset
-{
 	/// <summary>
 	/// ============================================================================
 	/// Tile load state enum

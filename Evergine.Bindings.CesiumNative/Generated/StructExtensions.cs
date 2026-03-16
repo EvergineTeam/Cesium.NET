@@ -3,14 +3,8 @@
 // -------------------------------------------------------------------------------------------------
 using System;
 using System.Runtime.InteropServices;
-using Evergine.Bindings.CesiumNative.Common;
-using Evergine.Bindings.CesiumNative.Geospatial;
-using Evergine.Bindings.CesiumNative.Gltf;
-using Evergine.Bindings.CesiumNative.Ion;
-using Evergine.Bindings.CesiumNative.RasterOverlays;
-using Evergine.Bindings.CesiumNative.Tileset;
 
-namespace Evergine.Bindings.CesiumNative.Common
+namespace Evergine.Bindings.CesiumNative
 {
 	public unsafe partial struct CesiumCartographic
 	{
@@ -18,7 +12,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 		/// @brief Creates a cartographic position from degrees (converted to radians).
 		/// </summary>
 		public static CesiumCartographic FromDegrees(double longitudeDegrees, double latitudeDegrees, double heightMeters)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.CartographicFromDegrees(longitudeDegrees, latitudeDegrees, heightMeters);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.CartographicFromDegrees(longitudeDegrees, latitudeDegrees, heightMeters);
 	}
 
 	public unsafe partial struct CesiumGlobeRectangle
@@ -27,30 +21,30 @@ namespace Evergine.Bindings.CesiumNative.Common
 		/// @brief Creates a globe rectangle from degrees (converted to radians).
 		/// </summary>
 		public static CesiumGlobeRectangle FromDegrees(double westDegrees, double southDegrees, double eastDegrees, double northDegrees)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.GlobeRectangleFromDegrees(westDegrees, southDegrees, eastDegrees, northDegrees);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleFromDegrees(westDegrees, southDegrees, eastDegrees, northDegrees);
 
 		/// <summary>
 		/// @brief Computes the width of the globe rectangle in radians.
 		/// </summary>
 		public double ComputeWidth()
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.GlobeRectangleComputeWidth(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleComputeWidth(this);
 
 		/// <summary>
 		/// @brief Computes the height of the globe rectangle in radians.
 		/// </summary>
 		public double ComputeHeight()
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.GlobeRectangleComputeHeight(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleComputeHeight(this);
 
 		/// <summary>
 		/// @brief Computes the center of the globe rectangle.
 		/// </summary>
 		public CesiumCartographic ComputeCenter()
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.GlobeRectangleComputeCenter(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleComputeCenter(this);
 
 		/// <summary>
 		/// @brief Returns 1 if the rectangle contains the given cartographic point.
 		/// </summary>
 		public bool Contains(CesiumCartographic point)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.GlobeRectangleContains(this, point) != 0;
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleContains(this, point) != 0;
 	}
 }

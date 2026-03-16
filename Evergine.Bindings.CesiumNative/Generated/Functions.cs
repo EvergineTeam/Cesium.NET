@@ -3,14 +3,8 @@
 // -------------------------------------------------------------------------------------------------
 using System;
 using System.Runtime.InteropServices;
-using Evergine.Bindings.CesiumNative.Common;
-using Evergine.Bindings.CesiumNative.Geospatial;
-using Evergine.Bindings.CesiumNative.Gltf;
-using Evergine.Bindings.CesiumNative.Ion;
-using Evergine.Bindings.CesiumNative.RasterOverlays;
-using Evergine.Bindings.CesiumNative.Tileset;
 
-namespace Evergine.Bindings.CesiumNative.Common
+namespace Evergine.Bindings.CesiumNative
 {
 	internal static unsafe partial class CesiumAPI
 	{
@@ -26,13 +20,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_clear_last_error")]
 		public static extern void ClearLastError();
-	}
-}
 
-namespace Evergine.Bindings.CesiumNative.Geospatial
-{
-	internal static unsafe partial class CesiumAPI
-	{
 		/// <summary>
 		/// @brief Creates an ellipsoid with the given radii.
 		/// </summary>
@@ -155,13 +143,7 @@ namespace Evergine.Bindings.CesiumNative.Geospatial
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_globe_transforms_east_north_up_to_fixed_frame")]
 		public static extern CesiumMat4 GlobeTransformsEastNorthUpToFixedFrame(CesiumVec3 origin, CesiumEllipsoid ellipsoid);
-	}
-}
 
-namespace Evergine.Bindings.CesiumNative.Gltf
-{
-	internal static unsafe partial class CesiumAPI
-	{
 		/// <summary>
 		/// @brief Creates a new GltfReader instance.
 		/// </summary>
@@ -298,188 +280,7 @@ namespace Evergine.Bindings.CesiumNative.Gltf
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_skin_count")]
 		public static extern int GltfModelGetSkinCount(CesiumGltfModel model);
-	}
-}
 
-namespace Evergine.Bindings.CesiumNative.Ion
-{
-	internal static unsafe partial class CesiumAPI
-	{
-		/// <summary>
-		/// @brief Creates an Ion connection from an existing access token.
-		/// @param asyncSystem The async system.
-		/// @param accessor The asset accessor for HTTP requests.
-		/// @param accessToken The Cesium Ion access token.
-		/// @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com/".
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_create")]
-		public static extern CesiumIonConnection IonConnectionCreate(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, [MarshalAs(UnmanagedType.LPStr)] string accessToken, [MarshalAs(UnmanagedType.LPStr)] string apiUrl);
-
-		/// <summary>
-		/// @brief Destroys an Ion connection.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_destroy")]
-		public static extern void IonConnectionDestroy(CesiumIonConnection connection);
-
-		/// <summary>
-		/// @brief Starts the OAuth authorization flow.
-		/// @param asyncSystem The async system.
-		/// @param accessor The asset accessor.
-		/// @param appID The application's OAuth client ID.
-		/// @param redirectPath The redirect path (e.g., "/cesium-callback").
-		/// @param scopes Space-separated OAuth scopes.
-		/// @param urlCallback Called with the authorization URL to open in a browser.
-		/// @param urlCallbackUserData User data for urlCallback.
-		/// @param completeCallback Called when authorization completes.
-		/// @param completeCallbackUserData User data for completeCallback.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_authorize")]
-		public static extern void IonConnectionAuthorize(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, [MarshalAs(UnmanagedType.LPStr)] string appID, [MarshalAs(UnmanagedType.LPStr)] string redirectPath, [MarshalAs(UnmanagedType.LPStr)] string scopes, CesiumIonAuthorizeUrlCallback urlCallback, void* urlCallbackUserData, CesiumIonAuthorizeCompleteCallback completeCallback, void* completeCallbackUserData);
-
-		/// <summary>
-		/// @brief Requests the list of assets from Cesium Ion (async).
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_list_assets")]
-		public static extern void IonConnectionListAssets(CesiumIonConnection connection, CesiumIonAssetsCompleteCallback callback, void* userData);
-
-		/// <summary>
-		/// @brief Gets the number of assets in the list.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_count")]
-		public static extern int IonAssetListGetCount(CesiumIonAssetList list);
-
-		/// <summary>
-		/// @brief Gets an asset's ID.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_id")]
-		public static extern long IonAssetListGetAssetId(CesiumIonAssetList list, int index);
-
-		/// <summary>
-		/// @brief Gets an asset's name.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_name")]
-		public static extern byte* IonAssetListGetAssetName(CesiumIonAssetList list, int index);
-
-		/// <summary>
-		/// @brief Gets an asset's type (e.g., "3DTILES", "TERRAIN", "IMAGERY").
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_type")]
-		public static extern byte* IonAssetListGetAssetType(CesiumIonAssetList list, int index);
-
-		/// <summary>
-		/// @brief Destroys an asset list.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_destroy")]
-		public static extern void IonAssetListDestroy(CesiumIonAssetList list);
-
-		/// <summary>
-		/// @brief Requests the list of tokens from Cesium Ion (async).
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_list_tokens")]
-		public static extern void IonConnectionListTokens(CesiumIonConnection connection, CesiumIonTokensCompleteCallback callback, void* userData);
-
-		/// <summary>
-		/// @brief Gets the number of tokens in the list.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_count")]
-		public static extern int IonTokenListGetCount(CesiumIonTokenList list);
-
-		/// <summary>
-		/// @brief Gets a token's name.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_token_name")]
-		public static extern byte* IonTokenListGetTokenName(CesiumIonTokenList list, int index);
-
-		/// <summary>
-		/// @brief Gets a token's value string.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_token_value")]
-		public static extern byte* IonTokenListGetTokenValue(CesiumIonTokenList list, int index);
-
-		/// <summary>
-		/// @brief Destroys a token list.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_destroy")]
-		public static extern void IonTokenListDestroy(CesiumIonTokenList list);
-	}
-}
-
-namespace Evergine.Bindings.CesiumNative.RasterOverlays
-{
-	internal static unsafe partial class CesiumAPI
-	{
-		/// <summary>
-		/// @brief Gets the raster overlay collection from a tileset.
-		/// The returned pointer is owned by the tileset.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_overlays")]
-		public static extern CesiumRasterOverlayCollection TilesetGetOverlays(CesiumTileset tileset);
-
-		/// <summary>
-		/// @brief Adds a raster overlay to the collection.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_collection_add")]
-		public static extern void RasterOverlayCollectionAdd(CesiumRasterOverlayCollection collection, CesiumRasterOverlay overlay);
-
-		/// <summary>
-		/// @brief Removes a raster overlay from the collection.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_collection_remove")]
-		public static extern void RasterOverlayCollectionRemove(CesiumRasterOverlayCollection collection, CesiumRasterOverlay overlay);
-
-		/// <summary>
-		/// @brief Creates a Cesium Ion raster overlay.
-		/// @param assetID The Ion asset ID for the imagery.
-		/// @param accessToken The Ion access token.
-		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for default.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_raster_overlay_create")]
-		public static extern CesiumRasterOverlay IonRasterOverlayCreate(long assetID, [MarshalAs(UnmanagedType.LPStr)] string accessToken, [MarshalAs(UnmanagedType.LPStr)] string ionAssetEndpointUrl);
-
-		/// <summary>
-		/// @brief Creates a URL-template raster overlay (e.g., XYZ tiles).
-		/// @param name Display name for the overlay.
-		/// @param urlTemplate URL template with {x}, {y}, {z} placeholders.
-		/// @param minimumLevel Minimum zoom level.
-		/// @param maximumLevel Maximum zoom level.
-		/// @param tileWidth Tile width in pixels (e.g., 256).
-		/// @param tileHeight Tile height in pixels (e.g., 256).
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_url_template_raster_overlay_create")]
-		public static extern CesiumRasterOverlay UrlTemplateRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string urlTemplate, uint minimumLevel, uint maximumLevel, uint tileWidth, uint tileHeight);
-
-		/// <summary>
-		/// @brief Creates a TMS (Tile Map Service) raster overlay.
-		/// @param name Display name for the overlay.
-		/// @param url The TMS service URL.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_map_service_raster_overlay_create")]
-		public static extern CesiumRasterOverlay TileMapServiceRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string url);
-
-		/// <summary>
-		/// @brief Creates a WMS (Web Map Service) raster overlay.
-		/// @param name Display name for the overlay.
-		/// @param url The WMS service URL.
-		/// @param layers Comma-separated list of WMS layers.
-		/// @param tileWidth Tile width in pixels.
-		/// @param tileHeight Tile height in pixels.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_web_map_service_raster_overlay_create")]
-		public static extern CesiumRasterOverlay WebMapServiceRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string url, [MarshalAs(UnmanagedType.LPStr)] string layers, int tileWidth, int tileHeight);
-
-		/// <summary>
-		/// @brief Destroys a raster overlay.
-		/// Remove it from any collections first.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_destroy")]
-		public static extern void RasterOverlayDestroy(CesiumRasterOverlay overlay);
-	}
-}
-
-namespace Evergine.Bindings.CesiumNative.Tileset
-{
-	internal static unsafe partial class CesiumAPI
-	{
 		/// <summary>
 		/// @brief Creates an async system with a built-in thread pool.
 		/// </summary>
@@ -893,5 +694,168 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_lod_transition_fade_percentage")]
 		public static extern float TileGetLodTransitionFadePercentage(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Gets the raster overlay collection from a tileset.
+		/// The returned pointer is owned by the tileset.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_overlays")]
+		public static extern CesiumRasterOverlayCollection TilesetGetOverlays(CesiumTileset tileset);
+
+		/// <summary>
+		/// @brief Adds a raster overlay to the collection.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_collection_add")]
+		public static extern void RasterOverlayCollectionAdd(CesiumRasterOverlayCollection collection, CesiumRasterOverlay overlay);
+
+		/// <summary>
+		/// @brief Removes a raster overlay from the collection.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_collection_remove")]
+		public static extern void RasterOverlayCollectionRemove(CesiumRasterOverlayCollection collection, CesiumRasterOverlay overlay);
+
+		/// <summary>
+		/// @brief Creates a Cesium Ion raster overlay.
+		/// @param assetID The Ion asset ID for the imagery.
+		/// @param accessToken The Ion access token.
+		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for default.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_raster_overlay_create")]
+		public static extern CesiumRasterOverlay IonRasterOverlayCreate(long assetID, [MarshalAs(UnmanagedType.LPStr)] string accessToken, [MarshalAs(UnmanagedType.LPStr)] string ionAssetEndpointUrl);
+
+		/// <summary>
+		/// @brief Creates a URL-template raster overlay (e.g., XYZ tiles).
+		/// @param name Display name for the overlay.
+		/// @param urlTemplate URL template with {x}, {y}, {z} placeholders.
+		/// @param minimumLevel Minimum zoom level.
+		/// @param maximumLevel Maximum zoom level.
+		/// @param tileWidth Tile width in pixels (e.g., 256).
+		/// @param tileHeight Tile height in pixels (e.g., 256).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_url_template_raster_overlay_create")]
+		public static extern CesiumRasterOverlay UrlTemplateRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string urlTemplate, uint minimumLevel, uint maximumLevel, uint tileWidth, uint tileHeight);
+
+		/// <summary>
+		/// @brief Creates a TMS (Tile Map Service) raster overlay.
+		/// @param name Display name for the overlay.
+		/// @param url The TMS service URL.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_map_service_raster_overlay_create")]
+		public static extern CesiumRasterOverlay TileMapServiceRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string url);
+
+		/// <summary>
+		/// @brief Creates a WMS (Web Map Service) raster overlay.
+		/// @param name Display name for the overlay.
+		/// @param url The WMS service URL.
+		/// @param layers Comma-separated list of WMS layers.
+		/// @param tileWidth Tile width in pixels.
+		/// @param tileHeight Tile height in pixels.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_web_map_service_raster_overlay_create")]
+		public static extern CesiumRasterOverlay WebMapServiceRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string url, [MarshalAs(UnmanagedType.LPStr)] string layers, int tileWidth, int tileHeight);
+
+		/// <summary>
+		/// @brief Destroys a raster overlay.
+		/// Remove it from any collections first.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_destroy")]
+		public static extern void RasterOverlayDestroy(CesiumRasterOverlay overlay);
+
+		/// <summary>
+		/// @brief Creates an Ion connection from an existing access token.
+		/// @param asyncSystem The async system.
+		/// @param accessor The asset accessor for HTTP requests.
+		/// @param accessToken The Cesium Ion access token.
+		/// @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com/".
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_create")]
+		public static extern CesiumIonConnection IonConnectionCreate(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, [MarshalAs(UnmanagedType.LPStr)] string accessToken, [MarshalAs(UnmanagedType.LPStr)] string apiUrl);
+
+		/// <summary>
+		/// @brief Destroys an Ion connection.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_destroy")]
+		public static extern void IonConnectionDestroy(CesiumIonConnection connection);
+
+		/// <summary>
+		/// @brief Starts the OAuth authorization flow.
+		/// @param asyncSystem The async system.
+		/// @param accessor The asset accessor.
+		/// @param appID The application's OAuth client ID.
+		/// @param redirectPath The redirect path (e.g., "/cesium-callback").
+		/// @param scopes Space-separated OAuth scopes.
+		/// @param urlCallback Called with the authorization URL to open in a browser.
+		/// @param urlCallbackUserData User data for urlCallback.
+		/// @param completeCallback Called when authorization completes.
+		/// @param completeCallbackUserData User data for completeCallback.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_authorize")]
+		public static extern void IonConnectionAuthorize(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, [MarshalAs(UnmanagedType.LPStr)] string appID, [MarshalAs(UnmanagedType.LPStr)] string redirectPath, [MarshalAs(UnmanagedType.LPStr)] string scopes, CesiumIonAuthorizeUrlCallback urlCallback, void* urlCallbackUserData, CesiumIonAuthorizeCompleteCallback completeCallback, void* completeCallbackUserData);
+
+		/// <summary>
+		/// @brief Requests the list of assets from Cesium Ion (async).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_list_assets")]
+		public static extern void IonConnectionListAssets(CesiumIonConnection connection, CesiumIonAssetsCompleteCallback callback, void* userData);
+
+		/// <summary>
+		/// @brief Gets the number of assets in the list.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_count")]
+		public static extern int IonAssetListGetCount(CesiumIonAssetList list);
+
+		/// <summary>
+		/// @brief Gets an asset's ID.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_id")]
+		public static extern long IonAssetListGetAssetId(CesiumIonAssetList list, int index);
+
+		/// <summary>
+		/// @brief Gets an asset's name.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_name")]
+		public static extern byte* IonAssetListGetAssetName(CesiumIonAssetList list, int index);
+
+		/// <summary>
+		/// @brief Gets an asset's type (e.g., "3DTILES", "TERRAIN", "IMAGERY").
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_type")]
+		public static extern byte* IonAssetListGetAssetType(CesiumIonAssetList list, int index);
+
+		/// <summary>
+		/// @brief Destroys an asset list.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_destroy")]
+		public static extern void IonAssetListDestroy(CesiumIonAssetList list);
+
+		/// <summary>
+		/// @brief Requests the list of tokens from Cesium Ion (async).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_list_tokens")]
+		public static extern void IonConnectionListTokens(CesiumIonConnection connection, CesiumIonTokensCompleteCallback callback, void* userData);
+
+		/// <summary>
+		/// @brief Gets the number of tokens in the list.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_count")]
+		public static extern int IonTokenListGetCount(CesiumIonTokenList list);
+
+		/// <summary>
+		/// @brief Gets a token's name.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_token_name")]
+		public static extern byte* IonTokenListGetTokenName(CesiumIonTokenList list, int index);
+
+		/// <summary>
+		/// @brief Gets a token's value string.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_token_value")]
+		public static extern byte* IonTokenListGetTokenValue(CesiumIonTokenList list, int index);
+
+		/// <summary>
+		/// @brief Destroys a token list.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_destroy")]
+		public static extern void IonTokenListDestroy(CesiumIonTokenList list);
 	}
 }

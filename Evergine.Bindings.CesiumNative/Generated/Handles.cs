@@ -4,14 +4,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
-using Evergine.Bindings.CesiumNative.Common;
-using Evergine.Bindings.CesiumNative.Geospatial;
-using Evergine.Bindings.CesiumNative.Gltf;
-using Evergine.Bindings.CesiumNative.Ion;
-using Evergine.Bindings.CesiumNative.RasterOverlays;
-using Evergine.Bindings.CesiumNative.Tileset;
 
-namespace Evergine.Bindings.CesiumNative.Geospatial
+namespace Evergine.Bindings.CesiumNative
 {
 	public unsafe partial struct CesiumEllipsoid : IEquatable<CesiumEllipsoid>, IDisposable
 	{
@@ -28,87 +22,84 @@ namespace Evergine.Bindings.CesiumNative.Geospatial
 		public override string ToString() => $"CesiumEllipsoid[0x{Handle:x}]";
 
 		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidDestroy(this);
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidDestroy(this);
 
 		/// <summary>
 		/// @brief Creates an ellipsoid with the given radii.
 		/// </summary>
 		public static CesiumEllipsoid Create(double radiusX, double radiusY, double radiusZ)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidCreate(radiusX, radiusY, radiusZ);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidCreate(radiusX, radiusY, radiusZ);
 
 		/// <summary>
 		/// @brief Returns the WGS84 ellipsoid (singleton — do NOT destroy).
 		/// </summary>
 		public static CesiumEllipsoid Wgs84()
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidWgs84();
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidWgs84();
 
 		/// <summary>
 		/// @brief Returns the unit sphere ellipsoid (singleton — do NOT destroy).
 		/// </summary>
 		public static CesiumEllipsoid UnitSphere()
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidUnitSphere();
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidUnitSphere();
 
 		/// <summary>
 		/// @brief Gets the radii of the ellipsoid.
 		/// </summary>
 		public CesiumVec3 Radii
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidGetRadii(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidGetRadii(this);
 
 		/// <summary>
 		/// @brief Gets the maximum radius.
 		/// </summary>
 		public double MaximumRadius
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidGetMaximumRadius(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidGetMaximumRadius(this);
 
 		/// <summary>
 		/// @brief Gets the minimum radius.
 		/// </summary>
 		public double MinimumRadius
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidGetMinimumRadius(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidGetMinimumRadius(this);
 
 		/// <summary>
 		/// @brief Converts a cartographic position to Cartesian coordinates.
 		/// </summary>
 		public CesiumVec3 CartographicToCartesian(CesiumCartographic cartographic)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidCartographicToCartesian(this, cartographic);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidCartographicToCartesian(this, cartographic);
 
 		/// <summary>
 		/// @brief Converts Cartesian coordinates to a cartographic position.
 		/// @return 1 on success, 0 if the point is at the center (result is invalid).
 		/// </summary>
 		public int CartesianToCartographic(CesiumVec3 cartesian, CesiumCartographic* out_result)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidCartesianToCartographic(this, cartesian, out_result);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidCartesianToCartographic(this, cartesian, out_result);
 
 		/// <summary>
 		/// @brief Computes the geodetic surface normal at the given Cartesian position.
 		/// </summary>
 		public CesiumVec3 GeodeticSurfaceNormalCartesian(CesiumVec3 cartesian)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidGeodeticSurfaceNormalCartesian(this, cartesian);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidGeodeticSurfaceNormalCartesian(this, cartesian);
 
 		/// <summary>
 		/// @brief Computes the geodetic surface normal at the given cartographic position.
 		/// </summary>
 		public CesiumVec3 GeodeticSurfaceNormalCartographic(CesiumCartographic cartographic)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidGeodeticSurfaceNormalCartographic(this, cartographic);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidGeodeticSurfaceNormalCartographic(this, cartographic);
 
 		/// <summary>
 		/// @brief Scales the position along the geodetic normal to the ellipsoid surface.
 		/// @return 1 on success, 0 if the point is at the center (result is invalid).
 		/// </summary>
 		public int ScaleToGeodeticSurface(CesiumVec3 cartesian, CesiumVec3* out_result)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidScaleToGeodeticSurface(this, cartesian, out_result);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidScaleToGeodeticSurface(this, cartesian, out_result);
 
 		/// <summary>
 		/// @brief Scales the position along the geocentric normal to the ellipsoid surface.
 		/// @return 1 on success, 0 if the point is at the center (result is invalid).
 		/// </summary>
 		public int ScaleToGeocentricSurface(CesiumVec3 cartesian, CesiumVec3* out_result)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.EllipsoidScaleToGeocentricSurface(this, cartesian, out_result);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.EllipsoidScaleToGeocentricSurface(this, cartesian, out_result);
 	}
-}
 
-namespace Evergine.Bindings.CesiumNative.Gltf
-{
 	public unsafe partial struct CesiumCGltfReader : IEquatable<CesiumCGltfReader>, IDisposable
 	{
 		public readonly IntPtr Handle;
@@ -124,13 +115,13 @@ namespace Evergine.Bindings.CesiumNative.Gltf
 		public override string ToString() => $"CesiumCGltfReader[0x{Handle:x}]";
 
 		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderDestroy(this);
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderDestroy(this);
 
 		/// <summary>
 		/// @brief Creates a new GltfReader instance.
 		/// </summary>
 		public static CesiumCGltfReader Create()
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderCreate();
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderCreate();
 
 		/// <summary>
 		/// @brief Reads a glTF or GLB from a byte buffer.
@@ -140,7 +131,7 @@ namespace Evergine.Bindings.CesiumNative.Gltf
 		/// @return A result handle (must be destroyed with cesium_gltf_reader_result_destroy).
 		/// </summary>
 		public CesiumCGltfReaderResult Read(byte* data, nuint data_size)
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderRead(this, data, data_size);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderRead(this, data, data_size);
 	}
 
 	public unsafe partial struct CesiumGltfModel : IEquatable<CesiumGltfModel>
@@ -161,73 +152,73 @@ namespace Evergine.Bindings.CesiumNative.Gltf
 		/// @brief Gets the number of meshes in the model.
 		/// </summary>
 		public int MeshCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetMeshCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetMeshCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of materials in the model.
 		/// </summary>
 		public int MaterialCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetMaterialCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetMaterialCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of textures in the model.
 		/// </summary>
 		public int TextureCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetTextureCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetTextureCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of images in the model.
 		/// </summary>
 		public int ImageCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetImageCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetImageCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of nodes in the model.
 		/// </summary>
 		public int NodeCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetNodeCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetNodeCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of accessors in the model.
 		/// </summary>
 		public int AccessorCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetAccessorCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetAccessorCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of buffers in the model.
 		/// </summary>
 		public int BufferCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetBufferCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetBufferCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of buffer views in the model.
 		/// </summary>
 		public int BufferViewCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetBufferViewCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetBufferViewCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of scenes in the model.
 		/// </summary>
 		public int SceneCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetSceneCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetSceneCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of animations in the model.
 		/// </summary>
 		public int AnimationCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetAnimationCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetAnimationCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of skins in the model.
 		/// </summary>
 		public int SkinCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetSkinCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetSkinCount(this);
 
 		/// <summary>
 		/// @brief Gets the name of a mesh. Returns empty string if no name.
 		/// </summary>
 		public string GetMeshName(int meshIndex)
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfModelGetMeshName(this, meshIndex));
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetMeshName(this, meshIndex));
 	}
 
 	public unsafe partial struct CesiumCGltfReaderResult : IEquatable<CesiumCGltfReaderResult>, IDisposable
@@ -245,277 +236,46 @@ namespace Evergine.Bindings.CesiumNative.Gltf
 		public override string ToString() => $"CesiumCGltfReaderResult[0x{Handle:x}]";
 
 		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderResultDestroy(this);
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderResultDestroy(this);
 
 		/// <summary>
 		/// @brief Returns the number of errors in the result.
 		/// </summary>
 		public int ErrorCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderResultGetErrorCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderResultGetErrorCount(this);
 
 		/// <summary>
 		/// @brief Returns the number of warnings in the result.
 		/// </summary>
 		public int WarningCount
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderResultGetWarningCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderResultGetWarningCount(this);
 
 		/// <summary>
 		/// @brief Gets the model from a reader result. The pointer is owned by the result.
 		/// @return The model pointer, or NULL if no model was read.
 		/// </summary>
 		public CesiumGltfModel Model
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderResultGetModel(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderResultGetModel(this);
 
 		/// <summary>
 		/// @brief Returns 1 if the result contains a valid model.
 		/// </summary>
 		public bool HasModel()
-			=> Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderResultHasModel(this) != 0;
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderResultHasModel(this) != 0;
 
 		/// <summary>
 		/// @brief Returns the error message at the given index.
 		/// </summary>
 		public string GetError(int index)
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderResultGetError(this, index));
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderResultGetError(this, index));
 
 		/// <summary>
 		/// @brief Returns the warning message at the given index.
 		/// </summary>
 		public string GetWarning(int index)
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Gltf.CesiumAPI.GltfReaderResultGetWarning(this, index));
-	}
-}
-
-namespace Evergine.Bindings.CesiumNative.Ion
-{
-	public unsafe partial struct CesiumIonConnection : IEquatable<CesiumIonConnection>, IDisposable
-	{
-		public readonly IntPtr Handle;
-		public CesiumIonConnection(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumIonConnection Null => new CesiumIonConnection(IntPtr.Zero);
-		public static implicit operator CesiumIonConnection(IntPtr handle) => new CesiumIonConnection(handle);
-		public static implicit operator IntPtr(CesiumIonConnection handle) => handle.Handle;
-		public static bool operator ==(CesiumIonConnection left, CesiumIonConnection right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumIonConnection left, CesiumIonConnection right) => left.Handle != right.Handle;
-		public bool Equals(CesiumIonConnection h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumIonConnection h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumIonConnection[0x{Handle:x}]";
-
-		private static readonly ConcurrentDictionary<IntPtr, Delegate[]> _pinnedDelegates = new();
-
-		/// <summary>Releases the native resource.</summary>
-		public void Dispose()
-		{
-			_pinnedDelegates.TryRemove(Handle, out _);
-			Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonConnectionDestroy(this);
-		}
-
-		/// <summary>
-		/// @brief Creates an Ion connection from an existing access token.
-		/// @param asyncSystem The async system.
-		/// @param accessor The asset accessor for HTTP requests.
-		/// @param accessToken The Cesium Ion access token.
-		/// @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com/".
-		/// </summary>
-		public static CesiumIonConnection Create(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, string accessToken, string apiUrl)
-			=> Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonConnectionCreate(asyncSystem, accessor, accessToken, apiUrl);
-
-		/// <summary>
-		/// @brief Requests the list of assets from Cesium Ion (async).
-		/// </summary>
-		public void ListAssets(CesiumIonAssetsCompleteCallback callback, void* userData)
-		{
-			_pinnedDelegates[Handle] = new Delegate[] { callback };
-			Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonConnectionListAssets(this, callback, userData);
-		}
-
-		/// <summary>
-		/// @brief Requests the list of tokens from Cesium Ion (async).
-		/// </summary>
-		public void ListTokens(CesiumIonTokensCompleteCallback callback, void* userData)
-		{
-			_pinnedDelegates[Handle] = new Delegate[] { callback };
-			Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonConnectionListTokens(this, callback, userData);
-		}
-
-		/// <summary>
-		/// @brief Starts the OAuth authorization flow.
-		/// @param asyncSystem The async system.
-		/// @param accessor The asset accessor.
-		/// @param appID The application's OAuth client ID.
-		/// @param redirectPath The redirect path (e.g., "/cesium-callback").
-		/// @param scopes Space-separated OAuth scopes.
-		/// @param urlCallback Called with the authorization URL to open in a browser.
-		/// @param urlCallbackUserData User data for urlCallback.
-		/// @param completeCallback Called when authorization completes.
-		/// @param completeCallbackUserData User data for completeCallback.
-		/// </summary>
-		public static void Authorize(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, string appID, string redirectPath, string scopes, CesiumIonAuthorizeUrlCallback urlCallback, void* urlCallbackUserData, CesiumIonAuthorizeCompleteCallback completeCallback, void* completeCallbackUserData)
-			=> Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonConnectionAuthorize(asyncSystem, accessor, appID, redirectPath, scopes, urlCallback, urlCallbackUserData, completeCallback, completeCallbackUserData);
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.GltfReaderResultGetWarning(this, index));
 	}
 
-	public unsafe partial struct CesiumIonAssetList : IEquatable<CesiumIonAssetList>, IDisposable
-	{
-		public readonly IntPtr Handle;
-		public CesiumIonAssetList(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumIonAssetList Null => new CesiumIonAssetList(IntPtr.Zero);
-		public static implicit operator CesiumIonAssetList(IntPtr handle) => new CesiumIonAssetList(handle);
-		public static implicit operator IntPtr(CesiumIonAssetList handle) => handle.Handle;
-		public static bool operator ==(CesiumIonAssetList left, CesiumIonAssetList right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumIonAssetList left, CesiumIonAssetList right) => left.Handle != right.Handle;
-		public bool Equals(CesiumIonAssetList h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumIonAssetList h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumIonAssetList[0x{Handle:x}]";
-
-		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonAssetListDestroy(this);
-
-		/// <summary>
-		/// @brief Gets the number of assets in the list.
-		/// </summary>
-		public int Count
-			=> Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonAssetListGetCount(this);
-
-		/// <summary>
-		/// @brief Gets an asset's ID.
-		/// </summary>
-		public long GetAssetId(int index)
-			=> Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonAssetListGetAssetId(this, index);
-
-		/// <summary>
-		/// @brief Gets an asset's name.
-		/// </summary>
-		public string GetAssetName(int index)
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonAssetListGetAssetName(this, index));
-
-		/// <summary>
-		/// @brief Gets an asset's type (e.g., "3DTILES", "TERRAIN", "IMAGERY").
-		/// </summary>
-		public string GetAssetType(int index)
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonAssetListGetAssetType(this, index));
-	}
-
-	public unsafe partial struct CesiumIonTokenList : IEquatable<CesiumIonTokenList>, IDisposable
-	{
-		public readonly IntPtr Handle;
-		public CesiumIonTokenList(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumIonTokenList Null => new CesiumIonTokenList(IntPtr.Zero);
-		public static implicit operator CesiumIonTokenList(IntPtr handle) => new CesiumIonTokenList(handle);
-		public static implicit operator IntPtr(CesiumIonTokenList handle) => handle.Handle;
-		public static bool operator ==(CesiumIonTokenList left, CesiumIonTokenList right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumIonTokenList left, CesiumIonTokenList right) => left.Handle != right.Handle;
-		public bool Equals(CesiumIonTokenList h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumIonTokenList h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumIonTokenList[0x{Handle:x}]";
-
-		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonTokenListDestroy(this);
-
-		/// <summary>
-		/// @brief Gets the number of tokens in the list.
-		/// </summary>
-		public int Count
-			=> Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonTokenListGetCount(this);
-
-		/// <summary>
-		/// @brief Gets a token's name.
-		/// </summary>
-		public string GetTokenName(int index)
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonTokenListGetTokenName(this, index));
-
-		/// <summary>
-		/// @brief Gets a token's value string.
-		/// </summary>
-		public string GetTokenValue(int index)
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Ion.CesiumAPI.IonTokenListGetTokenValue(this, index));
-	}
-}
-
-namespace Evergine.Bindings.CesiumNative.RasterOverlays
-{
-	public unsafe partial struct CesiumRasterOverlay : IEquatable<CesiumRasterOverlay>, IDisposable
-	{
-		public readonly IntPtr Handle;
-		public CesiumRasterOverlay(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumRasterOverlay Null => new CesiumRasterOverlay(IntPtr.Zero);
-		public static implicit operator CesiumRasterOverlay(IntPtr handle) => new CesiumRasterOverlay(handle);
-		public static implicit operator IntPtr(CesiumRasterOverlay handle) => handle.Handle;
-		public static bool operator ==(CesiumRasterOverlay left, CesiumRasterOverlay right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumRasterOverlay left, CesiumRasterOverlay right) => left.Handle != right.Handle;
-		public bool Equals(CesiumRasterOverlay h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumRasterOverlay h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumRasterOverlay[0x{Handle:x}]";
-
-		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.RasterOverlays.CesiumAPI.RasterOverlayDestroy(this);
-
-		/// <summary>
-		/// @brief Creates a Cesium Ion raster overlay.
-		/// @param assetID The Ion asset ID for the imagery.
-		/// @param accessToken The Ion access token.
-		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for default.
-		/// </summary>
-		public static CesiumRasterOverlay IonRasterOverlayCreate(long assetID, string accessToken, string ionAssetEndpointUrl)
-			=> Evergine.Bindings.CesiumNative.RasterOverlays.CesiumAPI.IonRasterOverlayCreate(assetID, accessToken, ionAssetEndpointUrl);
-
-		/// <summary>
-		/// @brief Creates a URL-template raster overlay (e.g., XYZ tiles).
-		/// @param name Display name for the overlay.
-		/// @param urlTemplate URL template with {x}, {y}, {z} placeholders.
-		/// @param minimumLevel Minimum zoom level.
-		/// @param maximumLevel Maximum zoom level.
-		/// @param tileWidth Tile width in pixels (e.g., 256).
-		/// @param tileHeight Tile height in pixels (e.g., 256).
-		/// </summary>
-		public static CesiumRasterOverlay UrlTemplateRasterOverlayCreate(string name, string urlTemplate, uint minimumLevel, uint maximumLevel, uint tileWidth, uint tileHeight)
-			=> Evergine.Bindings.CesiumNative.RasterOverlays.CesiumAPI.UrlTemplateRasterOverlayCreate(name, urlTemplate, minimumLevel, maximumLevel, tileWidth, tileHeight);
-
-		/// <summary>
-		/// @brief Creates a WMS (Web Map Service) raster overlay.
-		/// @param name Display name for the overlay.
-		/// @param url The WMS service URL.
-		/// @param layers Comma-separated list of WMS layers.
-		/// @param tileWidth Tile width in pixels.
-		/// @param tileHeight Tile height in pixels.
-		/// </summary>
-		public static CesiumRasterOverlay WebMapServiceRasterOverlayCreate(string name, string url, string layers, int tileWidth, int tileHeight)
-			=> Evergine.Bindings.CesiumNative.RasterOverlays.CesiumAPI.WebMapServiceRasterOverlayCreate(name, url, layers, tileWidth, tileHeight);
-	}
-
-	public unsafe partial struct CesiumRasterOverlayCollection : IEquatable<CesiumRasterOverlayCollection>
-	{
-		public readonly IntPtr Handle;
-		public CesiumRasterOverlayCollection(IntPtr existingHandle) { Handle = existingHandle; }
-		public static CesiumRasterOverlayCollection Null => new CesiumRasterOverlayCollection(IntPtr.Zero);
-		public static implicit operator CesiumRasterOverlayCollection(IntPtr handle) => new CesiumRasterOverlayCollection(handle);
-		public static implicit operator IntPtr(CesiumRasterOverlayCollection handle) => handle.Handle;
-		public static bool operator ==(CesiumRasterOverlayCollection left, CesiumRasterOverlayCollection right) => left.Handle == right.Handle;
-		public static bool operator !=(CesiumRasterOverlayCollection left, CesiumRasterOverlayCollection right) => left.Handle != right.Handle;
-		public bool Equals(CesiumRasterOverlayCollection h) => Handle == h.Handle;
-		public override bool Equals(object o) => o is CesiumRasterOverlayCollection h && Equals(h);
-		public override int GetHashCode() => Handle.GetHashCode();
-		public override string ToString() => $"CesiumRasterOverlayCollection[0x{Handle:x}]";
-
-		/// <summary>
-		/// @brief Adds a raster overlay to the collection.
-		/// </summary>
-		public void Add(CesiumRasterOverlay overlay)
-			=> Evergine.Bindings.CesiumNative.RasterOverlays.CesiumAPI.RasterOverlayCollectionAdd(this, overlay);
-
-		/// <summary>
-		/// @brief Removes a raster overlay from the collection.
-		/// </summary>
-		public void Remove(CesiumRasterOverlay overlay)
-			=> Evergine.Bindings.CesiumNative.RasterOverlays.CesiumAPI.RasterOverlayCollectionRemove(this, overlay);
-	}
-}
-
-namespace Evergine.Bindings.CesiumNative.Tileset
-{
 	public unsafe partial struct CesiumAsyncSystem : IEquatable<CesiumAsyncSystem>, IDisposable
 	{
 		public readonly IntPtr Handle;
@@ -531,20 +291,20 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		public override string ToString() => $"CesiumAsyncSystem[0x{Handle:x}]";
 
 		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.AsyncSystemDestroy(this);
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.AsyncSystemDestroy(this);
 
 		/// <summary>
 		/// @brief Creates an async system with a built-in thread pool.
 		/// </summary>
 		public static CesiumAsyncSystem Create()
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.AsyncSystemCreate();
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.AsyncSystemCreate();
 
 		/// <summary>
 		/// @brief Dispatches pending main-thread tasks. Must be called each frame
 		/// from the main thread.
 		/// </summary>
 		public void DispatchMainThreadTasks()
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.AsyncSystemDispatchMainThreadTasks(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.AsyncSystemDispatchMainThreadTasks(this);
 	}
 
 	public unsafe partial struct CesiumAssetAccessor : IEquatable<CesiumAssetAccessor>, IDisposable
@@ -562,14 +322,14 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		public override string ToString() => $"CesiumAssetAccessor[0x{Handle:x}]";
 
 		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.AssetAccessorDestroy(this);
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.AssetAccessorDestroy(this);
 
 		/// <summary>
 		/// @brief Creates an asset accessor using libcurl.
 		/// @param userAgent The User-Agent header string, or NULL for default.
 		/// </summary>
 		public static CesiumAssetAccessor Create(string userAgent)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.AssetAccessorCreate(userAgent);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.AssetAccessorCreate(userAgent);
 	}
 
 	public unsafe partial struct CesiumCreditSystem : IEquatable<CesiumCreditSystem>, IDisposable
@@ -587,32 +347,32 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		public override string ToString() => $"CesiumCreditSystem[0x{Handle:x}]";
 
 		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.CreditSystemDestroy(this);
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.CreditSystemDestroy(this);
 
 		/// <summary>
 		/// @brief Creates a new credit system.
 		/// </summary>
 		public static CesiumCreditSystem Create()
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.CreditSystemCreate();
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.CreditSystemCreate();
 
 		/// <summary>
 		/// @brief Returns the number of credits that should be shown on screen.
 		/// </summary>
 		public int CreditsToShowOnScreenCount
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.CreditSystemGetCreditsToShowOnScreenCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.CreditSystemGetCreditsToShowOnScreenCount(this);
 
 		/// <summary>
 		/// @brief Returns the HTML text of a credit that should be shown on screen.
 		/// @param index The credit index (0 to count-1).
 		/// </summary>
 		public string GetCreditToShowOnScreen(int index)
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.CreditSystemGetCreditToShowOnScreen(this, index));
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.CreditSystemGetCreditToShowOnScreen(this, index));
 
 		/// <summary>
 		/// @brief Signals the start of a new frame. Call before updateView.
 		/// </summary>
 		public void StartNextFrame()
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.CreditSystemStartNextFrame(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.CreditSystemStartNextFrame(this);
 	}
 
 	public unsafe partial struct CesiumTilesetExternals : IEquatable<CesiumTilesetExternals>, IDisposable
@@ -630,7 +390,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		public override string ToString() => $"CesiumTilesetExternals[0x{Handle:x}]";
 
 		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetExternalsDestroy(this);
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetExternalsDestroy(this);
 
 		/// <summary>
 		/// @brief Creates the externals bundle required to construct a Tileset.
@@ -639,7 +399,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// for the entire lifetime of any Tileset created with these externals.
 		/// </summary>
 		public static CesiumTilesetExternals Create(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, CesiumCreditSystem creditSystem)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetExternalsCreate(asyncSystem, accessor, creditSystem);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetExternalsCreate(asyncSystem, accessor, creditSystem);
 	}
 
 	public unsafe partial struct CesiumTilesetOptions : IEquatable<CesiumTilesetOptions>, IDisposable
@@ -662,88 +422,88 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		public void Dispose()
 		{
 			_pinnedDelegates.TryRemove(Handle, out _);
-			Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsDestroy(this);
+			Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsDestroy(this);
 		}
 
 		/// <summary>
 		/// @brief Creates a new TilesetOptions with default values.
 		/// </summary>
 		public static CesiumTilesetOptions Create()
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsCreate();
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsCreate();
 
 		/// <summary>
 		/// --- Getters ---
 		/// </summary>
 		public double MaximumScreenSpaceError
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetMaximumScreenSpaceError(this);
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetMaximumScreenSpaceError(this, value);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetMaximumScreenSpaceError(this);
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetMaximumScreenSpaceError(this, value);
 		}
 
 		public uint MaximumSimultaneousTileLoads
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetMaximumSimultaneousTileLoads(this);
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetMaximumSimultaneousTileLoads(this, value);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetMaximumSimultaneousTileLoads(this);
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetMaximumSimultaneousTileLoads(this, value);
 		}
 
 		public long MaximumCachedBytes
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetMaximumCachedBytes(this);
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetMaximumCachedBytes(this, value);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetMaximumCachedBytes(this);
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetMaximumCachedBytes(this, value);
 		}
 
 		public bool PreloadAncestors
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetPreloadAncestors(this) != 0;
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetPreloadAncestors(this, value ? 1 : 0);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetPreloadAncestors(this) != 0;
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetPreloadAncestors(this, value ? 1 : 0);
 		}
 
 		public bool PreloadSiblings
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetPreloadSiblings(this) != 0;
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetPreloadSiblings(this, value ? 1 : 0);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetPreloadSiblings(this) != 0;
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetPreloadSiblings(this, value ? 1 : 0);
 		}
 
 		public bool ForbidHoles
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetForbidHoles(this) != 0;
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetForbidHoles(this, value ? 1 : 0);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetForbidHoles(this) != 0;
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetForbidHoles(this, value ? 1 : 0);
 		}
 
 		public bool EnableFrustumCulling
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetEnableFrustumCulling(this) != 0;
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetEnableFrustumCulling(this, value ? 1 : 0);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetEnableFrustumCulling(this) != 0;
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetEnableFrustumCulling(this, value ? 1 : 0);
 		}
 
 		public bool EnableFogCulling
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetEnableFogCulling(this) != 0;
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetEnableFogCulling(this, value ? 1 : 0);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetEnableFogCulling(this) != 0;
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetEnableFogCulling(this, value ? 1 : 0);
 		}
 
 		public bool EnableOcclusionCulling
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetEnableOcclusionCulling(this) != 0;
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetEnableOcclusionCulling(this, value ? 1 : 0);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetEnableOcclusionCulling(this) != 0;
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetEnableOcclusionCulling(this, value ? 1 : 0);
 		}
 
 		public bool EnableLodTransitionPeriod
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetEnableLodTransitionPeriod(this) != 0;
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetEnableLodTransitionPeriod(this, value ? 1 : 0);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetEnableLodTransitionPeriod(this) != 0;
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetEnableLodTransitionPeriod(this, value ? 1 : 0);
 		}
 
 		public float LodTransitionLength
 		{
-			get => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsGetLodTransitionLength(this);
-			set => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetLodTransitionLength(this, value);
+			get => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsGetLodTransitionLength(this);
+			set => Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetLodTransitionLength(this, value);
 		}
 
 		public void SetLoadErrorCallback(CesiumTilesetLoadErrorCallback callback, void* userData)
 		{
 			_pinnedDelegates[Handle] = new Delegate[] { callback };
-			Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetOptionsSetLoadErrorCallback(this, callback, userData);
+			Evergine.Bindings.CesiumNative.CesiumAPI.TilesetOptionsSetLoadErrorCallback(this, callback, userData);
 		}
 	}
 
@@ -767,7 +527,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		public void Dispose()
 		{
 			_pinnedDelegates.TryRemove(Handle, out _);
-			Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetDestroy(this);
+			Evergine.Bindings.CesiumNative.CesiumAPI.TilesetDestroy(this);
 		}
 
 		/// <summary>
@@ -777,7 +537,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @param options The tileset options, or NULL for defaults.
 		/// </summary>
 		public static CesiumTileset CreateFromUrl(CesiumTilesetExternals externals, string url, CesiumTilesetOptions options)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetCreateFromUrl(externals, url, options);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetCreateFromUrl(externals, url, options);
 
 		/// <summary>
 		/// @brief Creates a tileset from a Cesium Ion asset.
@@ -788,32 +548,32 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for "https://api.cesium.com/".
 		/// </summary>
 		public static CesiumTileset CreateFromIon(CesiumTilesetExternals externals, long ionAssetID, string ionAccessToken, CesiumTilesetOptions options, string ionAssetEndpointUrl)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetCreateFromIon(externals, ionAssetID, ionAccessToken, options, ionAssetEndpointUrl);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetCreateFromIon(externals, ionAssetID, ionAccessToken, options, ionAssetEndpointUrl);
 
 		/// <summary>
 		/// @brief Gets the root tile, or NULL if not yet available.
 		/// </summary>
 		public CesiumTile RootTile
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetGetRootTile(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetGetRootTile(this);
 
 		/// <summary>
 		/// @brief Gets the total number of tiles currently loaded.
 		/// </summary>
 		public int NumberOfTilesLoaded
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetGetNumberOfTilesLoaded(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetGetNumberOfTilesLoaded(this);
 
 		/// <summary>
 		/// @brief Gets the total data bytes of loaded tile and overlay data.
 		/// </summary>
 		public long TotalDataBytes
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetGetTotalDataBytes(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetGetTotalDataBytes(this);
 
 		/// <summary>
 		/// @brief Gets the raster overlay collection from a tileset.
 		/// The returned pointer is owned by the tileset.
 		/// </summary>
 		public CesiumRasterOverlayCollection Overlays
-			=> Evergine.Bindings.CesiumNative.RasterOverlays.CesiumAPI.TilesetGetOverlays(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetGetOverlays(this);
 
 		/// <summary>
 		/// @brief Updates the tileset's default view group and loads tiles.
@@ -827,13 +587,13 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @return Borrowed pointer to the update result.
 		/// </summary>
 		public CesiumViewUpdateResult UpdateView(CesiumViewState* viewStates, int viewStateCount, float deltaTime)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetUpdateView(this, viewStates, viewStateCount, deltaTime);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetUpdateView(this, viewStates, viewStateCount, deltaTime);
 
 		/// <summary>
 		/// @brief Returns 1 if the root tile is available, 0 otherwise (polling).
 		/// </summary>
 		public bool IsRootTileAvailable()
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetIsRootTileAvailable(this) != 0;
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetIsRootTileAvailable(this) != 0;
 
 		/// <summary>
 		/// @brief Sets a callback that fires when the root tile becomes available.
@@ -842,7 +602,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		public void SetRootTileAvailableCallback(CesiumRootTileAvailableCallback callback, void* userData)
 		{
 			_pinnedDelegates[Handle] = new Delegate[] { callback };
-			Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetSetRootTileAvailableCallback(this, callback, userData);
+			Evergine.Bindings.CesiumNative.CesiumAPI.TilesetSetRootTileAvailableCallback(this, callback, userData);
 		}
 
 		/// <summary>
@@ -850,7 +610,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @return A value between 0.0 and 100.0.
 		/// </summary>
 		public float ComputeLoadProgress()
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TilesetComputeLoadProgress(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetComputeLoadProgress(this);
 	}
 
 	public unsafe partial struct CesiumViewState : IEquatable<CesiumViewState>, IDisposable
@@ -868,7 +628,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		public override string ToString() => $"CesiumViewState[0x{Handle:x}]";
 
 		/// <summary>Releases the native resource.</summary>
-		public void Dispose() => Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewStateDestroy(this);
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.ViewStateDestroy(this);
 
 		/// <summary>
 		/// @brief Creates a view state with a symmetric perspective projection.
@@ -881,7 +641,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
 		/// </summary>
 		public static CesiumViewState CreatePerspective(CesiumVec3 position, CesiumVec3 direction, CesiumVec3 up, CesiumVec2 viewportSize, double horizontalFieldOfView, double verticalFieldOfView, CesiumEllipsoid ellipsoid)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewStateCreatePerspective(position, direction, up, viewportSize, horizontalFieldOfView, verticalFieldOfView, ellipsoid);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewStateCreatePerspective(position, direction, up, viewportSize, horizontalFieldOfView, verticalFieldOfView, ellipsoid);
 
 		/// <summary>
 		/// @brief Creates a view state from view and projection matrices.
@@ -891,7 +651,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
 		/// </summary>
 		public static CesiumViewState CreateFromMatrices(CesiumMat4 viewMatrix, CesiumMat4 projectionMatrix, CesiumVec2 viewportSize, CesiumEllipsoid ellipsoid)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewStateCreateFromMatrices(viewMatrix, projectionMatrix, viewportSize, ellipsoid);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewStateCreateFromMatrices(viewMatrix, projectionMatrix, viewportSize, ellipsoid);
 
 		/// <summary>
 		/// @brief Creates a view state with an orthographic projection.
@@ -906,7 +666,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
 		/// </summary>
 		public static CesiumViewState CreateOrthographic(CesiumVec3 position, CesiumVec3 direction, CesiumVec3 up, CesiumVec2 viewportSize, double left, double right, double bottom, double top, CesiumEllipsoid ellipsoid)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewStateCreateOrthographic(position, direction, up, viewportSize, left, right, bottom, top, ellipsoid);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewStateCreateOrthographic(position, direction, up, viewportSize, left, right, bottom, top, ellipsoid);
 	}
 
 	public unsafe partial struct CesiumViewUpdateResult : IEquatable<CesiumViewUpdateResult>
@@ -927,49 +687,49 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @brief Gets the number of tiles to render this frame.
 		/// </summary>
 		public int TilesToRenderCount
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetTilesToRenderCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetTilesToRenderCount(this);
 
 		/// <summary>
 		/// @brief Gets the number of tiles fading out.
 		/// </summary>
 		public int TilesFadingOutCount
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetTilesFadingOutCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetTilesFadingOutCount(this);
 
 		/// <summary>
 		/// @brief Gets the current frame number.
 		/// </summary>
 		public int FrameNumber
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetFrameNumber(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetFrameNumber(this);
 
 		/// <summary>
 		/// @brief Gets the number of tiles visited during traversal.
 		/// </summary>
 		public uint TilesVisited
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetTilesVisited(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetTilesVisited(this);
 
 		/// <summary>
 		/// @brief Gets the number of tiles culled during traversal.
 		/// </summary>
 		public uint TilesCulled
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetTilesCulled(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetTilesCulled(this);
 
 		/// <summary>
 		/// @brief Gets the maximum tree depth visited.
 		/// </summary>
 		public uint MaxDepthVisited
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetMaxDepthVisited(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetMaxDepthVisited(this);
 
 		/// <summary>
 		/// @brief Gets the worker thread tile load queue length.
 		/// </summary>
 		public int WorkerThreadLoadQueueLength
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetWorkerThreadLoadQueueLength(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetWorkerThreadLoadQueueLength(this);
 
 		/// <summary>
 		/// @brief Gets the main thread tile load queue length.
 		/// </summary>
 		public int MainThreadLoadQueueLength
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetMainThreadLoadQueueLength(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetMainThreadLoadQueueLength(this);
 
 		/// <summary>
 		/// @brief Gets a tile to render by index.
@@ -978,7 +738,7 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @return Borrowed pointer to the tile.
 		/// </summary>
 		public CesiumTile GetTileToRender(int index)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.ViewUpdateResultGetTileToRender(this, index);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetTileToRender(this, index);
 	}
 
 	public unsafe partial struct CesiumTile : IEquatable<CesiumTile>
@@ -999,64 +759,64 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @brief Gets a child tile by index.
 		/// </summary>
 		public static CesiumTile GetChild(CesiumTile tile, int index)
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetChild(tile, index);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetChild(tile, index);
 
 		/// <summary>
 		/// @brief Gets the tile's geometric error in meters.
 		/// </summary>
 		public double GeometricError
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetGeometricError(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetGeometricError(this);
 
 		/// <summary>
 		/// @brief Gets the tile's 4x4 transform matrix.
 		/// </summary>
 		public CesiumMat4 Transform
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetTransform(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetTransform(this);
 
 		/// <summary>
 		/// @brief Gets the tile's load state.
 		/// </summary>
 		public CesiumTileLoadState LoadState
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetLoadState(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetLoadState(this);
 
 		/// <summary>
 		/// @brief Gets the glTF model from a tile's render content.
 		/// @return Borrowed model pointer, or NULL if the tile has no render content.
 		/// </summary>
 		public CesiumGltfModel RenderContentModel
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetRenderContentModel(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetRenderContentModel(this);
 
 		/// <summary>
 		/// @brief Gets the renderer resources pointer set by prepareInMainThread.
 		/// @return The opaque renderer resources, or NULL.
 		/// </summary>
 		public void* RenderResources
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetRenderResources(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetRenderResources(this);
 
 		/// <summary>
 		/// @brief Gets the number of child tiles.
 		/// </summary>
 		public int ChildrenCount
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetChildrenCount(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetChildrenCount(this);
 
 		/// <summary>
 		/// @brief Gets the tile's bounding volume.
 		/// </summary>
 		public CesiumBoundingVolume BoundingVolume
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetBoundingVolume(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetBoundingVolume(this);
 
 		/// <summary>
 		/// @brief Gets the LOD transition fade percentage (0.0 to 1.0).
 		/// Only meaningful when LOD transitions are enabled.
 		/// </summary>
 		public float LodTransitionFadePercentage
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileGetLodTransitionFadePercentage(this);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileGetLodTransitionFadePercentage(this);
 
 		/// <summary>
 		/// @brief Returns 1 if the tile has renderable glTF content.
 		/// </summary>
 		public bool HasRenderContent()
-			=> Evergine.Bindings.CesiumNative.Tileset.CesiumAPI.TileHasRenderContent(this) != 0;
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileHasRenderContent(this) != 0;
 
 		/// <summary>
 		/// @brief Creates a TMS (Tile Map Service) raster overlay.
@@ -1064,7 +824,229 @@ namespace Evergine.Bindings.CesiumNative.Tileset
 		/// @param url The TMS service URL.
 		/// </summary>
 		public static CesiumRasterOverlay MapServiceRasterOverlayCreate(string name, string url)
-			=> Evergine.Bindings.CesiumNative.RasterOverlays.CesiumAPI.TileMapServiceRasterOverlayCreate(name, url);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TileMapServiceRasterOverlayCreate(name, url);
+	}
+
+	public unsafe partial struct CesiumRasterOverlay : IEquatable<CesiumRasterOverlay>, IDisposable
+	{
+		public readonly IntPtr Handle;
+		public CesiumRasterOverlay(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumRasterOverlay Null => new CesiumRasterOverlay(IntPtr.Zero);
+		public static implicit operator CesiumRasterOverlay(IntPtr handle) => new CesiumRasterOverlay(handle);
+		public static implicit operator IntPtr(CesiumRasterOverlay handle) => handle.Handle;
+		public static bool operator ==(CesiumRasterOverlay left, CesiumRasterOverlay right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumRasterOverlay left, CesiumRasterOverlay right) => left.Handle != right.Handle;
+		public bool Equals(CesiumRasterOverlay h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumRasterOverlay h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumRasterOverlay[0x{Handle:x}]";
+
+		/// <summary>Releases the native resource.</summary>
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.RasterOverlayDestroy(this);
+
+		/// <summary>
+		/// @brief Creates a Cesium Ion raster overlay.
+		/// @param assetID The Ion asset ID for the imagery.
+		/// @param accessToken The Ion access token.
+		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for default.
+		/// </summary>
+		public static CesiumRasterOverlay IonRasterOverlayCreate(long assetID, string accessToken, string ionAssetEndpointUrl)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonRasterOverlayCreate(assetID, accessToken, ionAssetEndpointUrl);
+
+		/// <summary>
+		/// @brief Creates a URL-template raster overlay (e.g., XYZ tiles).
+		/// @param name Display name for the overlay.
+		/// @param urlTemplate URL template with {x}, {y}, {z} placeholders.
+		/// @param minimumLevel Minimum zoom level.
+		/// @param maximumLevel Maximum zoom level.
+		/// @param tileWidth Tile width in pixels (e.g., 256).
+		/// @param tileHeight Tile height in pixels (e.g., 256).
+		/// </summary>
+		public static CesiumRasterOverlay UrlTemplateRasterOverlayCreate(string name, string urlTemplate, uint minimumLevel, uint maximumLevel, uint tileWidth, uint tileHeight)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.UrlTemplateRasterOverlayCreate(name, urlTemplate, minimumLevel, maximumLevel, tileWidth, tileHeight);
+
+		/// <summary>
+		/// @brief Creates a WMS (Web Map Service) raster overlay.
+		/// @param name Display name for the overlay.
+		/// @param url The WMS service URL.
+		/// @param layers Comma-separated list of WMS layers.
+		/// @param tileWidth Tile width in pixels.
+		/// @param tileHeight Tile height in pixels.
+		/// </summary>
+		public static CesiumRasterOverlay WebMapServiceRasterOverlayCreate(string name, string url, string layers, int tileWidth, int tileHeight)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.WebMapServiceRasterOverlayCreate(name, url, layers, tileWidth, tileHeight);
+	}
+
+	public unsafe partial struct CesiumRasterOverlayCollection : IEquatable<CesiumRasterOverlayCollection>
+	{
+		public readonly IntPtr Handle;
+		public CesiumRasterOverlayCollection(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumRasterOverlayCollection Null => new CesiumRasterOverlayCollection(IntPtr.Zero);
+		public static implicit operator CesiumRasterOverlayCollection(IntPtr handle) => new CesiumRasterOverlayCollection(handle);
+		public static implicit operator IntPtr(CesiumRasterOverlayCollection handle) => handle.Handle;
+		public static bool operator ==(CesiumRasterOverlayCollection left, CesiumRasterOverlayCollection right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumRasterOverlayCollection left, CesiumRasterOverlayCollection right) => left.Handle != right.Handle;
+		public bool Equals(CesiumRasterOverlayCollection h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumRasterOverlayCollection h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumRasterOverlayCollection[0x{Handle:x}]";
+
+		/// <summary>
+		/// @brief Adds a raster overlay to the collection.
+		/// </summary>
+		public void Add(CesiumRasterOverlay overlay)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.RasterOverlayCollectionAdd(this, overlay);
+
+		/// <summary>
+		/// @brief Removes a raster overlay from the collection.
+		/// </summary>
+		public void Remove(CesiumRasterOverlay overlay)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.RasterOverlayCollectionRemove(this, overlay);
+	}
+
+	public unsafe partial struct CesiumIonConnection : IEquatable<CesiumIonConnection>, IDisposable
+	{
+		public readonly IntPtr Handle;
+		public CesiumIonConnection(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumIonConnection Null => new CesiumIonConnection(IntPtr.Zero);
+		public static implicit operator CesiumIonConnection(IntPtr handle) => new CesiumIonConnection(handle);
+		public static implicit operator IntPtr(CesiumIonConnection handle) => handle.Handle;
+		public static bool operator ==(CesiumIonConnection left, CesiumIonConnection right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumIonConnection left, CesiumIonConnection right) => left.Handle != right.Handle;
+		public bool Equals(CesiumIonConnection h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumIonConnection h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumIonConnection[0x{Handle:x}]";
+
+		private static readonly ConcurrentDictionary<IntPtr, Delegate[]> _pinnedDelegates = new();
+
+		/// <summary>Releases the native resource.</summary>
+		public void Dispose()
+		{
+			_pinnedDelegates.TryRemove(Handle, out _);
+			Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionDestroy(this);
+		}
+
+		/// <summary>
+		/// @brief Creates an Ion connection from an existing access token.
+		/// @param asyncSystem The async system.
+		/// @param accessor The asset accessor for HTTP requests.
+		/// @param accessToken The Cesium Ion access token.
+		/// @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com/".
+		/// </summary>
+		public static CesiumIonConnection Create(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, string accessToken, string apiUrl)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionCreate(asyncSystem, accessor, accessToken, apiUrl);
+
+		/// <summary>
+		/// @brief Requests the list of assets from Cesium Ion (async).
+		/// </summary>
+		public void ListAssets(CesiumIonAssetsCompleteCallback callback, void* userData)
+		{
+			_pinnedDelegates[Handle] = new Delegate[] { callback };
+			Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionListAssets(this, callback, userData);
+		}
+
+		/// <summary>
+		/// @brief Requests the list of tokens from Cesium Ion (async).
+		/// </summary>
+		public void ListTokens(CesiumIonTokensCompleteCallback callback, void* userData)
+		{
+			_pinnedDelegates[Handle] = new Delegate[] { callback };
+			Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionListTokens(this, callback, userData);
+		}
+
+		/// <summary>
+		/// @brief Starts the OAuth authorization flow.
+		/// @param asyncSystem The async system.
+		/// @param accessor The asset accessor.
+		/// @param appID The application's OAuth client ID.
+		/// @param redirectPath The redirect path (e.g., "/cesium-callback").
+		/// @param scopes Space-separated OAuth scopes.
+		/// @param urlCallback Called with the authorization URL to open in a browser.
+		/// @param urlCallbackUserData User data for urlCallback.
+		/// @param completeCallback Called when authorization completes.
+		/// @param completeCallbackUserData User data for completeCallback.
+		/// </summary>
+		public static void Authorize(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, string appID, string redirectPath, string scopes, CesiumIonAuthorizeUrlCallback urlCallback, void* urlCallbackUserData, CesiumIonAuthorizeCompleteCallback completeCallback, void* completeCallbackUserData)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionAuthorize(asyncSystem, accessor, appID, redirectPath, scopes, urlCallback, urlCallbackUserData, completeCallback, completeCallbackUserData);
+	}
+
+	public unsafe partial struct CesiumIonAssetList : IEquatable<CesiumIonAssetList>, IDisposable
+	{
+		public readonly IntPtr Handle;
+		public CesiumIonAssetList(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumIonAssetList Null => new CesiumIonAssetList(IntPtr.Zero);
+		public static implicit operator CesiumIonAssetList(IntPtr handle) => new CesiumIonAssetList(handle);
+		public static implicit operator IntPtr(CesiumIonAssetList handle) => handle.Handle;
+		public static bool operator ==(CesiumIonAssetList left, CesiumIonAssetList right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumIonAssetList left, CesiumIonAssetList right) => left.Handle != right.Handle;
+		public bool Equals(CesiumIonAssetList h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumIonAssetList h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumIonAssetList[0x{Handle:x}]";
+
+		/// <summary>Releases the native resource.</summary>
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.IonAssetListDestroy(this);
+
+		/// <summary>
+		/// @brief Gets the number of assets in the list.
+		/// </summary>
+		public int Count
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonAssetListGetCount(this);
+
+		/// <summary>
+		/// @brief Gets an asset's ID.
+		/// </summary>
+		public long GetAssetId(int index)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonAssetListGetAssetId(this, index);
+
+		/// <summary>
+		/// @brief Gets an asset's name.
+		/// </summary>
+		public string GetAssetName(int index)
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.IonAssetListGetAssetName(this, index));
+
+		/// <summary>
+		/// @brief Gets an asset's type (e.g., "3DTILES", "TERRAIN", "IMAGERY").
+		/// </summary>
+		public string GetAssetType(int index)
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.IonAssetListGetAssetType(this, index));
+	}
+
+	public unsafe partial struct CesiumIonTokenList : IEquatable<CesiumIonTokenList>, IDisposable
+	{
+		public readonly IntPtr Handle;
+		public CesiumIonTokenList(IntPtr existingHandle) { Handle = existingHandle; }
+		public static CesiumIonTokenList Null => new CesiumIonTokenList(IntPtr.Zero);
+		public static implicit operator CesiumIonTokenList(IntPtr handle) => new CesiumIonTokenList(handle);
+		public static implicit operator IntPtr(CesiumIonTokenList handle) => handle.Handle;
+		public static bool operator ==(CesiumIonTokenList left, CesiumIonTokenList right) => left.Handle == right.Handle;
+		public static bool operator !=(CesiumIonTokenList left, CesiumIonTokenList right) => left.Handle != right.Handle;
+		public bool Equals(CesiumIonTokenList h) => Handle == h.Handle;
+		public override bool Equals(object o) => o is CesiumIonTokenList h && Equals(h);
+		public override int GetHashCode() => Handle.GetHashCode();
+		public override string ToString() => $"CesiumIonTokenList[0x{Handle:x}]";
+
+		/// <summary>Releases the native resource.</summary>
+		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.IonTokenListDestroy(this);
+
+		/// <summary>
+		/// @brief Gets the number of tokens in the list.
+		/// </summary>
+		public int Count
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonTokenListGetCount(this);
+
+		/// <summary>
+		/// @brief Gets a token's name.
+		/// </summary>
+		public string GetTokenName(int index)
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.IonTokenListGetTokenName(this, index));
+
+		/// <summary>
+		/// @brief Gets a token's value string.
+		/// </summary>
+		public string GetTokenValue(int index)
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.IonTokenListGetTokenValue(this, index));
 	}
 }
 
@@ -1077,18 +1059,18 @@ namespace Evergine.Bindings.CesiumNative
 		/// The returned pointer is valid until the next API call on the same thread.
 		/// </summary>
 		public static string GetLastError()
-			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.Common.CesiumAPI.GetLastError());
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.GetLastError());
 
 		/// <summary>
 		/// @brief Clears the last error.
 		/// </summary>
 		public static void ClearLastError()
-			=> Evergine.Bindings.CesiumNative.Common.CesiumAPI.ClearLastError();
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ClearLastError();
 
 		/// <summary>
 		/// @brief Computes the east-north-up to fixed frame transformation matrix.
 		/// </summary>
 		public static CesiumMat4 GlobeTransformsEastNorthUpToFixedFrame(CesiumVec3 origin, CesiumEllipsoid ellipsoid)
-			=> Evergine.Bindings.CesiumNative.Geospatial.CesiumAPI.GlobeTransformsEastNorthUpToFixedFrame(origin, ellipsoid);
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeTransformsEastNorthUpToFixedFrame(origin, ellipsoid);
 	}
 }
