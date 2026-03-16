@@ -1,5 +1,5 @@
 ﻿using Evergine.Bindings.CesiumNative;
-using System.Runtime.CompilerServices;
+using Evergine.Bindings.CesiumNative.Tileset;
 using System.Runtime.InteropServices;
 
 namespace Example;
@@ -12,36 +12,34 @@ internal unsafe static class Program
     {
         Console.WriteLine("Starting CesiumNative...");
 
-        // Initialize core Cesium systems. Notice that they have to be kept alive for as long as you intend to use the API. They can be disposed of by calling the corresponding CesiumAPI.*Destroy() method
-        CesiumAsyncSystem asyncSystem = CesiumAPI.AsyncSystemCreate();
-        CesiumAssetAccessor assetAccessor = CesiumAPI.AssetAccessorCreate("EvergineCesiumNative/1.0");
-        CesiumCreditSystem creditSystem = CesiumAPI.CreditSystemCreate();
+        // Initialize core Cesium systems with automatic disposal via 'using'.
+        using CesiumAsyncSystem asyncSystem = CesiumAsyncSystem.Create();
+        using CesiumAssetAccessor assetAccessor = CesiumAssetAccessor.Create("EvergineCesiumNative/1.0");
+        using CesiumCreditSystem creditSystem = CesiumCreditSystem.Create();
 
-        CesiumTilesetExternals externals = CesiumAPI.TilesetExternalsCreate(asyncSystem, assetAccessor, creditSystem);
+        using CesiumTilesetExternals externals = CesiumTilesetExternals.Create(asyncSystem, assetAccessor, creditSystem);
 
-        // Configure tileset options.
-        CesiumTilesetOptions options = CesiumAPI.TilesetOptionsCreate();
-        CesiumAPI.TilesetOptionsSetMaximumScreenSpaceError(options, 16.0);
-        CesiumAPI.TilesetOptionsSetMaximumSimultaneousTileLoads(options, 8);
-        CesiumAPI.TilesetOptionsSetLoadErrorCallback(options, ErrorCallback, null);
+        // Configure tileset options using C# properties.
+        var options = CesiumTilesetOptions.Create();
+        options.MaximumScreenSpaceError = 16.0;
+        options.MaximumSimultaneousTileLoads = 8;
+        options.SetLoadErrorCallback(ErrorCallback, null);
 
-        // Get root tileset
-        CesiumTileset tileset = CesiumAPI.TilesetCreateFromIon(externals, 1, IonAccessToken, options, null);
+        // Create tileset from Ion.
+        using CesiumTileset tileset = CesiumTileset.CreateFromIon(externals, 1, IonAccessToken, options, null);
 
-        if(tileset == CesiumTileset.Null)
+        if (tileset == CesiumTileset.Null)
         {
-            string errorMessage = Marshal.PtrToStringUTF8((IntPtr)CesiumAPI.GetLastError()) ?? "Unknown error";
+            string errorMessage = CesiumNativeApi.GetLastError() ?? "Unknown error";
             Console.WriteLine($"Failed to create tileset: {errorMessage}");
             return;
         }
 
-        // Wait for the tileset to load. In a real application, you would typically want to do this in a separate thread and render the tileset as it loads.
+        // Wait for the tileset to load.
         Console.WriteLine("Loading tile...");
-        bool isLoaded = false;
-        while (!isLoaded)
+        while (!tileset.IsRootTileAvailable())
         {
-            CesiumAPI.AsyncSystemDispatchMainThreadTasks(asyncSystem);
-            isLoaded = CesiumAPI.TilesetIsRootTileAvailable(tileset) == 1 ? true : false;
+            asyncSystem.DispatchMainThreadTasks();
             Thread.Sleep(10);
         }
 

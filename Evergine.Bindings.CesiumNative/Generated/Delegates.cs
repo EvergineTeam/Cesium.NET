@@ -30,7 +30,7 @@ namespace Evergine.Bindings.CesiumNative.Ion
 	/// @param assetList The asset list result (caller must destroy), or NULL on error.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumIonAssetsCompleteCallback(void* userData, IntPtr assetList);
+	public unsafe delegate void CesiumIonAssetsCompleteCallback(void* userData, CesiumIonAssetList assetList);
 
 	/// <summary>
 	/// @brief Callback invoked when token listing completes.
@@ -38,7 +38,7 @@ namespace Evergine.Bindings.CesiumNative.Ion
 	/// @param tokenList The token list result (caller must destroy), or NULL on error.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumIonTokensCompleteCallback(void* userData, IntPtr tokenList);
+	public unsafe delegate void CesiumIonTokensCompleteCallback(void* userData, CesiumIonTokenList tokenList);
 
 	/// <summary>
 	/// @brief Callback invoked during OAuth with the authorization URL.
@@ -55,7 +55,7 @@ namespace Evergine.Bindings.CesiumNative.Ion
 	/// @param connection The resulting connection (caller must destroy), or NULL on error.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumIonAuthorizeCompleteCallback(void* userData, IntPtr connection);
+	public unsafe delegate void CesiumIonAuthorizeCompleteCallback(void* userData, CesiumIonConnection connection);
 }
 
 namespace Evergine.Bindings.CesiumNative.Tileset

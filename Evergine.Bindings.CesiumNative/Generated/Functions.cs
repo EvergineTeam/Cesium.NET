@@ -3,10 +3,16 @@
 // -------------------------------------------------------------------------------------------------
 using System;
 using System.Runtime.InteropServices;
+using Evergine.Bindings.CesiumNative.Common;
+using Evergine.Bindings.CesiumNative.Geospatial;
+using Evergine.Bindings.CesiumNative.Gltf;
+using Evergine.Bindings.CesiumNative.Ion;
+using Evergine.Bindings.CesiumNative.RasterOverlays;
+using Evergine.Bindings.CesiumNative.Tileset;
 
-namespace Evergine.Bindings.CesiumNative
+namespace Evergine.Bindings.CesiumNative.Common
 {
-	public static unsafe partial class CesiumAPI
+	internal static unsafe partial class CesiumAPI
 	{
 		/// <summary>
 		/// @brief Returns the last error message, or NULL if no error has occurred.
@@ -20,87 +26,93 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_clear_last_error")]
 		public static extern void ClearLastError();
+	}
+}
 
+namespace Evergine.Bindings.CesiumNative.Geospatial
+{
+	internal static unsafe partial class CesiumAPI
+	{
 		/// <summary>
 		/// @brief Creates an ellipsoid with the given radii.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_create")]
-		public static extern IntPtr EllipsoidCreate(double radiusX, double radiusY, double radiusZ);
+		public static extern CesiumEllipsoid EllipsoidCreate(double radiusX, double radiusY, double radiusZ);
 
 		/// <summary>
 		/// @brief Returns the WGS84 ellipsoid (singleton — do NOT destroy).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_wgs84")]
-		public static extern IntPtr EllipsoidWgs84();
+		public static extern CesiumEllipsoid EllipsoidWgs84();
 
 		/// <summary>
 		/// @brief Returns the unit sphere ellipsoid (singleton — do NOT destroy).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_unit_sphere")]
-		public static extern IntPtr EllipsoidUnitSphere();
+		public static extern CesiumEllipsoid EllipsoidUnitSphere();
 
 		/// <summary>
 		/// @brief Destroys a user-created ellipsoid. Do not call on WGS84 or UNIT_SPHERE.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_destroy")]
-		public static extern void EllipsoidDestroy(IntPtr ellipsoid);
+		public static extern void EllipsoidDestroy(CesiumEllipsoid ellipsoid);
 
 		/// <summary>
 		/// @brief Gets the radii of the ellipsoid.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_get_radii")]
-		public static extern CesiumVec3 EllipsoidGetRadii(IntPtr ellipsoid);
+		public static extern CesiumVec3 EllipsoidGetRadii(CesiumEllipsoid ellipsoid);
 
 		/// <summary>
 		/// @brief Gets the maximum radius.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_get_maximum_radius")]
-		public static extern double EllipsoidGetMaximumRadius(IntPtr ellipsoid);
+		public static extern double EllipsoidGetMaximumRadius(CesiumEllipsoid ellipsoid);
 
 		/// <summary>
 		/// @brief Gets the minimum radius.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_get_minimum_radius")]
-		public static extern double EllipsoidGetMinimumRadius(IntPtr ellipsoid);
+		public static extern double EllipsoidGetMinimumRadius(CesiumEllipsoid ellipsoid);
 
 		/// <summary>
 		/// @brief Converts a cartographic position to Cartesian coordinates.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_cartographic_to_cartesian")]
-		public static extern CesiumVec3 EllipsoidCartographicToCartesian(IntPtr ellipsoid, CesiumCartographic cartographic);
+		public static extern CesiumVec3 EllipsoidCartographicToCartesian(CesiumEllipsoid ellipsoid, CesiumCartographic cartographic);
 
 		/// <summary>
 		/// @brief Converts Cartesian coordinates to a cartographic position.
 		/// @return 1 on success, 0 if the point is at the center (result is invalid).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_cartesian_to_cartographic")]
-		public static extern int EllipsoidCartesianToCartographic(IntPtr ellipsoid, CesiumVec3 cartesian, CesiumCartographic* out_result);
+		public static extern int EllipsoidCartesianToCartographic(CesiumEllipsoid ellipsoid, CesiumVec3 cartesian, CesiumCartographic* out_result);
 
 		/// <summary>
 		/// @brief Computes the geodetic surface normal at the given Cartesian position.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_geodetic_surface_normal_cartesian")]
-		public static extern CesiumVec3 EllipsoidGeodeticSurfaceNormalCartesian(IntPtr ellipsoid, CesiumVec3 cartesian);
+		public static extern CesiumVec3 EllipsoidGeodeticSurfaceNormalCartesian(CesiumEllipsoid ellipsoid, CesiumVec3 cartesian);
 
 		/// <summary>
 		/// @brief Computes the geodetic surface normal at the given cartographic position.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_geodetic_surface_normal_cartographic")]
-		public static extern CesiumVec3 EllipsoidGeodeticSurfaceNormalCartographic(IntPtr ellipsoid, CesiumCartographic cartographic);
+		public static extern CesiumVec3 EllipsoidGeodeticSurfaceNormalCartographic(CesiumEllipsoid ellipsoid, CesiumCartographic cartographic);
 
 		/// <summary>
 		/// @brief Scales the position along the geodetic normal to the ellipsoid surface.
 		/// @return 1 on success, 0 if the point is at the center (result is invalid).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_scale_to_geodetic_surface")]
-		public static extern int EllipsoidScaleToGeodeticSurface(IntPtr ellipsoid, CesiumVec3 cartesian, CesiumVec3* out_result);
+		public static extern int EllipsoidScaleToGeodeticSurface(CesiumEllipsoid ellipsoid, CesiumVec3 cartesian, CesiumVec3* out_result);
 
 		/// <summary>
 		/// @brief Scales the position along the geocentric normal to the ellipsoid surface.
 		/// @return 1 on success, 0 if the point is at the center (result is invalid).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ellipsoid_scale_to_geocentric_surface")]
-		public static extern int EllipsoidScaleToGeocentricSurface(IntPtr ellipsoid, CesiumVec3 cartesian, CesiumVec3* out_result);
+		public static extern int EllipsoidScaleToGeocentricSurface(CesiumEllipsoid ellipsoid, CesiumVec3 cartesian, CesiumVec3* out_result);
 
 		/// <summary>
 		/// @brief Creates a cartographic position from degrees (converted to radians).
@@ -142,19 +154,25 @@ namespace Evergine.Bindings.CesiumNative
 		/// @brief Computes the east-north-up to fixed frame transformation matrix.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_globe_transforms_east_north_up_to_fixed_frame")]
-		public static extern CesiumMat4 GlobeTransformsEastNorthUpToFixedFrame(CesiumVec3 origin, IntPtr ellipsoid);
+		public static extern CesiumMat4 GlobeTransformsEastNorthUpToFixedFrame(CesiumVec3 origin, CesiumEllipsoid ellipsoid);
+	}
+}
 
+namespace Evergine.Bindings.CesiumNative.Gltf
+{
+	internal static unsafe partial class CesiumAPI
+	{
 		/// <summary>
 		/// @brief Creates a new GltfReader instance.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_create")]
-		public static extern IntPtr GltfReaderCreate();
+		public static extern CesiumCGltfReader GltfReaderCreate();
 
 		/// <summary>
 		/// @brief Destroys a GltfReader instance.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_destroy")]
-		public static extern void GltfReaderDestroy(IntPtr reader);
+		public static extern void GltfReaderDestroy(CesiumCGltfReader reader);
 
 		/// <summary>
 		/// @brief Reads a glTF or GLB from a byte buffer.
@@ -164,603 +182,129 @@ namespace Evergine.Bindings.CesiumNative
 		/// @return A result handle (must be destroyed with cesium_gltf_reader_result_destroy).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_read")]
-		public static extern IntPtr GltfReaderRead(IntPtr reader, byte* data, nuint data_size);
+		public static extern CesiumCGltfReaderResult GltfReaderRead(CesiumCGltfReader reader, byte* data, nuint data_size);
 
 		/// <summary>
 		/// @brief Destroys a GltfReaderResult and any model it contains.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_result_destroy")]
-		public static extern void GltfReaderResultDestroy(IntPtr result);
+		public static extern void GltfReaderResultDestroy(CesiumCGltfReaderResult result);
 
 		/// <summary>
 		/// @brief Returns 1 if the result contains a valid model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_result_has_model")]
-		public static extern int GltfReaderResultHasModel(IntPtr result);
+		public static extern int GltfReaderResultHasModel(CesiumCGltfReaderResult result);
 
 		/// <summary>
 		/// @brief Returns the number of errors in the result.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_result_get_error_count")]
-		public static extern int GltfReaderResultGetErrorCount(IntPtr result);
+		public static extern int GltfReaderResultGetErrorCount(CesiumCGltfReaderResult result);
 
 		/// <summary>
 		/// @brief Returns the error message at the given index.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_result_get_error")]
-		public static extern byte* GltfReaderResultGetError(IntPtr result, int index);
+		public static extern byte* GltfReaderResultGetError(CesiumCGltfReaderResult result, int index);
 
 		/// <summary>
 		/// @brief Returns the number of warnings in the result.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_result_get_warning_count")]
-		public static extern int GltfReaderResultGetWarningCount(IntPtr result);
+		public static extern int GltfReaderResultGetWarningCount(CesiumCGltfReaderResult result);
 
 		/// <summary>
 		/// @brief Returns the warning message at the given index.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_result_get_warning")]
-		public static extern byte* GltfReaderResultGetWarning(IntPtr result, int index);
+		public static extern byte* GltfReaderResultGetWarning(CesiumCGltfReaderResult result, int index);
 
 		/// <summary>
 		/// @brief Gets the model from a reader result. The pointer is owned by the result.
 		/// @return The model pointer, or NULL if no model was read.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_reader_result_get_model")]
-		public static extern IntPtr GltfReaderResultGetModel(IntPtr result);
+		public static extern CesiumGltfModel GltfReaderResultGetModel(CesiumCGltfReaderResult result);
 
 		/// <summary>
 		/// @brief Gets the number of meshes in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_mesh_count")]
-		public static extern int GltfModelGetMeshCount(IntPtr model);
+		public static extern int GltfModelGetMeshCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the name of a mesh. Returns empty string if no name.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_mesh_name")]
-		public static extern byte* GltfModelGetMeshName(IntPtr model, int meshIndex);
+		public static extern byte* GltfModelGetMeshName(CesiumGltfModel model, int meshIndex);
 
 		/// <summary>
 		/// @brief Gets the number of materials in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_material_count")]
-		public static extern int GltfModelGetMaterialCount(IntPtr model);
+		public static extern int GltfModelGetMaterialCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of textures in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_texture_count")]
-		public static extern int GltfModelGetTextureCount(IntPtr model);
+		public static extern int GltfModelGetTextureCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of images in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_image_count")]
-		public static extern int GltfModelGetImageCount(IntPtr model);
+		public static extern int GltfModelGetImageCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of nodes in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_node_count")]
-		public static extern int GltfModelGetNodeCount(IntPtr model);
+		public static extern int GltfModelGetNodeCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of accessors in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_accessor_count")]
-		public static extern int GltfModelGetAccessorCount(IntPtr model);
+		public static extern int GltfModelGetAccessorCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of buffers in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_buffer_count")]
-		public static extern int GltfModelGetBufferCount(IntPtr model);
+		public static extern int GltfModelGetBufferCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of buffer views in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_buffer_view_count")]
-		public static extern int GltfModelGetBufferViewCount(IntPtr model);
+		public static extern int GltfModelGetBufferViewCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of scenes in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_scene_count")]
-		public static extern int GltfModelGetSceneCount(IntPtr model);
+		public static extern int GltfModelGetSceneCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of animations in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_animation_count")]
-		public static extern int GltfModelGetAnimationCount(IntPtr model);
+		public static extern int GltfModelGetAnimationCount(CesiumGltfModel model);
 
 		/// <summary>
 		/// @brief Gets the number of skins in the model.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_skin_count")]
-		public static extern int GltfModelGetSkinCount(IntPtr model);
-
-		/// <summary>
-		/// @brief Creates an async system with a built-in thread pool.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_create")]
-		public static extern IntPtr AsyncSystemCreate();
-
-		/// <summary>
-		/// @brief Destroys the async system.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_destroy")]
-		public static extern void AsyncSystemDestroy(IntPtr asyncSystem);
-
-		/// <summary>
-		/// @brief Dispatches pending main-thread tasks. Must be called each frame
-		/// from the main thread.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_dispatch_main_thread_tasks")]
-		public static extern void AsyncSystemDispatchMainThreadTasks(IntPtr asyncSystem);
-
-		/// <summary>
-		/// @brief Creates an asset accessor using libcurl.
-		/// @param userAgent The User-Agent header string, or NULL for default.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_asset_accessor_create")]
-		public static extern IntPtr AssetAccessorCreate([MarshalAs(UnmanagedType.LPStr)] string userAgent);
-
-		/// <summary>
-		/// @brief Destroys the asset accessor.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_asset_accessor_destroy")]
-		public static extern void AssetAccessorDestroy(IntPtr accessor);
-
-		/// <summary>
-		/// @brief Creates a new credit system.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_create")]
-		public static extern IntPtr CreditSystemCreate();
-
-		/// <summary>
-		/// @brief Destroys the credit system.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_destroy")]
-		public static extern void CreditSystemDestroy(IntPtr creditSystem);
-
-		/// <summary>
-		/// @brief Returns the number of credits that should be shown on screen.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_get_credits_to_show_on_screen_count")]
-		public static extern int CreditSystemGetCreditsToShowOnScreenCount(IntPtr creditSystem);
-
-		/// <summary>
-		/// @brief Returns the HTML text of a credit that should be shown on screen.
-		/// @param index The credit index (0 to count-1).
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_get_credit_to_show_on_screen")]
-		public static extern byte* CreditSystemGetCreditToShowOnScreen(IntPtr creditSystem, int index);
-
-		/// <summary>
-		/// @brief Signals the start of a new frame. Call before updateView.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_start_next_frame")]
-		public static extern void CreditSystemStartNextFrame(IntPtr creditSystem);
-
-		/// <summary>
-		/// @brief Creates the externals bundle required to construct a Tileset.
-		/// None of the parameters are consumed; the externals hold shared references.
-		/// @warning The caller must keep asyncSystem, accessor, and creditSystem alive
-		/// for the entire lifetime of any Tileset created with these externals.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_externals_create")]
-		public static extern IntPtr TilesetExternalsCreate(IntPtr asyncSystem, IntPtr accessor, IntPtr creditSystem);
-
-		/// <summary>
-		/// @brief Destroys the tileset externals.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_externals_destroy")]
-		public static extern void TilesetExternalsDestroy(IntPtr externals);
-
-		/// <summary>
-		/// @brief Sets the renderer resource callbacks on the externals.
-		/// Pass NULL for callbacks to revert to the default no-op implementation.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_externals_set_renderer_resource_callbacks")]
-		public static extern void TilesetExternalsSetRendererResourceCallbacks(IntPtr externals, CesiumRendererResourceCallbacks* callbacks);
-
-		/// <summary>
-		/// @brief Creates a new TilesetOptions with default values.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_create")]
-		public static extern IntPtr TilesetOptionsCreate();
-
-		/// <summary>
-		/// @brief Destroys the tileset options.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_destroy")]
-		public static extern void TilesetOptionsDestroy(IntPtr options);
-
-		/// <summary>
-		/// --- Setters ---
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_maximum_screen_space_error")]
-		public static extern void TilesetOptionsSetMaximumScreenSpaceError(IntPtr options, double value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_maximum_simultaneous_tile_loads")]
-		public static extern void TilesetOptionsSetMaximumSimultaneousTileLoads(IntPtr options, uint value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_maximum_cached_bytes")]
-		public static extern void TilesetOptionsSetMaximumCachedBytes(IntPtr options, long value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_preload_ancestors")]
-		public static extern void TilesetOptionsSetPreloadAncestors(IntPtr options, int value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_preload_siblings")]
-		public static extern void TilesetOptionsSetPreloadSiblings(IntPtr options, int value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_forbid_holes")]
-		public static extern void TilesetOptionsSetForbidHoles(IntPtr options, int value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_enable_frustum_culling")]
-		public static extern void TilesetOptionsSetEnableFrustumCulling(IntPtr options, int value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_enable_fog_culling")]
-		public static extern void TilesetOptionsSetEnableFogCulling(IntPtr options, int value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_enable_occlusion_culling")]
-		public static extern void TilesetOptionsSetEnableOcclusionCulling(IntPtr options, int value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_enable_lod_transition_period")]
-		public static extern void TilesetOptionsSetEnableLodTransitionPeriod(IntPtr options, int value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_lod_transition_length")]
-		public static extern void TilesetOptionsSetLodTransitionLength(IntPtr options, float value);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_load_error_callback")]
-		public static extern void TilesetOptionsSetLoadErrorCallback(IntPtr options, CesiumTilesetLoadErrorCallback callback, void* userData);
-
-		/// <summary>
-		/// --- Getters ---
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_maximum_screen_space_error")]
-		public static extern double TilesetOptionsGetMaximumScreenSpaceError(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_maximum_simultaneous_tile_loads")]
-		public static extern uint TilesetOptionsGetMaximumSimultaneousTileLoads(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_maximum_cached_bytes")]
-		public static extern long TilesetOptionsGetMaximumCachedBytes(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_preload_ancestors")]
-		public static extern int TilesetOptionsGetPreloadAncestors(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_preload_siblings")]
-		public static extern int TilesetOptionsGetPreloadSiblings(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_forbid_holes")]
-		public static extern int TilesetOptionsGetForbidHoles(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_enable_frustum_culling")]
-		public static extern int TilesetOptionsGetEnableFrustumCulling(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_enable_fog_culling")]
-		public static extern int TilesetOptionsGetEnableFogCulling(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_enable_occlusion_culling")]
-		public static extern int TilesetOptionsGetEnableOcclusionCulling(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_enable_lod_transition_period")]
-		public static extern int TilesetOptionsGetEnableLodTransitionPeriod(IntPtr options);
-
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_lod_transition_length")]
-		public static extern float TilesetOptionsGetLodTransitionLength(IntPtr options);
-
-		/// <summary>
-		/// @brief Creates a view state with a symmetric perspective projection.
-		/// @param position Camera position in ECEF coordinates.
-		/// @param direction Camera look direction.
-		/// @param up Camera up vector.
-		/// @param viewportSize Viewport size in pixels (width, height).
-		/// @param horizontalFieldOfView Horizontal FOV in radians.
-		/// @param verticalFieldOfView Vertical FOV in radians.
-		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_state_create_perspective")]
-		public static extern IntPtr ViewStateCreatePerspective(CesiumVec3 position, CesiumVec3 direction, CesiumVec3 up, CesiumVec2 viewportSize, double horizontalFieldOfView, double verticalFieldOfView, IntPtr ellipsoid);
-
-		/// <summary>
-		/// @brief Creates a view state from view and projection matrices.
-		/// @param viewMatrix 4x4 view matrix (inverse of camera pose).
-		/// @param projectionMatrix 4x4 projection matrix.
-		/// @param viewportSize Viewport size in pixels (width, height).
-		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_state_create_from_matrices")]
-		public static extern IntPtr ViewStateCreateFromMatrices(CesiumMat4 viewMatrix, CesiumMat4 projectionMatrix, CesiumVec2 viewportSize, IntPtr ellipsoid);
-
-		/// <summary>
-		/// @brief Creates a view state with an orthographic projection.
-		/// @param position Camera position in ECEF coordinates.
-		/// @param direction Camera look direction.
-		/// @param up Camera up vector.
-		/// @param viewportSize Viewport size in pixels (width, height).
-		/// @param left Left distance of near plane edge from center.
-		/// @param right Right distance of near plane edge from center.
-		/// @param bottom Bottom distance of near plane edge from center.
-		/// @param top Top distance of near plane edge from center.
-		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_state_create_orthographic")]
-		public static extern IntPtr ViewStateCreateOrthographic(CesiumVec3 position, CesiumVec3 direction, CesiumVec3 up, CesiumVec2 viewportSize, double left, double right, double bottom, double top, IntPtr ellipsoid);
-
-		/// <summary>
-		/// @brief Destroys a view state.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_state_destroy")]
-		public static extern void ViewStateDestroy(IntPtr viewState);
-
-		/// <summary>
-		/// @brief Creates a tileset from a tileset.json URL.
-		/// @param externals The externals bundle (async, HTTP, credits).
-		/// @param url The URL of the tileset.json.
-		/// @param options The tileset options, or NULL for defaults.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_create_from_url")]
-		public static extern IntPtr TilesetCreateFromUrl(IntPtr externals, [MarshalAs(UnmanagedType.LPStr)] string url, IntPtr options);
-
-		/// <summary>
-		/// @brief Creates a tileset from a Cesium Ion asset.
-		/// @param externals The externals bundle.
-		/// @param ionAssetID The Cesium Ion asset ID.
-		/// @param ionAccessToken The Cesium Ion access token.
-		/// @param options The tileset options, or NULL for defaults.
-		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for "https://api.cesium.com/".
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_create_from_ion")]
-		public static extern IntPtr TilesetCreateFromIon(IntPtr externals, long ionAssetID, [MarshalAs(UnmanagedType.LPStr)] string ionAccessToken, IntPtr options, [MarshalAs(UnmanagedType.LPStr)] string ionAssetEndpointUrl);
-
-		/// <summary>
-		/// @brief Destroys a tileset.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_destroy")]
-		public static extern void TilesetDestroy(IntPtr tileset);
-
-		/// <summary>
-		/// @brief Updates the tileset's default view group and loads tiles.
-		/// This is the main per-frame call. Pass one or more view states describing
-		/// the camera(s). The returned result pointer is valid until the next call
-		/// to this function or until the tileset is destroyed.
-		/// @param tileset The tileset.
-		/// @param viewStates Array of view state pointers.
-		/// @param viewStateCount Number of view states.
-		/// @param deltaTime Time elapsed since last update, in seconds.
-		/// @return Borrowed pointer to the update result.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_update_view")]
-		public static extern IntPtr TilesetUpdateView(IntPtr tileset, IntPtr* viewStates, int viewStateCount, float deltaTime);
-
-		/// <summary>
-		/// @brief Gets the root tile, or NULL if not yet available.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_root_tile")]
-		public static extern IntPtr TilesetGetRootTile(IntPtr tileset);
-
-		/// <summary>
-		/// @brief Returns 1 if the root tile is available, 0 otherwise (polling).
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_is_root_tile_available")]
-		public static extern int TilesetIsRootTileAvailable(IntPtr tileset);
-
-		/// <summary>
-		/// @brief Sets a callback that fires when the root tile becomes available.
-		/// Pass NULL to clear.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_set_root_tile_available_callback")]
-		public static extern void TilesetSetRootTileAvailableCallback(IntPtr tileset, CesiumRootTileAvailableCallback callback, void* userData);
-
-		/// <summary>
-		/// @brief Computes the percentage of tiles loaded for the default view group.
-		/// @return A value between 0.0 and 100.0.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_compute_load_progress")]
-		public static extern float TilesetComputeLoadProgress(IntPtr tileset);
-
-		/// <summary>
-		/// @brief Gets the total number of tiles currently loaded.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_number_of_tiles_loaded")]
-		public static extern int TilesetGetNumberOfTilesLoaded(IntPtr tileset);
-
-		/// <summary>
-		/// @brief Gets the total data bytes of loaded tile and overlay data.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_total_data_bytes")]
-		public static extern long TilesetGetTotalDataBytes(IntPtr tileset);
-
-		/// <summary>
-		/// @brief Gets the number of tiles to render this frame.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tiles_to_render_count")]
-		public static extern int ViewUpdateResultGetTilesToRenderCount(IntPtr result);
-
-		/// <summary>
-		/// @brief Gets a tile to render by index.
-		/// @param result The update result.
-		/// @param index Index in [0, count).
-		/// @return Borrowed pointer to the tile.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tile_to_render")]
-		public static extern IntPtr ViewUpdateResultGetTileToRender(IntPtr result, int index);
-
-		/// <summary>
-		/// @brief Gets the number of tiles fading out.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tiles_fading_out_count")]
-		public static extern int ViewUpdateResultGetTilesFadingOutCount(IntPtr result);
-
-		/// <summary>
-		/// @brief Gets the current frame number.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_frame_number")]
-		public static extern int ViewUpdateResultGetFrameNumber(IntPtr result);
-
-		/// <summary>
-		/// @brief Gets the number of tiles visited during traversal.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tiles_visited")]
-		public static extern uint ViewUpdateResultGetTilesVisited(IntPtr result);
-
-		/// <summary>
-		/// @brief Gets the number of tiles culled during traversal.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tiles_culled")]
-		public static extern uint ViewUpdateResultGetTilesCulled(IntPtr result);
-
-		/// <summary>
-		/// @brief Gets the maximum tree depth visited.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_max_depth_visited")]
-		public static extern uint ViewUpdateResultGetMaxDepthVisited(IntPtr result);
-
-		/// <summary>
-		/// @brief Gets the worker thread tile load queue length.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_worker_thread_load_queue_length")]
-		public static extern int ViewUpdateResultGetWorkerThreadLoadQueueLength(IntPtr result);
-
-		/// <summary>
-		/// @brief Gets the main thread tile load queue length.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_main_thread_load_queue_length")]
-		public static extern int ViewUpdateResultGetMainThreadLoadQueueLength(IntPtr result);
-
-		/// <summary>
-		/// @brief Gets the tile's geometric error in meters.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_geometric_error")]
-		public static extern double TileGetGeometricError(IntPtr tile);
-
-		/// <summary>
-		/// @brief Gets the tile's 4x4 transform matrix.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_transform")]
-		public static extern CesiumMat4 TileGetTransform(IntPtr tile);
-
-		/// <summary>
-		/// @brief Gets the tile's load state.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_load_state")]
-		public static extern CesiumTileLoadState TileGetLoadState(IntPtr tile);
-
-		/// <summary>
-		/// @brief Returns 1 if the tile has renderable glTF content.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_has_render_content")]
-		public static extern int TileHasRenderContent(IntPtr tile);
-
-		/// <summary>
-		/// @brief Gets the glTF model from a tile's render content.
-		/// @return Borrowed model pointer, or NULL if the tile has no render content.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_render_content_model")]
-		public static extern IntPtr TileGetRenderContentModel(IntPtr tile);
-
-		/// <summary>
-		/// @brief Gets the renderer resources pointer set by prepareInMainThread.
-		/// @return The opaque renderer resources, or NULL.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_render_resources")]
-		public static extern void* TileGetRenderResources(IntPtr tile);
-
-		/// <summary>
-		/// @brief Gets the number of child tiles.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_children_count")]
-		public static extern int TileGetChildrenCount(IntPtr tile);
-
-		/// <summary>
-		/// @brief Gets a child tile by index.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_child")]
-		public static extern IntPtr TileGetChild(IntPtr tile, int index);
-
-		/// <summary>
-		/// @brief Gets the tile's bounding volume.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_bounding_volume")]
-		public static extern CesiumBoundingVolume TileGetBoundingVolume(IntPtr tile);
-
-		/// <summary>
-		/// @brief Gets the LOD transition fade percentage (0.0 to 1.0).
-		/// Only meaningful when LOD transitions are enabled.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_lod_transition_fade_percentage")]
-		public static extern float TileGetLodTransitionFadePercentage(IntPtr tile);
-
-		/// <summary>
-		/// @brief Gets the raster overlay collection from a tileset.
-		/// The returned pointer is owned by the tileset.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_overlays")]
-		public static extern IntPtr TilesetGetOverlays(IntPtr tileset);
-
-		/// <summary>
-		/// @brief Adds a raster overlay to the collection.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_collection_add")]
-		public static extern void RasterOverlayCollectionAdd(IntPtr collection, IntPtr overlay);
-
-		/// <summary>
-		/// @brief Removes a raster overlay from the collection.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_collection_remove")]
-		public static extern void RasterOverlayCollectionRemove(IntPtr collection, IntPtr overlay);
-
-		/// <summary>
-		/// @brief Creates a Cesium Ion raster overlay.
-		/// @param assetID The Ion asset ID for the imagery.
-		/// @param accessToken The Ion access token.
-		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for default.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_raster_overlay_create")]
-		public static extern IntPtr IonRasterOverlayCreate(long assetID, [MarshalAs(UnmanagedType.LPStr)] string accessToken, [MarshalAs(UnmanagedType.LPStr)] string ionAssetEndpointUrl);
-
-		/// <summary>
-		/// @brief Creates a URL-template raster overlay (e.g., XYZ tiles).
-		/// @param name Display name for the overlay.
-		/// @param urlTemplate URL template with {x}, {y}, {z} placeholders.
-		/// @param minimumLevel Minimum zoom level.
-		/// @param maximumLevel Maximum zoom level.
-		/// @param tileWidth Tile width in pixels (e.g., 256).
-		/// @param tileHeight Tile height in pixels (e.g., 256).
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_url_template_raster_overlay_create")]
-		public static extern IntPtr UrlTemplateRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string urlTemplate, uint minimumLevel, uint maximumLevel, uint tileWidth, uint tileHeight);
-
-		/// <summary>
-		/// @brief Creates a TMS (Tile Map Service) raster overlay.
-		/// @param name Display name for the overlay.
-		/// @param url The TMS service URL.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_map_service_raster_overlay_create")]
-		public static extern IntPtr TileMapServiceRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string url);
-
-		/// <summary>
-		/// @brief Creates a WMS (Web Map Service) raster overlay.
-		/// @param name Display name for the overlay.
-		/// @param url The WMS service URL.
-		/// @param layers Comma-separated list of WMS layers.
-		/// @param tileWidth Tile width in pixels.
-		/// @param tileHeight Tile height in pixels.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_web_map_service_raster_overlay_create")]
-		public static extern IntPtr WebMapServiceRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string url, [MarshalAs(UnmanagedType.LPStr)] string layers, int tileWidth, int tileHeight);
-
-		/// <summary>
-		/// @brief Destroys a raster overlay.
-		/// Remove it from any collections first.
-		/// </summary>
-		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_destroy")]
-		public static extern void RasterOverlayDestroy(IntPtr overlay);
-
+		public static extern int GltfModelGetSkinCount(CesiumGltfModel model);
+	}
+}
+
+namespace Evergine.Bindings.CesiumNative.Ion
+{
+	internal static unsafe partial class CesiumAPI
+	{
 		/// <summary>
 		/// @brief Creates an Ion connection from an existing access token.
 		/// @param asyncSystem The async system.
@@ -769,13 +313,13 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com/".
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_create")]
-		public static extern IntPtr IonConnectionCreate(IntPtr asyncSystem, IntPtr accessor, [MarshalAs(UnmanagedType.LPStr)] string accessToken, [MarshalAs(UnmanagedType.LPStr)] string apiUrl);
+		public static extern CesiumIonConnection IonConnectionCreate(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, [MarshalAs(UnmanagedType.LPStr)] string accessToken, [MarshalAs(UnmanagedType.LPStr)] string apiUrl);
 
 		/// <summary>
 		/// @brief Destroys an Ion connection.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_destroy")]
-		public static extern void IonConnectionDestroy(IntPtr connection);
+		public static extern void IonConnectionDestroy(CesiumIonConnection connection);
 
 		/// <summary>
 		/// @brief Starts the OAuth authorization flow.
@@ -790,72 +334,564 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param completeCallbackUserData User data for completeCallback.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_authorize")]
-		public static extern void IonConnectionAuthorize(IntPtr asyncSystem, IntPtr accessor, [MarshalAs(UnmanagedType.LPStr)] string appID, [MarshalAs(UnmanagedType.LPStr)] string redirectPath, [MarshalAs(UnmanagedType.LPStr)] string scopes, CesiumIonAuthorizeUrlCallback urlCallback, void* urlCallbackUserData, CesiumIonAuthorizeCompleteCallback completeCallback, void* completeCallbackUserData);
+		public static extern void IonConnectionAuthorize(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, [MarshalAs(UnmanagedType.LPStr)] string appID, [MarshalAs(UnmanagedType.LPStr)] string redirectPath, [MarshalAs(UnmanagedType.LPStr)] string scopes, CesiumIonAuthorizeUrlCallback urlCallback, void* urlCallbackUserData, CesiumIonAuthorizeCompleteCallback completeCallback, void* completeCallbackUserData);
 
 		/// <summary>
 		/// @brief Requests the list of assets from Cesium Ion (async).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_list_assets")]
-		public static extern void IonConnectionListAssets(IntPtr connection, CesiumIonAssetsCompleteCallback callback, void* userData);
+		public static extern void IonConnectionListAssets(CesiumIonConnection connection, CesiumIonAssetsCompleteCallback callback, void* userData);
 
 		/// <summary>
 		/// @brief Gets the number of assets in the list.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_count")]
-		public static extern int IonAssetListGetCount(IntPtr list);
+		public static extern int IonAssetListGetCount(CesiumIonAssetList list);
 
 		/// <summary>
 		/// @brief Gets an asset's ID.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_id")]
-		public static extern long IonAssetListGetAssetId(IntPtr list, int index);
+		public static extern long IonAssetListGetAssetId(CesiumIonAssetList list, int index);
 
 		/// <summary>
 		/// @brief Gets an asset's name.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_name")]
-		public static extern byte* IonAssetListGetAssetName(IntPtr list, int index);
+		public static extern byte* IonAssetListGetAssetName(CesiumIonAssetList list, int index);
 
 		/// <summary>
 		/// @brief Gets an asset's type (e.g., "3DTILES", "TERRAIN", "IMAGERY").
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_get_asset_type")]
-		public static extern byte* IonAssetListGetAssetType(IntPtr list, int index);
+		public static extern byte* IonAssetListGetAssetType(CesiumIonAssetList list, int index);
 
 		/// <summary>
 		/// @brief Destroys an asset list.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_asset_list_destroy")]
-		public static extern void IonAssetListDestroy(IntPtr list);
+		public static extern void IonAssetListDestroy(CesiumIonAssetList list);
 
 		/// <summary>
 		/// @brief Requests the list of tokens from Cesium Ion (async).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_connection_list_tokens")]
-		public static extern void IonConnectionListTokens(IntPtr connection, CesiumIonTokensCompleteCallback callback, void* userData);
+		public static extern void IonConnectionListTokens(CesiumIonConnection connection, CesiumIonTokensCompleteCallback callback, void* userData);
 
 		/// <summary>
 		/// @brief Gets the number of tokens in the list.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_count")]
-		public static extern int IonTokenListGetCount(IntPtr list);
+		public static extern int IonTokenListGetCount(CesiumIonTokenList list);
 
 		/// <summary>
 		/// @brief Gets a token's name.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_token_name")]
-		public static extern byte* IonTokenListGetTokenName(IntPtr list, int index);
+		public static extern byte* IonTokenListGetTokenName(CesiumIonTokenList list, int index);
 
 		/// <summary>
 		/// @brief Gets a token's value string.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_get_token_value")]
-		public static extern byte* IonTokenListGetTokenValue(IntPtr list, int index);
+		public static extern byte* IonTokenListGetTokenValue(CesiumIonTokenList list, int index);
 
 		/// <summary>
 		/// @brief Destroys a token list.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_token_list_destroy")]
-		public static extern void IonTokenListDestroy(IntPtr list);
+		public static extern void IonTokenListDestroy(CesiumIonTokenList list);
+	}
+}
+
+namespace Evergine.Bindings.CesiumNative.RasterOverlays
+{
+	internal static unsafe partial class CesiumAPI
+	{
+		/// <summary>
+		/// @brief Gets the raster overlay collection from a tileset.
+		/// The returned pointer is owned by the tileset.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_overlays")]
+		public static extern CesiumRasterOverlayCollection TilesetGetOverlays(CesiumTileset tileset);
+
+		/// <summary>
+		/// @brief Adds a raster overlay to the collection.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_collection_add")]
+		public static extern void RasterOverlayCollectionAdd(CesiumRasterOverlayCollection collection, CesiumRasterOverlay overlay);
+
+		/// <summary>
+		/// @brief Removes a raster overlay from the collection.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_collection_remove")]
+		public static extern void RasterOverlayCollectionRemove(CesiumRasterOverlayCollection collection, CesiumRasterOverlay overlay);
+
+		/// <summary>
+		/// @brief Creates a Cesium Ion raster overlay.
+		/// @param assetID The Ion asset ID for the imagery.
+		/// @param accessToken The Ion access token.
+		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for default.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_ion_raster_overlay_create")]
+		public static extern CesiumRasterOverlay IonRasterOverlayCreate(long assetID, [MarshalAs(UnmanagedType.LPStr)] string accessToken, [MarshalAs(UnmanagedType.LPStr)] string ionAssetEndpointUrl);
+
+		/// <summary>
+		/// @brief Creates a URL-template raster overlay (e.g., XYZ tiles).
+		/// @param name Display name for the overlay.
+		/// @param urlTemplate URL template with {x}, {y}, {z} placeholders.
+		/// @param minimumLevel Minimum zoom level.
+		/// @param maximumLevel Maximum zoom level.
+		/// @param tileWidth Tile width in pixels (e.g., 256).
+		/// @param tileHeight Tile height in pixels (e.g., 256).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_url_template_raster_overlay_create")]
+		public static extern CesiumRasterOverlay UrlTemplateRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string urlTemplate, uint minimumLevel, uint maximumLevel, uint tileWidth, uint tileHeight);
+
+		/// <summary>
+		/// @brief Creates a TMS (Tile Map Service) raster overlay.
+		/// @param name Display name for the overlay.
+		/// @param url The TMS service URL.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_map_service_raster_overlay_create")]
+		public static extern CesiumRasterOverlay TileMapServiceRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string url);
+
+		/// <summary>
+		/// @brief Creates a WMS (Web Map Service) raster overlay.
+		/// @param name Display name for the overlay.
+		/// @param url The WMS service URL.
+		/// @param layers Comma-separated list of WMS layers.
+		/// @param tileWidth Tile width in pixels.
+		/// @param tileHeight Tile height in pixels.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_web_map_service_raster_overlay_create")]
+		public static extern CesiumRasterOverlay WebMapServiceRasterOverlayCreate([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string url, [MarshalAs(UnmanagedType.LPStr)] string layers, int tileWidth, int tileHeight);
+
+		/// <summary>
+		/// @brief Destroys a raster overlay.
+		/// Remove it from any collections first.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_raster_overlay_destroy")]
+		public static extern void RasterOverlayDestroy(CesiumRasterOverlay overlay);
+	}
+}
+
+namespace Evergine.Bindings.CesiumNative.Tileset
+{
+	internal static unsafe partial class CesiumAPI
+	{
+		/// <summary>
+		/// @brief Creates an async system with a built-in thread pool.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_create")]
+		public static extern CesiumAsyncSystem AsyncSystemCreate();
+
+		/// <summary>
+		/// @brief Destroys the async system.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_destroy")]
+		public static extern void AsyncSystemDestroy(CesiumAsyncSystem asyncSystem);
+
+		/// <summary>
+		/// @brief Dispatches pending main-thread tasks. Must be called each frame
+		/// from the main thread.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_dispatch_main_thread_tasks")]
+		public static extern void AsyncSystemDispatchMainThreadTasks(CesiumAsyncSystem asyncSystem);
+
+		/// <summary>
+		/// @brief Creates an asset accessor using libcurl.
+		/// @param userAgent The User-Agent header string, or NULL for default.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_asset_accessor_create")]
+		public static extern CesiumAssetAccessor AssetAccessorCreate([MarshalAs(UnmanagedType.LPStr)] string userAgent);
+
+		/// <summary>
+		/// @brief Destroys the asset accessor.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_asset_accessor_destroy")]
+		public static extern void AssetAccessorDestroy(CesiumAssetAccessor accessor);
+
+		/// <summary>
+		/// @brief Creates a new credit system.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_create")]
+		public static extern CesiumCreditSystem CreditSystemCreate();
+
+		/// <summary>
+		/// @brief Destroys the credit system.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_destroy")]
+		public static extern void CreditSystemDestroy(CesiumCreditSystem creditSystem);
+
+		/// <summary>
+		/// @brief Returns the number of credits that should be shown on screen.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_get_credits_to_show_on_screen_count")]
+		public static extern int CreditSystemGetCreditsToShowOnScreenCount(CesiumCreditSystem creditSystem);
+
+		/// <summary>
+		/// @brief Returns the HTML text of a credit that should be shown on screen.
+		/// @param index The credit index (0 to count-1).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_get_credit_to_show_on_screen")]
+		public static extern byte* CreditSystemGetCreditToShowOnScreen(CesiumCreditSystem creditSystem, int index);
+
+		/// <summary>
+		/// @brief Signals the start of a new frame. Call before updateView.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_credit_system_start_next_frame")]
+		public static extern void CreditSystemStartNextFrame(CesiumCreditSystem creditSystem);
+
+		/// <summary>
+		/// @brief Creates the externals bundle required to construct a Tileset.
+		/// None of the parameters are consumed; the externals hold shared references.
+		/// @warning The caller must keep asyncSystem, accessor, and creditSystem alive
+		/// for the entire lifetime of any Tileset created with these externals.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_externals_create")]
+		public static extern CesiumTilesetExternals TilesetExternalsCreate(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, CesiumCreditSystem creditSystem);
+
+		/// <summary>
+		/// @brief Destroys the tileset externals.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_externals_destroy")]
+		public static extern void TilesetExternalsDestroy(CesiumTilesetExternals externals);
+
+		/// <summary>
+		/// @brief Sets the renderer resource callbacks on the externals.
+		/// Pass NULL for callbacks to revert to the default no-op implementation.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_externals_set_renderer_resource_callbacks")]
+		public static extern void TilesetExternalsSetRendererResourceCallbacks(CesiumTilesetExternals externals, CesiumRendererResourceCallbacks* callbacks);
+
+		/// <summary>
+		/// @brief Creates a new TilesetOptions with default values.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_create")]
+		public static extern CesiumTilesetOptions TilesetOptionsCreate();
+
+		/// <summary>
+		/// @brief Destroys the tileset options.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_destroy")]
+		public static extern void TilesetOptionsDestroy(CesiumTilesetOptions options);
+
+		/// <summary>
+		/// --- Setters ---
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_maximum_screen_space_error")]
+		public static extern void TilesetOptionsSetMaximumScreenSpaceError(CesiumTilesetOptions options, double value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_maximum_simultaneous_tile_loads")]
+		public static extern void TilesetOptionsSetMaximumSimultaneousTileLoads(CesiumTilesetOptions options, uint value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_maximum_cached_bytes")]
+		public static extern void TilesetOptionsSetMaximumCachedBytes(CesiumTilesetOptions options, long value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_preload_ancestors")]
+		public static extern void TilesetOptionsSetPreloadAncestors(CesiumTilesetOptions options, int value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_preload_siblings")]
+		public static extern void TilesetOptionsSetPreloadSiblings(CesiumTilesetOptions options, int value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_forbid_holes")]
+		public static extern void TilesetOptionsSetForbidHoles(CesiumTilesetOptions options, int value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_enable_frustum_culling")]
+		public static extern void TilesetOptionsSetEnableFrustumCulling(CesiumTilesetOptions options, int value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_enable_fog_culling")]
+		public static extern void TilesetOptionsSetEnableFogCulling(CesiumTilesetOptions options, int value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_enable_occlusion_culling")]
+		public static extern void TilesetOptionsSetEnableOcclusionCulling(CesiumTilesetOptions options, int value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_enable_lod_transition_period")]
+		public static extern void TilesetOptionsSetEnableLodTransitionPeriod(CesiumTilesetOptions options, int value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_lod_transition_length")]
+		public static extern void TilesetOptionsSetLodTransitionLength(CesiumTilesetOptions options, float value);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_set_load_error_callback")]
+		public static extern void TilesetOptionsSetLoadErrorCallback(CesiumTilesetOptions options, CesiumTilesetLoadErrorCallback callback, void* userData);
+
+		/// <summary>
+		/// --- Getters ---
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_maximum_screen_space_error")]
+		public static extern double TilesetOptionsGetMaximumScreenSpaceError(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_maximum_simultaneous_tile_loads")]
+		public static extern uint TilesetOptionsGetMaximumSimultaneousTileLoads(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_maximum_cached_bytes")]
+		public static extern long TilesetOptionsGetMaximumCachedBytes(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_preload_ancestors")]
+		public static extern int TilesetOptionsGetPreloadAncestors(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_preload_siblings")]
+		public static extern int TilesetOptionsGetPreloadSiblings(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_forbid_holes")]
+		public static extern int TilesetOptionsGetForbidHoles(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_enable_frustum_culling")]
+		public static extern int TilesetOptionsGetEnableFrustumCulling(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_enable_fog_culling")]
+		public static extern int TilesetOptionsGetEnableFogCulling(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_enable_occlusion_culling")]
+		public static extern int TilesetOptionsGetEnableOcclusionCulling(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_enable_lod_transition_period")]
+		public static extern int TilesetOptionsGetEnableLodTransitionPeriod(CesiumTilesetOptions options);
+
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_options_get_lod_transition_length")]
+		public static extern float TilesetOptionsGetLodTransitionLength(CesiumTilesetOptions options);
+
+		/// <summary>
+		/// @brief Creates a view state with a symmetric perspective projection.
+		/// @param position Camera position in ECEF coordinates.
+		/// @param direction Camera look direction.
+		/// @param up Camera up vector.
+		/// @param viewportSize Viewport size in pixels (width, height).
+		/// @param horizontalFieldOfView Horizontal FOV in radians.
+		/// @param verticalFieldOfView Vertical FOV in radians.
+		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_state_create_perspective")]
+		public static extern CesiumViewState ViewStateCreatePerspective(CesiumVec3 position, CesiumVec3 direction, CesiumVec3 up, CesiumVec2 viewportSize, double horizontalFieldOfView, double verticalFieldOfView, CesiumEllipsoid ellipsoid);
+
+		/// <summary>
+		/// @brief Creates a view state from view and projection matrices.
+		/// @param viewMatrix 4x4 view matrix (inverse of camera pose).
+		/// @param projectionMatrix 4x4 projection matrix.
+		/// @param viewportSize Viewport size in pixels (width, height).
+		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_state_create_from_matrices")]
+		public static extern CesiumViewState ViewStateCreateFromMatrices(CesiumMat4 viewMatrix, CesiumMat4 projectionMatrix, CesiumVec2 viewportSize, CesiumEllipsoid ellipsoid);
+
+		/// <summary>
+		/// @brief Creates a view state with an orthographic projection.
+		/// @param position Camera position in ECEF coordinates.
+		/// @param direction Camera look direction.
+		/// @param up Camera up vector.
+		/// @param viewportSize Viewport size in pixels (width, height).
+		/// @param left Left distance of near plane edge from center.
+		/// @param right Right distance of near plane edge from center.
+		/// @param bottom Bottom distance of near plane edge from center.
+		/// @param top Top distance of near plane edge from center.
+		/// @param ellipsoid The ellipsoid, or NULL for WGS84.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_state_create_orthographic")]
+		public static extern CesiumViewState ViewStateCreateOrthographic(CesiumVec3 position, CesiumVec3 direction, CesiumVec3 up, CesiumVec2 viewportSize, double left, double right, double bottom, double top, CesiumEllipsoid ellipsoid);
+
+		/// <summary>
+		/// @brief Destroys a view state.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_state_destroy")]
+		public static extern void ViewStateDestroy(CesiumViewState viewState);
+
+		/// <summary>
+		/// @brief Creates a tileset from a tileset.json URL.
+		/// @param externals The externals bundle (async, HTTP, credits).
+		/// @param url The URL of the tileset.json.
+		/// @param options The tileset options, or NULL for defaults.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_create_from_url")]
+		public static extern CesiumTileset TilesetCreateFromUrl(CesiumTilesetExternals externals, [MarshalAs(UnmanagedType.LPStr)] string url, CesiumTilesetOptions options);
+
+		/// <summary>
+		/// @brief Creates a tileset from a Cesium Ion asset.
+		/// @param externals The externals bundle.
+		/// @param ionAssetID The Cesium Ion asset ID.
+		/// @param ionAccessToken The Cesium Ion access token.
+		/// @param options The tileset options, or NULL for defaults.
+		/// @param ionAssetEndpointUrl The Ion API endpoint, or NULL for "https://api.cesium.com/".
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_create_from_ion")]
+		public static extern CesiumTileset TilesetCreateFromIon(CesiumTilesetExternals externals, long ionAssetID, [MarshalAs(UnmanagedType.LPStr)] string ionAccessToken, CesiumTilesetOptions options, [MarshalAs(UnmanagedType.LPStr)] string ionAssetEndpointUrl);
+
+		/// <summary>
+		/// @brief Destroys a tileset.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_destroy")]
+		public static extern void TilesetDestroy(CesiumTileset tileset);
+
+		/// <summary>
+		/// @brief Updates the tileset's default view group and loads tiles.
+		/// This is the main per-frame call. Pass one or more view states describing
+		/// the camera(s). The returned result pointer is valid until the next call
+		/// to this function or until the tileset is destroyed.
+		/// @param tileset The tileset.
+		/// @param viewStates Array of view state pointers.
+		/// @param viewStateCount Number of view states.
+		/// @param deltaTime Time elapsed since last update, in seconds.
+		/// @return Borrowed pointer to the update result.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_update_view")]
+		public static extern CesiumViewUpdateResult TilesetUpdateView(CesiumTileset tileset, CesiumViewState* viewStates, int viewStateCount, float deltaTime);
+
+		/// <summary>
+		/// @brief Gets the root tile, or NULL if not yet available.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_root_tile")]
+		public static extern CesiumTile TilesetGetRootTile(CesiumTileset tileset);
+
+		/// <summary>
+		/// @brief Returns 1 if the root tile is available, 0 otherwise (polling).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_is_root_tile_available")]
+		public static extern int TilesetIsRootTileAvailable(CesiumTileset tileset);
+
+		/// <summary>
+		/// @brief Sets a callback that fires when the root tile becomes available.
+		/// Pass NULL to clear.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_set_root_tile_available_callback")]
+		public static extern void TilesetSetRootTileAvailableCallback(CesiumTileset tileset, CesiumRootTileAvailableCallback callback, void* userData);
+
+		/// <summary>
+		/// @brief Computes the percentage of tiles loaded for the default view group.
+		/// @return A value between 0.0 and 100.0.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_compute_load_progress")]
+		public static extern float TilesetComputeLoadProgress(CesiumTileset tileset);
+
+		/// <summary>
+		/// @brief Gets the total number of tiles currently loaded.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_number_of_tiles_loaded")]
+		public static extern int TilesetGetNumberOfTilesLoaded(CesiumTileset tileset);
+
+		/// <summary>
+		/// @brief Gets the total data bytes of loaded tile and overlay data.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_total_data_bytes")]
+		public static extern long TilesetGetTotalDataBytes(CesiumTileset tileset);
+
+		/// <summary>
+		/// @brief Gets the number of tiles to render this frame.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tiles_to_render_count")]
+		public static extern int ViewUpdateResultGetTilesToRenderCount(CesiumViewUpdateResult result);
+
+		/// <summary>
+		/// @brief Gets a tile to render by index.
+		/// @param result The update result.
+		/// @param index Index in [0, count).
+		/// @return Borrowed pointer to the tile.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tile_to_render")]
+		public static extern CesiumTile ViewUpdateResultGetTileToRender(CesiumViewUpdateResult result, int index);
+
+		/// <summary>
+		/// @brief Gets the number of tiles fading out.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tiles_fading_out_count")]
+		public static extern int ViewUpdateResultGetTilesFadingOutCount(CesiumViewUpdateResult result);
+
+		/// <summary>
+		/// @brief Gets the current frame number.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_frame_number")]
+		public static extern int ViewUpdateResultGetFrameNumber(CesiumViewUpdateResult result);
+
+		/// <summary>
+		/// @brief Gets the number of tiles visited during traversal.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tiles_visited")]
+		public static extern uint ViewUpdateResultGetTilesVisited(CesiumViewUpdateResult result);
+
+		/// <summary>
+		/// @brief Gets the number of tiles culled during traversal.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tiles_culled")]
+		public static extern uint ViewUpdateResultGetTilesCulled(CesiumViewUpdateResult result);
+
+		/// <summary>
+		/// @brief Gets the maximum tree depth visited.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_max_depth_visited")]
+		public static extern uint ViewUpdateResultGetMaxDepthVisited(CesiumViewUpdateResult result);
+
+		/// <summary>
+		/// @brief Gets the worker thread tile load queue length.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_worker_thread_load_queue_length")]
+		public static extern int ViewUpdateResultGetWorkerThreadLoadQueueLength(CesiumViewUpdateResult result);
+
+		/// <summary>
+		/// @brief Gets the main thread tile load queue length.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_main_thread_load_queue_length")]
+		public static extern int ViewUpdateResultGetMainThreadLoadQueueLength(CesiumViewUpdateResult result);
+
+		/// <summary>
+		/// @brief Gets the tile's geometric error in meters.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_geometric_error")]
+		public static extern double TileGetGeometricError(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Gets the tile's 4x4 transform matrix.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_transform")]
+		public static extern CesiumMat4 TileGetTransform(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Gets the tile's load state.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_load_state")]
+		public static extern CesiumTileLoadState TileGetLoadState(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Returns 1 if the tile has renderable glTF content.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_has_render_content")]
+		public static extern int TileHasRenderContent(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Gets the glTF model from a tile's render content.
+		/// @return Borrowed model pointer, or NULL if the tile has no render content.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_render_content_model")]
+		public static extern CesiumGltfModel TileGetRenderContentModel(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Gets the renderer resources pointer set by prepareInMainThread.
+		/// @return The opaque renderer resources, or NULL.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_render_resources")]
+		public static extern void* TileGetRenderResources(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Gets the number of child tiles.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_children_count")]
+		public static extern int TileGetChildrenCount(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Gets a child tile by index.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_child")]
+		public static extern CesiumTile TileGetChild(CesiumTile tile, int index);
+
+		/// <summary>
+		/// @brief Gets the tile's bounding volume.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_bounding_volume")]
+		public static extern CesiumBoundingVolume TileGetBoundingVolume(CesiumTile tile);
+
+		/// <summary>
+		/// @brief Gets the LOD transition fade percentage (0.0 to 1.0).
+		/// Only meaningful when LOD transitions are enabled.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tile_get_lod_transition_fade_percentage")]
+		public static extern float TileGetLodTransitionFadePercentage(CesiumTile tile);
 	}
 }
