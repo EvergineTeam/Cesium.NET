@@ -3,20 +3,14 @@
 // -------------------------------------------------------------------------------------------------
 using System;
 using System.Runtime.InteropServices;
-using Evergine.Bindings.CesiumNative.Common;
-using Evergine.Bindings.CesiumNative.Geospatial;
-using Evergine.Bindings.CesiumNative.Gltf;
-using Evergine.Bindings.CesiumNative.Ion;
-using Evergine.Bindings.CesiumNative.RasterOverlays;
-using Evergine.Bindings.CesiumNative.Tileset;
 
-namespace Evergine.Bindings.CesiumNative.Common
+namespace Evergine.Bindings.CesiumNative
 {
 	/// <summary>
 	/// @brief A 2D vector (x, y).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumVec2
+	public unsafe partial struct CesiumVec2
 	{
 		public double x;
 		public double y;
@@ -26,7 +20,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// @brief A 3D Cartesian coordinate (x, y, z).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumVec3
+	public unsafe partial struct CesiumVec3
 	{
 		public double x;
 		public double y;
@@ -37,7 +31,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// @brief A 4x4 matrix stored in column-major order (matches glm and OpenGL).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumMat4
+	public unsafe partial struct CesiumMat4
 	{
 		public fixed double m[16];
 	}
@@ -47,7 +41,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// Longitude and latitude are in radians; height in meters.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumCartographic
+	public unsafe partial struct CesiumCartographic
 	{
 		public double longitude;
 		public double latitude;
@@ -58,7 +52,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// @brief A globe rectangle defined by west, south, east, north in radians.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumGlobeRectangle
+	public unsafe partial struct CesiumGlobeRectangle
 	{
 		public double west;
 		public double south;
@@ -70,7 +64,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// @brief A bounding sphere: center (x,y,z) and radius.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumBoundingSphere
+	public unsafe partial struct CesiumBoundingSphere
 	{
 		public CesiumVec3 center;
 		public double radius;
@@ -80,7 +74,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// @brief An oriented bounding box: center and half-axes (3x3 matrix, column-major).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumOrientedBoundingBox
+	public unsafe partial struct CesiumOrientedBoundingBox
 	{
 		public CesiumVec3 center;
 		/// <summary>
@@ -93,7 +87,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// @brief A bounding region: globe rectangle with min/max heights.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumBoundingRegion
+	public unsafe partial struct CesiumBoundingRegion
 	{
 		public CesiumGlobeRectangle rectangle;
 		public double minimumHeight;
@@ -104,7 +98,7 @@ namespace Evergine.Bindings.CesiumNative.Common
 	/// @brief A bounding volume represented as a tagged union.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumBoundingVolume
+	public unsafe partial struct CesiumBoundingVolume
 	{
 		public CesiumBoundingVolumeType type;
 		[StructLayout(LayoutKind.Explicit)]
@@ -120,17 +114,14 @@ namespace Evergine.Bindings.CesiumNative.Common
 
 		public CesiumBoundingVolume_volume volume;
 	}
-}
 
-namespace Evergine.Bindings.CesiumNative.Tileset
-{
 	/// <summary>
 	/// @brief A set of function pointers implementing IPrepareRendererResources.
 	/// All callbacks receive userData as the first argument. Any callback may be
 	/// NULL, in which case a no-op default is used for that operation.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct CesiumRendererResourceCallbacks
+	public unsafe partial struct CesiumRendererResourceCallbacks
 	{
 		public void* userData;
 		/// <summary>

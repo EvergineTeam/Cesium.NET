@@ -1,6 +1,10 @@
 using CppAst;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CesiumGen
 {
@@ -8,6 +12,7 @@ namespace CesiumGen
 	{
 		public static List<string> OpaqueHandleTypes = new List<string>();
 		public static List<string> DelegateNames = new List<string>();
+		public static List<string> DefinedStructNames = new List<string>();
 
 		private static readonly Dictionary<string, string> csNameMappings = new()
 		{
@@ -130,13 +135,13 @@ namespace CesiumGen
 			if (elementType is CppFunctionType)
 				return "IntPtr";
 
-			// Pointer to opaque handle struct → IntPtr
+			// Pointer to opaque handle struct → typed handle (blittable struct with IntPtr)
 			if (elementType is CppClass cls && OpaqueHandleTypes.Contains(cls.Name))
-				return "IntPtr";
+				return cls.Name;
 
-			// Pointer to typedef of opaque handle → IntPtr
+			// Pointer to typedef of opaque handle → typed handle
 			if (elementType is CppTypedef td && OpaqueHandleTypes.Contains(td.Name))
-				return "IntPtr";
+				return td.Name;
 
 			// For other pointer types, recurse
 			var inner = ConvertToCSharpType(elementType);
@@ -194,6 +199,96 @@ namespace CesiumGen
 					writer.WriteLine($"{tabs}/// {trimmed}");
 			}
 			writer.WriteLine($"{tabs}/// </summary>");
+		}
+
+		public static string ClearFunctionName(string name)
+		{
+			if (name.StartsWith("cesium_"))
+				name = name.Substring(7);
+			name = string.Concat(name.Split("_").Select(word => char.ToUpper(word[0]) + word.Substring(1)));
+
+			return name;
+		}
+
+		/// <summary>
+		/// Converts a PascalCase name to snake_case.
+		/// E.g. "CesiumTilesetOptions" → "cesium_tileset_options"
+		/// </summary>
+		public static string PascalToSnakeCase(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return name;
+			var sb = new StringBuilder();
+			for (int i = 0; i < name.Length; i++)
+			{
+				var c = name[i];
+				if (char.IsUpper(c))
+				{
+					// Insert underscore before uppercase letter, except at start
+					// Also avoid double underscores for consecutive capitals like "CGltf"
+					if (i > 0 && !char.IsUpper(name[i - 1]))
+						sb.Append('_');
+					else if (i > 0 && i + 1 < name.Length && !char.IsUpper(name[i + 1]))
+						sb.Append('_');
+					sb.Append(char.ToLower(c));
+				}
+				else
+				{
+					sb.Append(c);
+				}
+			}
+			return sb.ToString();
+		}
+
+		/// <summary>
+		/// Gets the C function prefix for a handle or struct name.
+		/// E.g. "CesiumEllipsoid" → "cesium_ellipsoid_"
+		/// </summary>
+		public static string GetCFunctionPrefix(string typeName)
+		{
+			return PascalToSnakeCase(typeName) + "_";
+		}
+
+		/// <summary>
+		/// Checks if a C function's return type is const char* (string return).
+		/// </summary>
+		public static bool IsConstCharPointerReturn(CppType returnType)
+		{
+			return IsConstCharPointer(returnType);
+		}
+
+		/// <summary>
+		/// Checks if a C function name represents a boolean operation
+		/// based on common naming patterns.
+		/// </summary>
+		public static bool IsBooleanFunction(string strippedName)
+		{
+			// After stripping the type prefix, check patterns like:
+			// is_root_tile_available, has_render_content, contains
+			return strippedName.StartsWith("is_")
+				|| strippedName.StartsWith("has_")
+				|| strippedName.StartsWith("contains");
+		}
+
+		/// <summary>
+		/// Checks if a property name represents a boolean option
+		/// based on common naming patterns (enable_*, preload_*, forbid_*).
+		/// </summary>
+		public static bool IsBooleanProperty(string propertySnakeName)
+		{
+			return propertySnakeName.StartsWith("enable_")
+				|| propertySnakeName.StartsWith("preload_")
+				|| propertySnakeName.StartsWith("forbid_");
+		}
+
+		/// <summary>
+		/// Converts a snake_case name part to PascalCase.
+		/// E.g. "get_radii" → "GetRadii"
+		/// </summary>
+		public static string SnakeToPascalCase(string snake)
+		{
+			if (string.IsNullOrEmpty(snake)) return snake;
+			return string.Concat(snake.Split('_', StringSplitOptions.RemoveEmptyEntries)
+				.Select(word => char.ToUpper(word[0]) + word.Substring(1)));
 		}
 	}
 }
