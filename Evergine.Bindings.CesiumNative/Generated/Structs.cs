@@ -116,6 +116,171 @@ namespace Evergine.Bindings.CesiumNative
 	}
 
 	/// <summary>
+	/// @brief Resolved accessor data providing zero-copy access to vertex/index
+	/// buffer data. Returned by cesium_gltf_accessor_get_data.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public unsafe partial struct CesiumAccessorData
+	{
+		/// <summary>
+		/// Pointer to the first element in the buffer (owned by the model).
+		/// </summary>
+		public void* data;
+		/// <summary>
+		/// Byte stride between consecutive elements.
+		/// </summary>
+		public nuint stride;
+		/// <summary>
+		/// Number of elements.
+		/// </summary>
+		public int count;
+		/// <summary>
+		/// glTF component type (5126=FLOAT, 5123=UNSIGNED_SHORT, 5125=UNSIGNED_INT, etc.).
+		/// </summary>
+		public int componentType;
+		/// <summary>
+		/// Number of components per element (1=SCALAR, 2=VEC2, 3=VEC3, 4=VEC4, 9=MAT3, 16=MAT4).
+		/// </summary>
+		public int numberOfComponents;
+		/// <summary>
+		/// Total byte length of the accessible data region.
+		/// </summary>
+		public nuint byteLength;
+	}
+
+	/// <summary>
+	/// @brief A reference to a texture, as used by material properties.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public unsafe partial struct CesiumTextureInfo
+	{
+		/// <summary>
+		/// Index into Model.textures (-1 if not set).
+		/// </summary>
+		public int textureIndex;
+		/// <summary>
+		/// Texture coordinate set index (e.g. 0 for TEXCOORD_0).
+		/// </summary>
+		public int texCoord;
+		/// <summary>
+		/// Per-property extra scale (normalTexture.scale or occlusionTexture.strength, 1.0 otherwise).
+		/// </summary>
+		public double scale;
+	}
+
+	/// <summary>
+	/// @brief PBR metallic-roughness material data.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public unsafe partial struct CesiumMaterialData
+	{
+		/// <summary>
+		/// Base color factor (RGBA, linear).
+		/// </summary>
+		public fixed double baseColorFactor[4];
+		/// <summary>
+		/// Metallic factor [0..1].
+		/// </summary>
+		public double metallicFactor;
+		/// <summary>
+		/// Roughness factor [0..1].
+		/// </summary>
+		public double roughnessFactor;
+		/// <summary>
+		/// Emissive factor (RGB, linear).
+		/// </summary>
+		public fixed double emissiveFactor[3];
+		/// <summary>
+		/// Alpha cutoff threshold (used when alphaMode == 1).
+		/// </summary>
+		public double alphaCutoff;
+		/// <summary>
+		/// Alpha mode: 0 = OPAQUE, 1 = MASK, 2 = BLEND.
+		/// </summary>
+		public int alphaMode;
+		/// <summary>
+		/// 1 if double-sided, 0 otherwise.
+		/// </summary>
+		public int doubleSided;
+		/// <summary>
+		/// Base color texture. textureIndex == -1 if not set.
+		/// </summary>
+		public CesiumTextureInfo baseColorTexture;
+		/// <summary>
+		/// Metallic-roughness texture. textureIndex == -1 if not set.
+		/// </summary>
+		public CesiumTextureInfo metallicRoughnessTexture;
+		/// <summary>
+		/// Normal map texture. textureIndex == -1 if not set.
+		/// </summary>
+		public CesiumTextureInfo normalTexture;
+		/// <summary>
+		/// Occlusion texture. textureIndex == -1 if not set.
+		/// </summary>
+		public CesiumTextureInfo occlusionTexture;
+		/// <summary>
+		/// Emissive texture. textureIndex == -1 if not set.
+		/// </summary>
+		public CesiumTextureInfo emissiveTexture;
+	}
+
+	/// <summary>
+	/// @brief Sampler data with filter and wrap modes.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public unsafe partial struct CesiumSamplerData
+	{
+		/// <summary>
+		/// Magnification filter (9728=NEAREST, 9729=LINEAR), -1 if not set.
+		/// </summary>
+		public int magFilter;
+		/// <summary>
+		/// Minification filter (9728..9987), -1 if not set.
+		/// </summary>
+		public int minFilter;
+		/// <summary>
+		/// Wrap mode S (10497=REPEAT, 33071=CLAMP_TO_EDGE, 33648=MIRRORED_REPEAT).
+		/// </summary>
+		public int wrapS;
+		/// <summary>
+		/// Wrap mode T.
+		/// </summary>
+		public int wrapT;
+	}
+
+	/// <summary>
+	/// @brief Decoded image data (pixel buffer).
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public unsafe partial struct CesiumImageData
+	{
+		/// <summary>
+		/// Pointer to the pixel data (owned by the model).
+		/// </summary>
+		public void* pixelData;
+		/// <summary>
+		/// Total size of the pixel data in bytes.
+		/// </summary>
+		public nuint pixelDataSize;
+		/// <summary>
+		/// Image width in pixels.
+		/// </summary>
+		public int width;
+		/// <summary>
+		/// Image height in pixels.
+		/// </summary>
+		public int height;
+		/// <summary>
+		/// Number of channels (1=grey, 2=grey+alpha, 3=RGB, 4=RGBA).
+		/// </summary>
+		public int channels;
+		/// <summary>
+		/// Bytes per channel (typically 1).
+		/// </summary>
+		public int bytesPerChannel;
+	}
+
+	/// <summary>
 	/// @brief A set of function pointers implementing IPrepareRendererResources.
 	/// All callbacks receive userData as the first argument. Any callback may be
 	/// NULL, in which case a no-op default is used for that operation.

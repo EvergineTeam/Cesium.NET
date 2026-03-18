@@ -5,7 +5,12 @@ namespace Example;
 
 internal unsafe static class Program
 {
-    const string IonAccessToken = "";
+    const string IonAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzQyOGI4MC02NWE2LTRhODEtYWIzMS00N2JkNDRhODgzYTEiLCJpZCI6Mzk2NjYxLCJpYXQiOjE3NzI0NTMzMjF9.KrVH1ATAsBlBsAG17f0lzBmDPHj9Cv25wbhhY4hGE8c";
+
+    private static readonly CesiumRendererResourceCallbacksSet RendererCallbacks = new()
+    {
+        PrepareInLoadThread = PrepareInLoadThread,
+    };
 
     public static CesiumViewState createViewState(CesiumCartographic worldCoordinates)
     {
@@ -39,64 +44,82 @@ internal unsafe static class Program
         using CesiumCreditSystem creditSystem = CesiumCreditSystem.Create();
 
         using CesiumTilesetExternals externals = CesiumTilesetExternals.Create(asyncSystem, assetAccessor, creditSystem);
+        externals.SetRendererResourceCallbacks(RendererCallbacks);
 
-        // Configure tileset options using C# properties.
-        var options = CesiumTilesetOptions.Create();
-        options.MaximumScreenSpaceError = 32;
-        options.EnableFrustumCulling = true;
-        options.EnableOcclusionCulling = true;
-        options.PreloadSiblings = true;
-        options.MaximumSimultaneousTileLoads = 8;
-        options.SetLoadErrorCallback(ErrorCallback, null);
-
-        // Create tileset from Ion.
-        using CesiumTileset tileset = CesiumTileset.CreateFromIon(externals, 1, IonAccessToken, options, null);
-
-        if (tileset == CesiumTileset.Null)
+        try
         {
-            string errorMessage = CesiumNativeApi.GetLastError() ?? "Unknown error";
-            Console.WriteLine($"Failed to create tileset: {errorMessage}");
-            return;
-        }
+            // Configure tileset options using C# properties.
+            var options = CesiumTilesetOptions.Create();
+            options.MaximumScreenSpaceError = 32;
+            options.EnableFrustumCulling = true;
+            options.EnableOcclusionCulling = true;
+            options.PreloadSiblings = true;
+            options.MaximumSimultaneousTileLoads = 8;
+            options.SetLoadErrorCallback(ErrorCallback, null);
 
+            // Create tileset from Ion.
+            using CesiumTileset tileset = CesiumTileset.CreateFromIon(externals, 1, IonAccessToken, options, null);
 
-        // Wait for the tileset to load.
-        Console.WriteLine("Loading root tile...");
-        while (!tileset.IsRootTileAvailable())
-        {
-            asyncSystem.DispatchMainThreadTasks();
-            Thread.Sleep(10);
-        }
-
-        Console.WriteLine("Root tile loaded successfully!");
-        // Coordinates in degrees for interpolation
-        double initLon = -6, initLat = 37.38, initHeight = 10.0;
-        double lastLon = -3.78, lastLat = 37.7787, lastHeight = 10.0;
-        int numSteps = 200;
-        for (int i = 0; i <= numSteps; i++)
-        {
-            double lon = initLon + (lastLon - initLon) * i / numSteps;
-            double lat = initLat + (lastLat - initLat) * i / numSteps;
-            double height = initHeight + (lastHeight - initHeight) * i / numSteps;
-
-            // CesiumCartographic expects radians, so use FromDegrees to convert
-            CesiumCartographic interpolatedPos = CesiumCartographic.FromDegrees(lon, lat, height);
-            CesiumViewState state = createViewState(interpolatedPos);
-            CesiumViewUpdateResult result = tileset.UpdateView(&state, 1, 0.016f);
-            
-            Console.WriteLine($"Frame number: {result.FrameNumber}");
-            Console.WriteLine($"Number of tiles to render: {result.TilesToRenderCount}");
-            Console.WriteLine($"TilesVisited: {result.TilesVisited}");
-            Console.WriteLine($"TilesCulled: {result.TilesCulled}");
-            Console.WriteLine($"MaxDepth: {result.MaxDepthVisited}");
-            for (int j = 0; j < result.TilesToRenderCount; j++)
+            if (tileset == CesiumTileset.Null)
             {
-                CesiumTile tile = result.GetTileToRender(j);
-                Console.WriteLine($"  Tile {j}: LoadState={tile.LoadState}, GeometricError={tile.GeometricError}, HasRenderContent={tile.HasRenderContent()}");
+                string errorMessage = CesiumNativeApi.GetLastError() ?? "Unknown error";
+                Console.WriteLine($"Failed to create tileset: {errorMessage}");
+                return;
             }
-            Console.WriteLine("----------------------------------------------------------------");
-            Thread.Sleep(16);
+
+
+            // Wait for the tileset to load.
+            Console.WriteLine("Loading root tile...");
+            while (!tileset.IsRootTileAvailable())
+            {
+                asyncSystem.DispatchMainThreadTasks();
+                Thread.Sleep(10);
+            }
+
+            Console.WriteLine("Root tile loaded successfully!");
+            // Coordinates in degrees for interpolation
+            double initLon = -6, initLat = 37.38, initHeight = 10.0;
+            double lastLon = -3.78, lastLat = 37.7787, lastHeight = 10.0;
+            int numSteps = 200;
+            for (int i = 0; i <= numSteps; i++)
+            {
+                double lon = initLon + (lastLon - initLon) * i / numSteps;
+                double lat = initLat + (lastLat - initLat) * i / numSteps;
+                double height = initHeight + (lastHeight - initHeight) * i / numSteps;
+
+                // CesiumCartographic expects radians, so use FromDegrees to convert
+                CesiumCartographic interpolatedPos = CesiumCartographic.FromDegrees(lon, lat, height);
+                CesiumViewState state = createViewState(interpolatedPos);
+                CesiumViewUpdateResult result = tileset.UpdateView(&state, 1, 0.016f);
+
+                Console.WriteLine($"Frame number: {result.FrameNumber}");
+                Console.WriteLine($"Number of tiles to render: {result.TilesToRenderCount}");
+                Console.WriteLine($"TilesVisited: {result.TilesVisited}");
+                Console.WriteLine($"TilesCulled: {result.TilesCulled}");
+                Console.WriteLine($"MaxDepth: {result.MaxDepthVisited}");
+                for (int j = 0; j < result.TilesToRenderCount; j++)
+                {
+                    CesiumTile tile = result.GetTileToRender(j);
+                    Console.WriteLine($"  Tile {j}: LoadState={tile.LoadState}, GeometricError={tile.GeometricError}, HasRenderContent={tile.HasRenderContent()}");
+                }
+                Console.WriteLine("----------------------------------------------------------------");
+                Thread.Sleep(16);
+            }
         }
+        finally
+        {
+            externals.ClearRendererResourceCallbacks();
+        }
+    }
+
+    private static void* PrepareInLoadThread(void* userData, CesiumGltfModel model, CesiumMat4 transform)
+    {
+        if (model != CesiumGltfModel.Null)
+        {
+            Console.WriteLine($"[Callback] {model.GetMeshName(0)} glTF model received. Meshes={model.MeshCount}, Materials={model.MaterialCount}, Buffers={model.BufferCount}");           
+        }
+
+        return null;
     }
 
     private static void ErrorCallback(void* userData, byte* message)

@@ -215,10 +215,172 @@ namespace Evergine.Bindings.CesiumNative
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetSkinCount(this);
 
 		/// <summary>
+		/// @brief Gets the default scene index. Returns -1 if none specified.
+		/// </summary>
+		public int DefaultScene
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetDefaultScene(this);
+
+		/// <summary>
 		/// @brief Gets the name of a mesh. Returns empty string if no name.
 		/// </summary>
 		public string GetMeshName(int meshIndex)
 			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelGetMeshName(this, meshIndex));
+
+		/// <summary>
+		/// @brief Gets the number of primitives in a mesh.
+		/// </summary>
+		public int MeshGetPrimitiveCount(int meshIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfMeshGetPrimitiveCount(this, meshIndex);
+
+		/// <summary>
+		/// @brief Gets the rendering mode of a primitive (0=POINTS, 1=LINES, 4=TRIANGLES, etc.).
+		/// </summary>
+		public int PrimitiveGetMode(int meshIndex, int primitiveIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfPrimitiveGetMode(this, meshIndex, primitiveIndex);
+
+		/// <summary>
+		/// @brief Gets the material index of a primitive. Returns -1 if no material is assigned.
+		/// </summary>
+		public int PrimitiveGetMaterialIndex(int meshIndex, int primitiveIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfPrimitiveGetMaterialIndex(this, meshIndex, primitiveIndex);
+
+		/// <summary>
+		/// @brief Gets the accessor index for the indices of a primitive. Returns -1 if the primitive
+		/// has no index buffer (non-indexed rendering).
+		/// </summary>
+		public int PrimitiveGetIndicesAccessorIndex(int meshIndex, int primitiveIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfPrimitiveGetIndicesAccessorIndex(this, meshIndex, primitiveIndex);
+
+		/// <summary>
+		/// @brief Gets the number of vertex attributes on a primitive.
+		/// </summary>
+		public int PrimitiveGetAttributeCount(int meshIndex, int primitiveIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfPrimitiveGetAttributeCount(this, meshIndex, primitiveIndex);
+
+		/// <summary>
+		/// @brief Gets the semantic name of a vertex attribute by index (e.g. "POSITION", "NORMAL").
+		/// The iteration order is unspecified. Returns empty string on invalid index.
+		/// </summary>
+		public string PrimitiveGetAttributeName(int meshIndex, int primitiveIndex, int attributeIndex)
+			=> Marshal.PtrToStringUTF8((IntPtr)Evergine.Bindings.CesiumNative.CesiumAPI.GltfPrimitiveGetAttributeName(this, meshIndex, primitiveIndex, attributeIndex));
+
+		/// <summary>
+		/// @brief Gets the accessor index of a vertex attribute by its iteration index.
+		/// Returns -1 on invalid index.
+		/// </summary>
+		public int PrimitiveGetAttributeAccessorIndex(int meshIndex, int primitiveIndex, int attributeIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfPrimitiveGetAttributeAccessorIndex(this, meshIndex, primitiveIndex, attributeIndex);
+
+		/// <summary>
+		/// @brief Finds the accessor index for a named vertex attribute (e.g. "POSITION").
+		/// Returns -1 if the attribute is not present.
+		/// </summary>
+		public int PrimitiveFindAttributeAccessorIndex(int meshIndex, int primitiveIndex, string attributeName)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfPrimitiveFindAttributeAccessorIndex(this, meshIndex, primitiveIndex, attributeName);
+
+		/// <summary>
+		/// @brief Resolves an accessor into a zero-copy data pointer.
+		/// Follows the accessor -> bufferView -> buffer chain and fills the output struct.
+		/// @param model The model.
+		/// @param accessorIndex Index of the accessor.
+		/// @param out Output struct to fill with the resolved data pointer and metadata.
+		/// @return 1 on success, 0 on failure (invalid index or missing buffer data).
+		/// </summary>
+		public int AccessorGetData(int accessorIndex, CesiumAccessorData* @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfAccessorGetData(this, accessorIndex, @out);
+
+		/// <summary>
+		/// @brief Gets the number of root nodes in a scene.
+		/// </summary>
+		public int SceneGetNodeCount(int sceneIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfSceneGetNodeCount(this, sceneIndex);
+
+		/// <summary>
+		/// @brief Gets a root node index from a scene.
+		/// </summary>
+		public int SceneGetNode(int sceneIndex, int index)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfSceneGetNode(this, sceneIndex, index);
+
+		/// <summary>
+		/// @brief Gets the mesh index assigned to a node. Returns -1 if the node has no mesh.
+		/// </summary>
+		public int NodeGetMesh(int nodeIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetMesh(this, nodeIndex);
+
+		/// <summary>
+		/// @brief Gets the number of children of a node.
+		/// </summary>
+		public int NodeGetChildrenCount(int nodeIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetChildrenCount(this, nodeIndex);
+
+		/// <summary>
+		/// @brief Gets a child node index from a parent node.
+		/// </summary>
+		public int NodeGetChild(int nodeIndex, int childIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetChild(this, nodeIndex, childIndex);
+
+		/// <summary>
+		/// @brief Gets the 4x4 column-major transformation matrix of a node.
+		/// @param out Array of 16 doubles to receive the matrix.
+		/// @return 1 if the node uses an explicit matrix, 0 if it uses TRS decomposition (out is still filled
+		/// with the identity default in that case if the node has no explicit matrix set).
+		/// </summary>
+		public int NodeGetMatrix(int nodeIndex, double @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetMatrix(this, nodeIndex, @out);
+
+		/// <summary>
+		/// @brief Gets the translation of a node.
+		/// @param out Array of 3 doubles (x, y, z).
+		/// </summary>
+		public void NodeGetTranslation(int nodeIndex, double @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetTranslation(this, nodeIndex, @out);
+
+		/// <summary>
+		/// @brief Gets the rotation quaternion of a node.
+		/// @param out Array of 4 doubles (x, y, z, w).
+		/// </summary>
+		public void NodeGetRotation(int nodeIndex, double @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetRotation(this, nodeIndex, @out);
+
+		/// <summary>
+		/// @brief Gets the scale of a node.
+		/// @param out Array of 3 doubles (x, y, z).
+		/// </summary>
+		public void NodeGetScale(int nodeIndex, double @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetScale(this, nodeIndex, @out);
+
+		/// <summary>
+		/// @brief Fills a CesiumMaterialData struct with the properties of a material.
+		/// @return 1 on success, 0 on invalid index.
+		/// </summary>
+		public int MaterialGetData(int materialIndex, CesiumMaterialData* @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfMaterialGetData(this, materialIndex, @out);
+
+		/// <summary>
+		/// @brief Gets the image (source) index of a texture. Returns -1 if not set.
+		/// </summary>
+		public int TextureGetSource(int textureIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfTextureGetSource(this, textureIndex);
+
+		/// <summary>
+		/// @brief Gets the sampler index of a texture. Returns -1 if not set.
+		/// </summary>
+		public int TextureGetSampler(int textureIndex)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfTextureGetSampler(this, textureIndex);
+
+		/// <summary>
+		/// @brief Fills a CesiumSamplerData struct with the properties of a sampler.
+		/// @return 1 on success, 0 on invalid index.
+		/// </summary>
+		public int SamplerGetData(int samplerIndex, CesiumSamplerData* @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfSamplerGetData(this, samplerIndex, @out);
+
+		/// <summary>
+		/// @brief Fills a CesiumImageData struct with the decoded pixel data of an image.
+		/// @return 1 on success, 0 on failure (invalid index or no pixel data available).
+		/// </summary>
+		public int ImageGetData(int imageIndex, CesiumImageData* @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfImageGetData(this, imageIndex, @out);
 	}
 
 	public unsafe partial struct CesiumCGltfReaderResult : IEquatable<CesiumCGltfReaderResult>, IDisposable

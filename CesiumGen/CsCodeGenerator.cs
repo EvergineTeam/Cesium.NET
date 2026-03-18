@@ -237,6 +237,36 @@ namespace CesiumGen
 						if (handlePrefix != null && cName.StartsWith(handlePrefix))
 							info.MethodName = Helpers.SnakeToPascalCase(cName.Substring(handlePrefix.Length));
 					}
+					else if (f.Parameters.Count > 0 && GetFirstParamHandleType(f) is string firstParamHandle)
+					{
+						// First parameter is a handle type — treat as instance method on that handle
+						info.OwnerType = firstParamHandle;
+						info.Role = FunctionRole.InstanceMethod;
+						// Derive method name: strip the handle's known prefix, or try the
+						// prefix minus the last segment (e.g. "cesium_gltf_model_" → "cesium_gltf_")
+						// to handle sub-object functions like cesium_gltf_mesh_get_primitive_count
+						var handlePrefix = prefixMap.GetValueOrDefault(firstParamHandle);
+						string snakeSuffix = cName;
+						if (handlePrefix != null && cName.StartsWith(handlePrefix))
+						{
+							snakeSuffix = cName.Substring(handlePrefix.Length);
+						}
+						else if (handlePrefix != null)
+						{
+							// Try trimming last segment: "cesium_gltf_model_" → "cesium_gltf_"
+							var trimmed = handlePrefix.TrimEnd('_');
+							var lastUnderscore = trimmed.LastIndexOf('_');
+							if (lastUnderscore > 0)
+							{
+								var shorterPrefix = trimmed.Substring(0, lastUnderscore + 1);
+								if (cName.StartsWith(shorterPrefix))
+									snakeSuffix = cName.Substring(shorterPrefix.Length);
+							}
+						}
+						info.StrippedSnakeName = snakeSuffix;
+						info.MethodName = Helpers.SnakeToPascalCase(snakeSuffix);
+						info.IsStringReturn = Helpers.IsConstCharPointerReturn(f.ReturnType);
+					}
 					else
 					{
 						info.Role = FunctionRole.GlobalFunction;
@@ -423,6 +453,26 @@ namespace CesiumGen
 		{
 			var retType = f.ReturnType;
 			if (retType is CppPointerType pt)
+			{
+				var elem = pt.ElementType;
+				while (elem is CppQualifiedType qt) elem = qt.ElementType;
+				if (elem is CppClass cls && Helpers.OpaqueHandleTypes.Contains(cls.Name))
+					return cls.Name;
+				if (elem is CppTypedef td && Helpers.OpaqueHandleTypes.Contains(td.Name))
+					return td.Name;
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// If the first parameter of a function is a handle type (pointer to opaque struct),
+		/// returns that handle type name. Used to assign unmatched functions as instance methods.
+		/// </summary>
+		private string GetFirstParamHandleType(CppFunction f)
+		{
+			if (f.Parameters.Count == 0) return null;
+			var paramType = f.Parameters[0].Type;
+			if (paramType is CppPointerType pt)
 			{
 				var elem = pt.ElementType;
 				while (elem is CppQualifiedType qt) elem = qt.ElementType;

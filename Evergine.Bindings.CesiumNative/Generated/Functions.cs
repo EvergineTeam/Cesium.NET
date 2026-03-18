@@ -282,6 +282,168 @@ namespace Evergine.Bindings.CesiumNative
 		public static extern int GltfModelGetSkinCount(CesiumGltfModel model);
 
 		/// <summary>
+		/// @brief Gets the number of primitives in a mesh.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_mesh_get_primitive_count")]
+		public static extern int GltfMeshGetPrimitiveCount(CesiumGltfModel model, int meshIndex);
+
+		/// <summary>
+		/// @brief Gets the rendering mode of a primitive (0=POINTS, 1=LINES, 4=TRIANGLES, etc.).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_primitive_get_mode")]
+		public static extern int GltfPrimitiveGetMode(CesiumGltfModel model, int meshIndex, int primitiveIndex);
+
+		/// <summary>
+		/// @brief Gets the material index of a primitive. Returns -1 if no material is assigned.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_primitive_get_material_index")]
+		public static extern int GltfPrimitiveGetMaterialIndex(CesiumGltfModel model, int meshIndex, int primitiveIndex);
+
+		/// <summary>
+		/// @brief Gets the accessor index for the indices of a primitive. Returns -1 if the primitive
+		/// has no index buffer (non-indexed rendering).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_primitive_get_indices_accessor_index")]
+		public static extern int GltfPrimitiveGetIndicesAccessorIndex(CesiumGltfModel model, int meshIndex, int primitiveIndex);
+
+		/// <summary>
+		/// @brief Gets the number of vertex attributes on a primitive.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_primitive_get_attribute_count")]
+		public static extern int GltfPrimitiveGetAttributeCount(CesiumGltfModel model, int meshIndex, int primitiveIndex);
+
+		/// <summary>
+		/// @brief Gets the semantic name of a vertex attribute by index (e.g. "POSITION", "NORMAL").
+		/// The iteration order is unspecified. Returns empty string on invalid index.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_primitive_get_attribute_name")]
+		public static extern byte* GltfPrimitiveGetAttributeName(CesiumGltfModel model, int meshIndex, int primitiveIndex, int attributeIndex);
+
+		/// <summary>
+		/// @brief Gets the accessor index of a vertex attribute by its iteration index.
+		/// Returns -1 on invalid index.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_primitive_get_attribute_accessor_index")]
+		public static extern int GltfPrimitiveGetAttributeAccessorIndex(CesiumGltfModel model, int meshIndex, int primitiveIndex, int attributeIndex);
+
+		/// <summary>
+		/// @brief Finds the accessor index for a named vertex attribute (e.g. "POSITION").
+		/// Returns -1 if the attribute is not present.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_primitive_find_attribute_accessor_index")]
+		public static extern int GltfPrimitiveFindAttributeAccessorIndex(CesiumGltfModel model, int meshIndex, int primitiveIndex, [MarshalAs(UnmanagedType.LPStr)] string attributeName);
+
+		/// <summary>
+		/// @brief Resolves an accessor into a zero-copy data pointer.
+		/// Follows the accessor -> bufferView -> buffer chain and fills the output struct.
+		/// @param model The model.
+		/// @param accessorIndex Index of the accessor.
+		/// @param out Output struct to fill with the resolved data pointer and metadata.
+		/// @return 1 on success, 0 on failure (invalid index or missing buffer data).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_accessor_get_data")]
+		public static extern int GltfAccessorGetData(CesiumGltfModel model, int accessorIndex, CesiumAccessorData* @out);
+
+		/// <summary>
+		/// @brief Gets the default scene index. Returns -1 if none specified.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_get_default_scene")]
+		public static extern int GltfModelGetDefaultScene(CesiumGltfModel model);
+
+		/// <summary>
+		/// @brief Gets the number of root nodes in a scene.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_scene_get_node_count")]
+		public static extern int GltfSceneGetNodeCount(CesiumGltfModel model, int sceneIndex);
+
+		/// <summary>
+		/// @brief Gets a root node index from a scene.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_scene_get_node")]
+		public static extern int GltfSceneGetNode(CesiumGltfModel model, int sceneIndex, int index);
+
+		/// <summary>
+		/// @brief Gets the mesh index assigned to a node. Returns -1 if the node has no mesh.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_mesh")]
+		public static extern int GltfNodeGetMesh(CesiumGltfModel model, int nodeIndex);
+
+		/// <summary>
+		/// @brief Gets the number of children of a node.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_children_count")]
+		public static extern int GltfNodeGetChildrenCount(CesiumGltfModel model, int nodeIndex);
+
+		/// <summary>
+		/// @brief Gets a child node index from a parent node.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_child")]
+		public static extern int GltfNodeGetChild(CesiumGltfModel model, int nodeIndex, int childIndex);
+
+		/// <summary>
+		/// @brief Gets the 4x4 column-major transformation matrix of a node.
+		/// @param out Array of 16 doubles to receive the matrix.
+		/// @return 1 if the node uses an explicit matrix, 0 if it uses TRS decomposition (out is still filled
+		/// with the identity default in that case if the node has no explicit matrix set).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_matrix")]
+		public static extern int GltfNodeGetMatrix(CesiumGltfModel model, int nodeIndex, double @out);
+
+		/// <summary>
+		/// @brief Gets the translation of a node.
+		/// @param out Array of 3 doubles (x, y, z).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_translation")]
+		public static extern void GltfNodeGetTranslation(CesiumGltfModel model, int nodeIndex, double @out);
+
+		/// <summary>
+		/// @brief Gets the rotation quaternion of a node.
+		/// @param out Array of 4 doubles (x, y, z, w).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_rotation")]
+		public static extern void GltfNodeGetRotation(CesiumGltfModel model, int nodeIndex, double @out);
+
+		/// <summary>
+		/// @brief Gets the scale of a node.
+		/// @param out Array of 3 doubles (x, y, z).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_scale")]
+		public static extern void GltfNodeGetScale(CesiumGltfModel model, int nodeIndex, double @out);
+
+		/// <summary>
+		/// @brief Fills a CesiumMaterialData struct with the properties of a material.
+		/// @return 1 on success, 0 on invalid index.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_material_get_data")]
+		public static extern int GltfMaterialGetData(CesiumGltfModel model, int materialIndex, CesiumMaterialData* @out);
+
+		/// <summary>
+		/// @brief Gets the image (source) index of a texture. Returns -1 if not set.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_texture_get_source")]
+		public static extern int GltfTextureGetSource(CesiumGltfModel model, int textureIndex);
+
+		/// <summary>
+		/// @brief Gets the sampler index of a texture. Returns -1 if not set.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_texture_get_sampler")]
+		public static extern int GltfTextureGetSampler(CesiumGltfModel model, int textureIndex);
+
+		/// <summary>
+		/// @brief Fills a CesiumSamplerData struct with the properties of a sampler.
+		/// @return 1 on success, 0 on invalid index.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_sampler_get_data")]
+		public static extern int GltfSamplerGetData(CesiumGltfModel model, int samplerIndex, CesiumSamplerData* @out);
+
+		/// <summary>
+		/// @brief Fills a CesiumImageData struct with the decoded pixel data of an image.
+		/// @return 1 on success, 0 on failure (invalid index or no pixel data available).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_image_get_data")]
+		public static extern int GltfImageGetData(CesiumGltfModel model, int imageIndex, CesiumImageData* @out);
+
+		/// <summary>
 		/// @brief Creates an async system with a built-in thread pool.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_create")]
