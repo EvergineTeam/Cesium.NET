@@ -74,6 +74,8 @@ namespace CesiumGen
 		// Handle types that have a destroy function — get IDisposable
 		private HashSet<string> _ownableHandleTypes = new();
 		private Dictionary<string, string> _structNamespaces = new();
+		// Structs that contain function pointer fields (callback structs)
+		private List<CppClass> _callbackStructs = new();
 
 		private static readonly string[] SubNamespaceUsings = Array.Empty<string>();
 
@@ -116,6 +118,14 @@ namespace CesiumGen
 				.Select(t => t.Name)
 				.ToList();
 
+			// Collect callback structs (structs containing function pointer fields)
+			_callbackStructs = compilation.Classes
+				.Where(c => c.ClassKind == CppClassKind.Struct
+					&& c.IsDefinition
+					&& !string.IsNullOrEmpty(c.Name)
+					&& c.Fields.Any(f => Helpers.IsFunctionPointerField(f)))
+				.ToList();
+
 			Console.WriteLine($"Found {_opaqueHandles.Count} opaque handle types:");
 			foreach (var h in _opaqueHandles)
 				Console.WriteLine($"  {h.Name} ({Path.GetFileName(h.File)})");
@@ -123,6 +133,13 @@ namespace CesiumGen
 			Console.WriteLine($"Found {Helpers.DelegateNames.Count} delegates:");
 			foreach (var d in Helpers.DelegateNames)
 				Console.WriteLine($"  {d}");
+
+			Console.WriteLine($"Found {_callbackStructs.Count} callback structs:");
+			foreach (var cs in _callbackStructs)
+			{
+				var fpCount = cs.Fields.Count(f => Helpers.IsFunctionPointerField(f));
+				Console.WriteLine($"  {cs.Name} ({fpCount} function pointers)");
+			}
 
 			// Analyze functions before generating
 			var functions = compilation.Functions
@@ -145,6 +162,7 @@ namespace CesiumGen
 			GenerateFunctions(compilation, outputPath);
 			GenerateHandles(outputPath);
 			GenerateStructMethods(outputPath);
+			GenerateCallbacks(outputPath);
 		}
 
 		private bool IsFunctionPointerTypedef(CppTypedef typedef)
@@ -453,11 +471,26 @@ namespace CesiumGen
 		/// <summary>
 		/// A "simple setter" is a function with exactly (owner, value) — 2 params.
 		/// Setters with more params (e.g., callback + userData) are treated as instance methods.
+		/// Also rejects setters where the value parameter is a pointer to a defined struct
+		/// (e.g., set_renderer_resource_callbacks takes CesiumRendererResourceCallbacks*),
+		/// since those are better expressed as instance methods.
 		/// </summary>
 		private bool IsSimpleSetter(CppFunction f, string ownerType)
 		{
 			if (f.Parameters.Count != 2) return false;
-			return IsParameterOfType(f.Parameters[0], ownerType);
+			if (!IsParameterOfType(f.Parameters[0], ownerType)) return false;
+
+			// Reject if the value parameter is a pointer to a defined struct
+			var valueType = f.Parameters[1].Type;
+			if (valueType is CppPointerType pt)
+			{
+				var elem = pt.ElementType;
+				while (elem is CppQualifiedType qt) elem = qt.ElementType;
+				if (elem is CppClass cls && Helpers.DefinedStructNames.Contains(cls.Name))
+					return false;
+			}
+
+			return true;
 		}
 
 		private bool IsParameterOfType(CppParameter param, string typeName)
@@ -1452,6 +1485,238 @@ namespace CesiumGen
 
 				writer.WriteLine("}");
 			}
+		}
+
+		// =====================================================================
+		// Callbacks (delegates + managed wrappers for callback structs)
+		// =====================================================================
+
+		private void GenerateCallbacks(string outputPath)
+		{
+			if (_callbackStructs.Count == 0) return;
+
+			Console.WriteLine($"Generating callbacks for {_callbackStructs.Count} callback structs...");
+
+			var groups = _callbackStructs
+				.GroupBy(s => GetNamespaceForFile(s.Span.Start.File))
+				.OrderBy(g => g.Key)
+				.ToList();
+
+			using var writer = new StreamWriter(Path.Combine(outputPath, "Callbacks.cs"));
+			WriteHeader(writer);
+			writer.WriteLine("using System;");
+			writer.WriteLine("using System.Collections.Concurrent;");
+			writer.WriteLine("using System.Runtime.InteropServices;");
+			WriteSubNamespaceUsings(writer);
+			writer.WriteLine();
+
+			for (int gi = 0; gi < groups.Count; gi++)
+			{
+				var group = groups[gi];
+				if (gi > 0) writer.WriteLine();
+
+				writer.WriteLine($"namespace {group.Key}");
+				writer.WriteLine("{");
+
+				var groupList = group.ToList();
+				for (int si = 0; si < groupList.Count; si++)
+				{
+					var s = groupList[si];
+					if (si > 0) writer.WriteLine();
+
+					WriteCallbackDelegates(writer, s, "\t");
+					writer.WriteLine();
+					WriteCallbackSetClass(writer, s, "\t");
+					WriteCallbackHandleExtensions(writer, s, "\t");
+				}
+
+				writer.WriteLine("}");
+			}
+		}
+
+		/// <summary>
+		/// Generates typed delegate declarations for each function-pointer field in a callback struct.
+		/// Delegate names follow the pattern: {StructName}{PascalFieldName}Delegate.
+		/// </summary>
+		private void WriteCallbackDelegates(StreamWriter writer, CppClass callbackStruct, string indent)
+		{
+			bool first = true;
+			foreach (var field in callbackStruct.Fields)
+			{
+				var funcType = Helpers.GetFieldFunctionType(field);
+				if (funcType == null) continue;
+
+				if (!first) writer.WriteLine();
+				first = false;
+
+				var delegateName = GetCallbackDelegateName(field.Name);
+
+				Helpers.PrintComments(writer, field.Comment, indent);
+				writer.WriteLine($"{indent}[UnmanagedFunctionPointer(CallingConvention.Cdecl)]");
+
+				var returnType = Helpers.ConvertToCSharpType(funcType.ReturnType);
+				var parameters = BuildDelegateParameters(funcType);
+
+				writer.Write($"{indent}public unsafe delegate {returnType} {delegateName}(");
+				writer.Write(string.Join(", ", parameters));
+				writer.WriteLine(");");
+			}
+		}
+
+		/// <summary>
+		/// Generates a managed CallbackSet class for a callback struct.
+		/// The class holds typed delegate fields, pins them for GC safety,
+		/// and provides a ToNative() method that produces the blittable struct.
+		/// </summary>
+		private void WriteCallbackSetClass(StreamWriter writer, CppClass callbackStruct, string indent)
+		{
+			var structName = callbackStruct.Name;
+			var className = structName + "Set";
+
+			// Collect function-pointer fields
+			var fpFields = callbackStruct.Fields
+				.Where(f => Helpers.IsFunctionPointerField(f))
+				.ToList();
+
+			writer.WriteLine($"{indent}/// <summary>");
+			writer.WriteLine($"{indent}/// Managed wrapper for <see cref=\"{structName}\"/>.");
+			writer.WriteLine($"{indent}/// Holds typed delegate fields with GC pinning and marshals to the native struct.");
+			writer.WriteLine($"{indent}/// </summary>");
+			writer.WriteLine($"{indent}public unsafe class {className}");
+			writer.WriteLine($"{indent}{{");
+
+			// Delegate fields
+			foreach (var field in fpFields)
+			{
+				var delegateName = GetCallbackDelegateName(field.Name);
+				var fieldName = Helpers.SnakeToPascalCase(field.Name);
+				writer.WriteLine($"{indent}\tpublic {delegateName} {fieldName};");
+			}
+
+			// Private pinning array
+			writer.WriteLine();
+			writer.WriteLine($"{indent}\tprivate Delegate[] _pinned;");
+
+			// GetDelegatesToPin
+			writer.WriteLine();
+			writer.WriteLine($"{indent}\t/// <summary>Pins all assigned delegates so they are not garbage collected.</summary>");
+			writer.WriteLine($"{indent}\tpublic Delegate[] GetDelegatesToPin()");
+			writer.WriteLine($"{indent}\t{{");
+			writer.Write($"{indent}\t\t_pinned = new Delegate[] {{ ");
+			writer.Write(string.Join(", ", fpFields.Select(f => Helpers.SnakeToPascalCase(f.Name))));
+			writer.WriteLine(" };");
+			writer.WriteLine($"{indent}\t\treturn _pinned;");
+			writer.WriteLine($"{indent}\t}}");
+
+			// ToNative
+			writer.WriteLine();
+			writer.WriteLine($"{indent}\t/// <summary>");
+			writer.WriteLine($"{indent}\t/// Marshals the managed delegates into a native <see cref=\"{structName}\"/> struct.");
+			writer.WriteLine($"{indent}\t/// Calls GetDelegatesToPin() to ensure delegates remain alive.");
+			writer.WriteLine($"{indent}\t/// </summary>");
+			writer.WriteLine($"{indent}\tpublic {structName} ToNative(void* userData = null)");
+			writer.WriteLine($"{indent}\t{{");
+			writer.WriteLine($"{indent}\t\tGetDelegatesToPin();");
+			writer.WriteLine($"{indent}\t\tvar result = new {structName}();");
+			writer.WriteLine($"{indent}\t\tresult.userData = userData;");
+
+			foreach (var field in fpFields)
+			{
+				var fieldName = Helpers.SnakeToPascalCase(field.Name);
+				writer.WriteLine($"{indent}\t\tif ({fieldName} != null)");
+				writer.WriteLine($"{indent}\t\t\tresult.{field.Name} = Marshal.GetFunctionPointerForDelegate({fieldName});");
+			}
+
+			writer.WriteLine($"{indent}\t\treturn result;");
+			writer.WriteLine($"{indent}\t}}");
+
+			writer.WriteLine($"{indent}}}");
+		}
+
+		/// <summary>
+		/// For each handle instance method that takes a pointer to this callback struct,
+		/// generates ergonomic overloads on the handle:
+		/// 1. An overload accepting the CallbackSet class directly (with GC pinning)
+		/// 2. A Clear method that passes null to unregister callbacks
+		/// </summary>
+		private void WriteCallbackHandleExtensions(StreamWriter writer, CppClass callbackStruct, string indent)
+		{
+			var structName = callbackStruct.Name;
+			var className = structName + "Set";
+
+			// Find handle instance methods that take {structName}* as a parameter
+			var matchingFunctions = _analyzedFunctions
+				.Where(f => f.Role == FunctionRole.InstanceMethod
+					&& f.OwnerType != null
+					&& Helpers.OpaqueHandleTypes.Contains(f.OwnerType)
+					&& HasCallbackStructParameter(f.CppFunction, structName))
+				.ToList();
+
+			if (matchingFunctions.Count == 0) return;
+
+			// Group by owner handle type
+			foreach (var handleGroup in matchingFunctions.GroupBy(f => f.OwnerType))
+			{
+				var handleName = handleGroup.Key;
+
+				writer.WriteLine();
+				writer.WriteLine($"{indent}public unsafe partial struct {handleName}");
+				writer.WriteLine($"{indent}{{");
+				writer.WriteLine($"{indent}\tprivate static readonly ConcurrentDictionary<IntPtr, {className}> _callbackSets = new();");
+
+				foreach (var func in handleGroup)
+				{
+					var methodName = func.MethodName;
+					writer.WriteLine();
+					writer.WriteLine($"{indent}\t/// <summary>");
+					writer.WriteLine($"{indent}\t/// Registers managed callbacks from a <see cref=\"{className}\"/>.");
+					writer.WriteLine($"{indent}\t/// The callback set is pinned to prevent garbage collection.");
+					writer.WriteLine($"{indent}\t/// </summary>");
+					writer.WriteLine($"{indent}\tpublic void {methodName}({className} callbacks, void* userData = null)");
+					writer.WriteLine($"{indent}\t{{");
+					writer.WriteLine($"{indent}\t\tvar native = callbacks.ToNative(userData);");
+					writer.WriteLine($"{indent}\t\t_callbackSets[Handle] = callbacks;");
+					writer.WriteLine($"{indent}\t\t{methodName}(&native);");
+					writer.WriteLine($"{indent}\t}}");
+
+					// Generate Clear method: strip "Set" prefix if present, add "Clear"
+					var clearName = methodName.StartsWith("Set")
+						? "Clear" + methodName.Substring(3)
+						: "Clear" + methodName;
+
+					writer.WriteLine();
+					writer.WriteLine($"{indent}\t/// <summary>");
+					writer.WriteLine($"{indent}\t/// Unregisters previously set callbacks and releases GC pins.");
+					writer.WriteLine($"{indent}\t/// </summary>");
+					writer.WriteLine($"{indent}\tpublic void {clearName}()");
+					writer.WriteLine($"{indent}\t{{");
+					writer.WriteLine($"{indent}\t\t_callbackSets.TryRemove(Handle, out _);");
+					writer.WriteLine($"{indent}\t\t{methodName}(({structName}*)null);");
+					writer.WriteLine($"{indent}\t}}");
+				}
+
+				writer.WriteLine($"{indent}}}");
+			}
+		}
+
+		private bool HasCallbackStructParameter(CppFunction f, string callbackStructName)
+		{
+			foreach (var param in f.Parameters)
+			{
+				if (param.Type is CppPointerType pt)
+				{
+					var elem = pt.ElementType;
+					while (elem is CppQualifiedType qt) elem = qt.ElementType;
+					if (elem is CppClass cls && cls.Name == callbackStructName)
+						return true;
+				}
+			}
+			return false;
+		}
+
+		private string GetCallbackDelegateName(string fieldName)
+		{
+			return Helpers.SnakeToPascalCase(fieldName) + "Delegate";
 		}
 
 		// =====================================================================

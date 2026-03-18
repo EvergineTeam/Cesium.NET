@@ -290,5 +290,28 @@ namespace CesiumGen
 			return string.Concat(snake.Split('_', StringSplitOptions.RemoveEmptyEntries)
 				.Select(word => char.ToUpper(word[0]) + word.Substring(1)));
 		}
+
+		/// <summary>
+		/// Checks if a CppField is a function pointer (pointer to CppFunctionType).
+		/// </summary>
+		public static bool IsFunctionPointerField(CppField field)
+		{
+			var type = field.Type;
+			while (type is CppQualifiedType qt) type = qt.ElementType;
+			return type is CppPointerType pt && pt.ElementType is CppFunctionType;
+		}
+
+		/// <summary>
+		/// Extracts the CppFunctionType from a function pointer field.
+		/// Returns null if the field is not a function pointer.
+		/// </summary>
+		public static CppFunctionType GetFieldFunctionType(CppField field)
+		{
+			var type = field.Type;
+			while (type is CppQualifiedType qt) type = qt.ElementType;
+			if (type is CppPointerType pt && pt.ElementType is CppFunctionType ft)
+				return ft;
+			return null;
+		}
 	}
 }

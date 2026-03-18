@@ -400,6 +400,13 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		public static CesiumTilesetExternals Create(CesiumAsyncSystem asyncSystem, CesiumAssetAccessor accessor, CesiumCreditSystem creditSystem)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetExternalsCreate(asyncSystem, accessor, creditSystem);
+
+		/// <summary>
+		/// @brief Sets the renderer resource callbacks on the externals.
+		/// Pass NULL for callbacks to revert to the default no-op implementation.
+		/// </summary>
+		public void SetRendererResourceCallbacks(CesiumRendererResourceCallbacks* callbacks)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetExternalsSetRendererResourceCallbacks(this, callbacks);
 	}
 
 	public unsafe partial struct CesiumTilesetOptions : IEquatable<CesiumTilesetOptions>, IDisposable
