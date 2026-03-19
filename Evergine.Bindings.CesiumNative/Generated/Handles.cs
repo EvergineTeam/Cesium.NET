@@ -381,6 +381,17 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		public int ImageGetData(int imageIndex, CesiumImageData* @out)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfImageGetData(this, imageIndex, @out);
+
+		/// <summary>
+		/// @brief Serializes a CesiumGltfModel to GLB (binary glTF 2.0) format.
+		/// The returned buffer is heap-allocated and must be freed with cesium_gltf_free_glb.
+		/// @param model The model to serialize.
+		/// @param out_data Receives a pointer to the GLB byte buffer.
+		/// @param out_size Receives the size of the GLB buffer in bytes.
+		/// @return 1 on success, 0 on failure.
+		/// </summary>
+		public int WriteGlb(byte** out_data, nuint* out_size)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelWriteGlb(this, out_data, out_size);
 	}
 
 	public unsafe partial struct CesiumCGltfReaderResult : IEquatable<CesiumCGltfReaderResult>, IDisposable
@@ -1241,5 +1252,11 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		public static CesiumMat4 GlobeTransformsEastNorthUpToFixedFrame(CesiumVec3 origin, CesiumEllipsoid ellipsoid)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeTransformsEastNorthUpToFixedFrame(origin, ellipsoid);
+
+		/// <summary>
+		/// @brief Frees a GLB buffer previously returned by cesium_gltf_model_write_glb.
+		/// </summary>
+		public static void GltfFreeGlb(byte* data)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfFreeGlb(data);
 	}
 }

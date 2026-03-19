@@ -444,6 +444,23 @@ namespace Evergine.Bindings.CesiumNative
 		public static extern int GltfImageGetData(CesiumGltfModel model, int imageIndex, CesiumImageData* @out);
 
 		/// <summary>
+		/// @brief Serializes a CesiumGltfModel to GLB (binary glTF 2.0) format.
+		/// The returned buffer is heap-allocated and must be freed with cesium_gltf_free_glb.
+		/// @param model The model to serialize.
+		/// @param out_data Receives a pointer to the GLB byte buffer.
+		/// @param out_size Receives the size of the GLB buffer in bytes.
+		/// @return 1 on success, 0 on failure.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_write_glb")]
+		public static extern int GltfModelWriteGlb(CesiumGltfModel model, byte** out_data, nuint* out_size);
+
+		/// <summary>
+		/// @brief Frees a GLB buffer previously returned by cesium_gltf_model_write_glb.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_free_glb")]
+		public static extern void GltfFreeGlb(byte* data);
+
+		/// <summary>
 		/// @brief Creates an async system with a built-in thread pool.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_create")]

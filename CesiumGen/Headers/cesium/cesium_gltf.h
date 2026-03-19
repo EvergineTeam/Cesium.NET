@@ -486,6 +486,28 @@ CESIUM_API int cesium_gltf_image_get_data(
     int imageIndex,
     CesiumImageData* out);
 
+/* ============================================================================
+ * GLB serialization — export model back to binary glTF
+ * ========================================================================= */
+
+/**
+ * @brief Serializes a CesiumGltfModel to GLB (binary glTF 2.0) format.
+ * The returned buffer is heap-allocated and must be freed with cesium_gltf_free_glb.
+ * @param model The model to serialize.
+ * @param out_data Receives a pointer to the GLB byte buffer.
+ * @param out_size Receives the size of the GLB buffer in bytes.
+ * @return 1 on success, 0 on failure.
+ */
+CESIUM_API int cesium_gltf_model_write_glb(
+    const CesiumGltfModel* model,
+    uint8_t** out_data,
+    size_t* out_size);
+
+/**
+ * @brief Frees a GLB buffer previously returned by cesium_gltf_model_write_glb.
+ */
+CESIUM_API void cesium_gltf_free_glb(uint8_t* data);
+
 #ifdef __cplusplus
 }
 #endif
