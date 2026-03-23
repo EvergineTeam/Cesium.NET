@@ -19,14 +19,22 @@ internal class TileRenderData
 internal struct RasterAttachment
 {
     public required byte[] ImageData;
+    public int Width;
+    public int Height;
+    public int Channels;
+    public int BytesPerChannel;
     public CesiumVec2 Translation;
     public CesiumVec2 Scale;
 }
 
-/// <summary>Holds raw image bytes for a raster overlay tile.</summary>
+/// <summary>Holds raw image bytes + dimensions for a raster overlay tile.</summary>
 internal class RasterData
 {
     public required byte[] ImageBytes;
+    public int Width;
+    public int Height;
+    public int Channels;
+    public int BytesPerChannel;
 }
 
 internal unsafe static class Program
@@ -197,18 +205,22 @@ internal unsafe static class Program
     // ── Raster overlay callbacks ─────────────────────────────────────────
 
     /// <summary>Worker thread: copy the raw overlay image pixels.</summary>
-    private static void* PrepareRasterInLoadThread(void* userData, byte* imageData, nuint imageDataSize)
+    private static void* PrepareRasterInLoadThread(void* userData, byte* imageData, nuint imageDataSize, int width, int height, int channels, int bytesPerChannel)
     {
         if (imageData == null || imageDataSize == 0)
             return null;
 
         var raster = new RasterData
         {
-            ImageBytes = new byte[(int)imageDataSize]
+            ImageBytes = new byte[(int)imageDataSize],
+            Width = width,
+            Height = height,
+            Channels = channels,
+            BytesPerChannel = bytesPerChannel,
         };
         Marshal.Copy((IntPtr)imageData, raster.ImageBytes, 0, (int)imageDataSize);
 
-        Console.WriteLine($"[LoadThread] Raster overlay image ready – {imageDataSize} bytes");
+        Console.WriteLine($"[LoadThread] Raster overlay image ready – {imageDataSize} bytes ({width}x{height}, {channels}ch)");
 
         var handle = GCHandle.Alloc(raster);
         return (void*)GCHandle.ToIntPtr(handle);
@@ -253,13 +265,64 @@ internal unsafe static class Program
         tileData.Overlays[overlayTextureCoordinateID] = new RasterAttachment
         {
             ImageData = rasterData.ImageBytes,
+            Width = rasterData.Width,
+            Height = rasterData.Height,
+            Channels = rasterData.Channels,
+            BytesPerChannel = rasterData.BytesPerChannel,
             Translation = translation,
             Scale = scale,
         };
 
         Console.WriteLine($"[MainThread] Attached raster overlay #{overlayTextureCoordinateID} to tile " +
-                          $"({rasterData.ImageBytes.Length} bytes, translate=({translation.x:F3},{translation.y:F3}), " +
-                          $"scale=({scale.x:F3},{scale.y:F3}))");
+                          $"({rasterData.ImageBytes.Length} bytes {rasterData.Width}x{rasterData.Height}, " +
+                          $"translate=({translation.x:F3},{translation.y:F3}), scale=({scale.x:F3},{scale.y:F3}))");
+
+        // Export a GLB with the overlay baked in using the tile's model
+        CesiumGltfModel model = tile.RenderContentModel;
+        if (model != CesiumGltfModel.Null && tileData.Overlays.Count > 0)
+        {
+            // Pin all image byte arrays so pointers remain valid during the native call
+            var pins = new List<GCHandle>();
+            var overlayInfos = new CesiumRasterOverlayInfo[tileData.Overlays.Count];
+            int idx = 0;
+            foreach (var (coordId, att) in tileData.Overlays)
+            {
+                var pin = GCHandle.Alloc(att.ImageData, GCHandleType.Pinned);
+                pins.Add(pin);
+                overlayInfos[idx++] = new CesiumRasterOverlayInfo
+                {
+                    pixelData = (byte*)pin.AddrOfPinnedObject(),
+                    pixelDataSize = (nuint)att.ImageData.Length,
+                    width = att.Width,
+                    height = att.Height,
+                    channels = att.Channels,
+                    bytesPerChannel = att.BytesPerChannel,
+                    textureCoordinateIndex = coordId,
+                    translation = att.Translation,
+                    scale = att.Scale,
+                };
+            }
+
+            try
+            {
+                byte* dataPtr;
+                nuint glbSize;
+                fixed (CesiumRasterOverlayInfo* pOverlays = overlayInfos)
+                {
+                    if (model.WriteGlbWithOverlays(pOverlays, overlayInfos.Length, &dataPtr, &glbSize) == 1)
+                    {
+                        string filePath = $"tile_textured_{Guid.NewGuid():N}.glb";
+                        File.WriteAllBytes(filePath, new ReadOnlySpan<byte>(dataPtr, (int)glbSize));
+                        Console.WriteLine($"[MainThread] Textured GLB written: {filePath} ({glbSize} bytes)");
+                        CesiumNativeApi.GltfFreeGlb(dataPtr);
+                    }
+                }
+            }
+            finally
+            {
+                foreach (var pin in pins) pin.Free();
+            }
+        }
     }
 
     /// <summary>Main thread: detach a raster overlay from a tile.</summary>
@@ -285,4 +348,5 @@ internal unsafe static class Program
         Console.WriteLine($"CesiumAPI: {errorMessage}");
     }
 }
+
 

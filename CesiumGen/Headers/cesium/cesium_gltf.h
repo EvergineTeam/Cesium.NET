@@ -487,6 +487,34 @@ CESIUM_API int cesium_gltf_image_get_data(
     CesiumImageData* out);
 
 /* ============================================================================
+ * Raster overlay baking info (for GLB export with textures)
+ * ========================================================================= */
+
+/**
+ * @brief Describes a raster overlay image to bake into a glTF model.
+ */
+typedef struct CesiumRasterOverlayInfo {
+    /** Decoded pixel data (RGBA/RGB) — will be PNG-encoded into the GLB. */
+    const uint8_t* pixelData;
+    /** Size of pixelData in bytes. */
+    size_t pixelDataSize;
+    /** Image width in pixels. */
+    int32_t width;
+    /** Image height in pixels. */
+    int32_t height;
+    /** Number of channels (3=RGB, 4=RGBA). */
+    int32_t channels;
+    /** Bytes per channel (typically 1). */
+    int32_t bytesPerChannel;
+    /** The texture coordinate attribute index (e.g., 0 for _CESIUMOVERLAY_0). */
+    int32_t textureCoordinateIndex;
+    /** Texture coordinate translation (offset.x, offset.y). */
+    CesiumVec2 translation;
+    /** Texture coordinate scale (scale.x, scale.y). */
+    CesiumVec2 scale;
+} CesiumRasterOverlayInfo;
+
+/* ============================================================================
  * GLB serialization — export model back to binary glTF
  * ========================================================================= */
 
@@ -500,6 +528,29 @@ CESIUM_API int cesium_gltf_image_get_data(
  */
 CESIUM_API int cesium_gltf_model_write_glb(
     const CesiumGltfModel* model,
+    uint8_t** out_data,
+    size_t* out_size);
+
+/**
+ * @brief Serializes a CesiumGltfModel to GLB with raster overlay textures baked in.
+ *
+ * For each overlay info entry, the function:
+ *   1. PNG-encodes the pixel data and adds it as a buffer/image/texture in the model.
+ *   2. Sets the base color texture on each primitive's material to the overlay image,
+ *      using KHR_texture_transform for the UV offset/scale.
+ *   3. Maps the texture to the _CESIUMOVERLAY_N texture coordinate attribute.
+ *
+ * @param model The model to serialize (not modified; a copy is used internally).
+ * @param overlays Array of overlay descriptors to bake in.
+ * @param overlayCount Number of overlays.
+ * @param out_data Receives a pointer to the GLB byte buffer.
+ * @param out_size Receives the size of the GLB buffer in bytes.
+ * @return 1 on success, 0 on failure.
+ */
+CESIUM_API int cesium_gltf_model_write_glb_with_overlays(
+    const CesiumGltfModel* model,
+    const CesiumRasterOverlayInfo* overlays,
+    int overlayCount,
     uint8_t** out_data,
     size_t* out_size);
 

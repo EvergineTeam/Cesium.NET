@@ -392,6 +392,23 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		public int WriteGlb(byte** out_data, nuint* out_size)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelWriteGlb(this, out_data, out_size);
+
+		/// <summary>
+		/// @brief Serializes a CesiumGltfModel to GLB with raster overlay textures baked in.
+		/// For each overlay info entry, the function:
+		/// 1. PNG-encodes the pixel data and adds it as a buffer/image/texture in the model.
+		/// 2. Sets the base color texture on each primitive's material to the overlay image,
+		/// using KHR_texture_transform for the UV offset/scale.
+		/// 3. Maps the texture to the _CESIUMOVERLAY_N texture coordinate attribute.
+		/// @param model The model to serialize (not modified; a copy is used internally).
+		/// @param overlays Array of overlay descriptors to bake in.
+		/// @param overlayCount Number of overlays.
+		/// @param out_data Receives a pointer to the GLB byte buffer.
+		/// @param out_size Receives the size of the GLB buffer in bytes.
+		/// @return 1 on success, 0 on failure.
+		/// </summary>
+		public int WriteGlbWithOverlays(CesiumRasterOverlayInfo* overlays, int overlayCount, byte** out_data, nuint* out_size)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelWriteGlbWithOverlays(this, overlays, overlayCount, out_data, out_size);
 	}
 
 	public unsafe partial struct CesiumCGltfReaderResult : IEquatable<CesiumCGltfReaderResult>, IDisposable

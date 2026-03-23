@@ -281,6 +281,50 @@ namespace Evergine.Bindings.CesiumNative
 	}
 
 	/// <summary>
+	/// @brief Describes a raster overlay image to bake into a glTF model.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public unsafe partial struct CesiumRasterOverlayInfo
+	{
+		/// <summary>
+		/// Decoded pixel data (RGBA/RGB) — will be PNG-encoded into the GLB.
+		/// </summary>
+		public byte* pixelData;
+		/// <summary>
+		/// Size of pixelData in bytes.
+		/// </summary>
+		public nuint pixelDataSize;
+		/// <summary>
+		/// Image width in pixels.
+		/// </summary>
+		public int width;
+		/// <summary>
+		/// Image height in pixels.
+		/// </summary>
+		public int height;
+		/// <summary>
+		/// Number of channels (3=RGB, 4=RGBA).
+		/// </summary>
+		public int channels;
+		/// <summary>
+		/// Bytes per channel (typically 1).
+		/// </summary>
+		public int bytesPerChannel;
+		/// <summary>
+		/// The texture coordinate attribute index (e.g., 0 for _CESIUMOVERLAY_0).
+		/// </summary>
+		public int textureCoordinateIndex;
+		/// <summary>
+		/// Texture coordinate translation (offset.x, offset.y).
+		/// </summary>
+		public CesiumVec2 translation;
+		/// <summary>
+		/// Texture coordinate scale (scale.x, scale.y).
+		/// </summary>
+		public CesiumVec2 scale;
+	}
+
+	/// <summary>
 	/// @brief A set of function pointers implementing IPrepareRendererResources.
 	/// All callbacks receive userData as the first argument. Any callback may be
 	/// NULL, in which case a no-op default is used for that operation.
@@ -316,8 +360,12 @@ namespace Evergine.Bindings.CesiumNative
 		/// <summary>
 		/// @brief Called in a worker thread to prepare raster overlay resources.
 		/// @param userData User context.
-		/// @param imageData Pointer to decoded image data.
-		/// @param imageDataSize Size of the image data in bytes.
+		/// @param imageData Pointer to decoded pixel data.
+		/// @param imageDataSize Size of the pixel data in bytes.
+		/// @param width Image width in pixels.
+		/// @param height Image height in pixels.
+		/// @param channels Number of channels (e.g., 4 for RGBA).
+		/// @param bytesPerChannel Bytes per channel (typically 1).
 		/// @return Opaque pointer to raster load-thread resources, or NULL.
 		/// </summary>
 		public IntPtr prepareRasterInLoadThread;

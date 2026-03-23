@@ -106,11 +106,15 @@ typedef struct CesiumRendererResourceCallbacks {
     /**
      * @brief Called in a worker thread to prepare raster overlay resources.
      * @param userData User context.
-     * @param imageData Pointer to decoded image data.
-     * @param imageDataSize Size of the image data in bytes.
+     * @param imageData Pointer to decoded pixel data.
+     * @param imageDataSize Size of the pixel data in bytes.
+     * @param width Image width in pixels.
+     * @param height Image height in pixels.
+     * @param channels Number of channels (e.g., 4 for RGBA).
+     * @param bytesPerChannel Bytes per channel (typically 1).
      * @return Opaque pointer to raster load-thread resources, or NULL.
      */
-    void* (*prepareRasterInLoadThread)(void* userData, const uint8_t* imageData, size_t imageDataSize);
+    void* (*prepareRasterInLoadThread)(void* userData, const uint8_t* imageData, size_t imageDataSize, int32_t width, int32_t height, int32_t channels, int32_t bytesPerChannel);
 
     /**
      * @brief Called in the main thread to finalize raster overlay resources.
