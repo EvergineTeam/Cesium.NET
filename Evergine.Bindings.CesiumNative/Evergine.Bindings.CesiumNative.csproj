@@ -1,25 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <Copyright>Copyright (c) Evergine 2026</Copyright>
-    <Authors>Evergine Team</Authors>
-    <Company>Plain Concepts</Company>
-    <Description>Low-level bindings for CesiumNative used in Evergine</Description>
-    <RepositoryUrl>https://github.com/EvergineTeam/Cesium.NET</RepositoryUrl>
-	  <PackageReadmeFile>README.md</PackageReadmeFile>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Folder Include="Generated\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="runtimes\**" PackagePath="runtimes"
-             Visible="true" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<Copyright>Copyright (c) Evergine 2026</Copyright>
+		<Authors>Evergine Team</Authors>
+		<Company>Plain Concepts</Company>
+		<Description>Low-level bindings for CesiumNative used in Evergine</Description>
+		<RepositoryUrl>https://github.com/EvergineTeam/Cesium.NET</RepositoryUrl>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
 
 	<ItemGroup>
+		<Folder Include="Generated\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="runtimes\**" PackagePath="runtimes"
+				 Visible="true" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\icon.png" Pack="true" PackagePath="\" Visible="false" />
 		<None Include="..\README.md" Pack="true" PackagePath="\" Visible="false" />
 	</ItemGroup>
 </Project>
