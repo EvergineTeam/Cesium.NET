@@ -3,22 +3,52 @@ using System.Runtime.InteropServices;
 
 namespace Example;
 
+/// <summary>
+/// Holds geometry + raster overlay data for a single tile.
+/// Returned as opaque pointer through the renderer resource callbacks.
+/// </summary>
+internal class TileRenderData
+{
+    public byte[]? GlbData;
+    public CesiumMat4 Transform;
+
+    /// <summary>Raster overlay images keyed by overlayTextureCoordinateID.</summary>
+    public Dictionary<int, RasterAttachment> Overlays = new();
+}
+
+internal struct RasterAttachment
+{
+    public required byte[] ImageData;
+    public CesiumVec2 Translation;
+    public CesiumVec2 Scale;
+}
+
+/// <summary>Holds raw image bytes for a raster overlay tile.</summary>
+internal class RasterData
+{
+    public required byte[] ImageBytes;
+}
+
 internal unsafe static class Program
 {
-    const string IonAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzQyOGI4MC02NWE2LTRhODEtYWIzMS00N2JkNDRhODgzYTEiLCJpZCI6Mzk2NjYxLCJpYXQiOjE3NzI0NTMzMjF9.KrVH1ATAsBlBsAG17f0lzBmDPHj9Cv25wbhhY4hGE8c";
+    const string IonAccessToken = "";
 
     private static readonly CesiumRendererResourceCallbacksSet RendererCallbacks = new()
     {
         PrepareInLoadThread = PrepareInLoadThread,
+        PrepareInMainThread = PrepareInMainThread,
+        FreeResources = FreeResources,
+        PrepareRasterInLoadThread = PrepareRasterInLoadThread,
+        PrepareRasterInMainThread = PrepareRasterInMainThread,
+        FreeRasterResources = FreeRasterResources,
+        AttachRasterInMainThread = AttachRasterInMainThread,
+        DetachRasterInMainThread = DetachRasterInMainThread,
     };
 
     public static CesiumViewState createViewState(CesiumCartographic worldCoordinates)
     {
         CesiumEllipsoid wgs84 = CesiumEllipsoid.Wgs84();
         CesiumVec3 position = wgs84.CartographicToCartesian(worldCoordinates);
-
-        Console.WriteLine($"Camera Position (Cartesian): ({position.x}, {position.y}, {position.z})");
-
         CesiumVec3 direction = new CesiumVec3
         {
             x = 0,
@@ -26,8 +56,8 @@ internal unsafe static class Program
             z = 0
         };
 
-
-        Console.WriteLine($"Camera Direction (Cartesian): ({direction.x}, {direction.y}, {direction.z})");
+        //Console.WriteLine($"Camera Position (Cartesian): ({position.x}, {position.y}, {position.z})");
+        //Console.WriteLine($"Camera Direction (Cartesian): ({direction.x}, {direction.y}, {direction.z})");
 
         CesiumVec3 up = wgs84.GeodeticSurfaceNormalCartesian(position);
         CesiumVec2 viewport = new CesiumVec2 { x = 1920, y = 1080 };
@@ -44,6 +74,7 @@ internal unsafe static class Program
         using CesiumCreditSystem creditSystem = CesiumCreditSystem.Create();
 
         using CesiumTilesetExternals externals = CesiumTilesetExternals.Create(asyncSystem, assetAccessor, creditSystem);
+        using CesiumRasterOverlay overlay = CesiumRasterOverlay.IonRasterOverlayCreate(2, IonAccessToken, null);
         externals.SetRendererResourceCallbacks(RendererCallbacks);
 
         try
@@ -57,8 +88,11 @@ internal unsafe static class Program
             options.MaximumSimultaneousTileLoads = 8;
             options.SetLoadErrorCallback(ErrorCallback, null);
 
+            bool printFrameDetails = false;
+
             // Create tileset from Ion.
             using CesiumTileset tileset = CesiumTileset.CreateFromIon(externals, 1, IonAccessToken, options, null);
+            tileset.Overlays.Add(overlay);
 
             if (tileset == CesiumTileset.Null)
             {
@@ -92,17 +126,20 @@ internal unsafe static class Program
                 CesiumViewState state = createViewState(interpolatedPos);
                 CesiumViewUpdateResult result = tileset.UpdateView(&state, 1, 0.016f);
 
-                Console.WriteLine($"Frame number: {result.FrameNumber}");
-                Console.WriteLine($"Number of tiles to render: {result.TilesToRenderCount}");
-                Console.WriteLine($"TilesVisited: {result.TilesVisited}");
-                Console.WriteLine($"TilesCulled: {result.TilesCulled}");
-                Console.WriteLine($"MaxDepth: {result.MaxDepthVisited}");
-                for (int j = 0; j < result.TilesToRenderCount; j++)
+                if (printFrameDetails)
                 {
-                    CesiumTile tile = result.GetTileToRender(j);
-                    Console.WriteLine($"  Tile {j}: LoadState={tile.LoadState}, GeometricError={tile.GeometricError}, HasRenderContent={tile.HasRenderContent()}");
+                    Console.WriteLine($"Frame number: {result.FrameNumber}");
+                    Console.WriteLine($"Number of tiles to render: {result.TilesToRenderCount}");
+                    Console.WriteLine($"TilesVisited: {result.TilesVisited}");
+                    Console.WriteLine($"TilesCulled: {result.TilesCulled}");
+                    Console.WriteLine($"MaxDepth: {result.MaxDepthVisited}");
+                    for (int j = 0; j < result.TilesToRenderCount; j++)
+                    {
+                        CesiumTile tile = result.GetTileToRender(j);
+                        Console.WriteLine($"  Tile {j}: LoadState={tile.LoadState}, GeometricError={tile.GeometricError}, HasRenderContent={tile.HasRenderContent()}");
+                    }
+                    Console.WriteLine("----------------------------------------------------------------");
                 }
-                Console.WriteLine("----------------------------------------------------------------");
                 Thread.Sleep(16);
             }
         }
@@ -112,14 +149,134 @@ internal unsafe static class Program
         }
     }
 
+    // ── Geometry tile callbacks ────────────────────────────────────────────
+
+    /// <summary>Worker thread: export GLB and wrap in TileRenderData.</summary>
     private static void* PrepareInLoadThread(void* userData, CesiumGltfModel model, CesiumMat4 transform)
     {
-        if (model != CesiumGltfModel.Null)
+        if (model == CesiumGltfModel.Null)
+            return null;
+
+        var data = new TileRenderData { Transform = transform };
+
+        byte* dataPtr;
+        nuint glbSize;
+        if (model.WriteGlb(&dataPtr, &glbSize) == 1)
         {
-            Console.WriteLine($"[Callback] {model.GetMeshName(0)} glTF model received. Meshes={model.MeshCount}, Materials={model.MaterialCount}, Buffers={model.BufferCount}");           
+            data.GlbData = new byte[(int)glbSize];
+            Marshal.Copy((IntPtr)dataPtr, data.GlbData, 0, (int)glbSize);
+            CesiumNativeApi.GltfFreeGlb(dataPtr);
         }
 
-        return null;
+        Console.WriteLine($"[LoadThread] Geometry ready – Meshes={model.MeshCount}, GLB={data.GlbData?.Length ?? 0} bytes");
+
+        // Return a GCHandle so the pointer survives across callbacks
+        var handle = GCHandle.Alloc(data);
+        return (void*)GCHandle.ToIntPtr(handle);
+    }
+
+    /// <summary>Main thread: pass the load-thread result through (or do GPU upload).</summary>
+    private static void* PrepareInMainThread(void* userData, CesiumTile tile, void* pLoadThreadResult)
+    {
+        // Simply forward the same GCHandle pointer — in a real renderer you'd
+        // create GPU resources here.
+        return pLoadThreadResult;
+    }
+
+    /// <summary>Main thread: free the GCHandle holding TileRenderData.</summary>
+    private static void FreeResources(void* userData, CesiumTile tile, void* pLoadThreadResult, void* pMainThreadResult)
+    {
+        void* active = pMainThreadResult != null ? pMainThreadResult : pLoadThreadResult;
+        if (active != null)
+        {
+            var handle = GCHandle.FromIntPtr((IntPtr)active);
+            handle.Free();
+        }
+    }
+
+    // ── Raster overlay callbacks ─────────────────────────────────────────
+
+    /// <summary>Worker thread: copy the raw overlay image pixels.</summary>
+    private static void* PrepareRasterInLoadThread(void* userData, byte* imageData, nuint imageDataSize)
+    {
+        if (imageData == null || imageDataSize == 0)
+            return null;
+
+        var raster = new RasterData
+        {
+            ImageBytes = new byte[(int)imageDataSize]
+        };
+        Marshal.Copy((IntPtr)imageData, raster.ImageBytes, 0, (int)imageDataSize);
+
+        Console.WriteLine($"[LoadThread] Raster overlay image ready – {imageDataSize} bytes");
+
+        var handle = GCHandle.Alloc(raster);
+        return (void*)GCHandle.ToIntPtr(handle);
+    }
+
+    /// <summary>Main thread: finalize raster resources (GPU upload in a real renderer).</summary>
+    private static void* PrepareRasterInMainThread(void* userData, void* pLoadThreadResult)
+    {
+        return pLoadThreadResult;
+    }
+
+    /// <summary>Main thread: free the raster GCHandle.</summary>
+    private static void FreeRasterResources(void* userData, void* pMainThreadResult)
+    {
+        if (pMainThreadResult != null)
+        {
+            var handle = GCHandle.FromIntPtr((IntPtr)pMainThreadResult);
+            handle.Free();
+        }
+    }
+
+    /// <summary>
+    /// Main thread: CORRELATION POINT – attaches a raster overlay to a geometry tile.
+    /// tile.RenderResources returns our TileRenderData pointer.
+    /// </summary>
+    private static void AttachRasterInMainThread(
+        void* userData,
+        CesiumTile tile,
+        int overlayTextureCoordinateID,
+        void* pMainThreadRasterResources,
+        CesiumVec2 translation,
+        CesiumVec2 scale)
+    {
+        // Get our TileRenderData from the tile
+        void* tileResPtr = tile.RenderResources;
+        if (tileResPtr == null || pMainThreadRasterResources == null)
+            return;
+
+        var tileData = (TileRenderData)GCHandle.FromIntPtr((IntPtr)tileResPtr).Target!;
+        var rasterData = (RasterData)GCHandle.FromIntPtr((IntPtr)pMainThreadRasterResources).Target!;
+
+        tileData.Overlays[overlayTextureCoordinateID] = new RasterAttachment
+        {
+            ImageData = rasterData.ImageBytes,
+            Translation = translation,
+            Scale = scale,
+        };
+
+        Console.WriteLine($"[MainThread] Attached raster overlay #{overlayTextureCoordinateID} to tile " +
+                          $"({rasterData.ImageBytes.Length} bytes, translate=({translation.x:F3},{translation.y:F3}), " +
+                          $"scale=({scale.x:F3},{scale.y:F3}))");
+    }
+
+    /// <summary>Main thread: detach a raster overlay from a tile.</summary>
+    private static void DetachRasterInMainThread(
+        void* userData,
+        CesiumTile tile,
+        int overlayTextureCoordinateID,
+        void* pMainThreadRasterResources)
+    {
+        void* tileResPtr = tile.RenderResources;
+        if (tileResPtr == null)
+            return;
+
+        var tileData = (TileRenderData)GCHandle.FromIntPtr((IntPtr)tileResPtr).Target!;
+        tileData.Overlays.Remove(overlayTextureCoordinateID);
+
+        Console.WriteLine($"[MainThread] Detached raster overlay #{overlayTextureCoordinateID}");
     }
 
     private static void ErrorCallback(void* userData, byte* message)
