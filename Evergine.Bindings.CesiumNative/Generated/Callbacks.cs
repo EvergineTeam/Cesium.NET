@@ -42,10 +42,16 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param userData User context.
 	/// @param imageData Pointer to decoded image data.
 	/// @param imageDataSize Size of the image data in bytes.
+	/// @param imageData Pointer to decoded pixel data.
+	/// @param imageDataSize Size of the pixel data in bytes.
+	/// @param width Image width in pixels.
+	/// @param height Image height in pixels.
+	/// @param channels Number of channels (e.g., 4 for RGBA).
+	/// @param bytesPerChannel Bytes per channel (typically 1).
 	/// @return Opaque pointer to raster load-thread resources, or NULL.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void* PrepareRasterInLoadThreadDelegate(void* userData, byte* imageData, nuint imageDataSize);
+	public unsafe delegate void* PrepareRasterInLoadThreadDelegate(void* userData, byte* imageData, nuint imageDataSize, int width, int height, int channels, int bytesPerChannel);
 
 	/// <summary>
 	/// @brief Called in the main thread to finalize raster overlay resources.

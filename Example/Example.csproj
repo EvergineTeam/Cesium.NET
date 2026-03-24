@@ -11,18 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.119.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Evergine.Bindings.CesiumNative\Evergine.Bindings.CesiumNative.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <None Include="..\Evergine.Bindings.CesiumNative\runtimes\win-x64\native\*.*"
-          Link="%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Condition="'$(RuntimeIdentifier)' == '' or '$(RuntimeIdentifier)' == 'win-x64'" />
-    <None Include="..\Evergine.Bindings.CesiumNative\runtimes\win-arm64\native\*.*"
-          Link="%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Condition="'$(RuntimeIdentifier)' == 'win-arm64'" />
+    <None Include="..\Evergine.Bindings.CesiumNative\runtimes\win-x64\native\*.*" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" Condition="'$(RuntimeIdentifier)' == '' or '$(RuntimeIdentifier)' == 'win-x64'" />
+    <None Include="..\Evergine.Bindings.CesiumNative\runtimes\win-arm64\native\*.*" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" Condition="'$(RuntimeIdentifier)' == 'win-arm64'" />
   </ItemGroup>
 
 </Project>
