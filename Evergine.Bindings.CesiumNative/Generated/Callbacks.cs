@@ -15,7 +15,7 @@ namespace Evergine.Bindings.CesiumNative
 	/// @return Opaque pointer to load-thread render resources, or NULL.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void* PrepareInLoadThreadDelegate(void* userData, CesiumGltfModel model, CesiumMat4 transform);
+	public unsafe delegate void* PrepareInLoadThreadDelegate(void* userData, GltfModel model, Mat4 transform);
 
 	/// <summary>
 	/// @brief Called in the main thread to finalize render resources.
@@ -25,7 +25,7 @@ namespace Evergine.Bindings.CesiumNative
 	/// @return Opaque pointer to main-thread render resources, or NULL.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void* PrepareInMainThreadDelegate(void* userData, CesiumTile tile, void* pLoadThreadResult);
+	public unsafe delegate void* PrepareInMainThreadDelegate(void* userData, Tile tile, void* pLoadThreadResult);
 
 	/// <summary>
 	/// @brief Called in the main thread to free render resources.
@@ -35,7 +35,7 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param pMainThreadResult Result from prepareInMainThread (NULL if not yet called).
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void FreeResourcesDelegate(void* userData, CesiumTile tile, void* pLoadThreadResult, void* pMainThreadResult);
+	public unsafe delegate void FreeResourcesDelegate(void* userData, Tile tile, void* pLoadThreadResult, void* pMainThreadResult);
 
 	/// <summary>
 	/// @brief Called in a worker thread to prepare raster overlay resources.
@@ -80,7 +80,7 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param scale Texture coordinate scale (x, y).
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void AttachRasterInMainThreadDelegate(void* userData, CesiumTile tile, int overlayTextureCoordinateID, void* pMainThreadRasterResources, CesiumVec2 translation, CesiumVec2 scale);
+	public unsafe delegate void AttachRasterInMainThreadDelegate(void* userData, Tile tile, int overlayTextureCoordinateID, void* pMainThreadRasterResources, Vec2 translation, Vec2 scale);
 
 	/// <summary>
 	/// @brief Called in the main thread to detach a raster overlay from a tile.
@@ -90,13 +90,13 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param pMainThreadRasterResources The raster resources to detach.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void DetachRasterInMainThreadDelegate(void* userData, CesiumTile tile, int overlayTextureCoordinateID, void* pMainThreadRasterResources);
+	public unsafe delegate void DetachRasterInMainThreadDelegate(void* userData, Tile tile, int overlayTextureCoordinateID, void* pMainThreadRasterResources);
 
 	/// <summary>
-	/// Managed wrapper for <see cref="CesiumRendererResourceCallbacks"/>.
+	/// Managed wrapper for <see cref="RendererResourceCallbacks"/>.
 	/// Holds typed delegate fields with GC pinning and marshals to the native struct.
 	/// </summary>
-	public unsafe class CesiumRendererResourceCallbacksSet
+	public unsafe class RendererResourceCallbacksSet
 	{
 		public PrepareInLoadThreadDelegate PrepareInLoadThread;
 		public PrepareInMainThreadDelegate PrepareInMainThread;
@@ -117,43 +117,43 @@ namespace Evergine.Bindings.CesiumNative
 		}
 
 		/// <summary>
-		/// Marshals the managed delegates into a native <see cref="CesiumRendererResourceCallbacks"/> struct.
+		/// Marshals the managed delegates into a native <see cref="RendererResourceCallbacks"/> struct.
 		/// Calls GetDelegatesToPin() to ensure delegates remain alive.
 		/// </summary>
-		public CesiumRendererResourceCallbacks ToNative(void* userData = null)
+		public RendererResourceCallbacks ToNative(void* userData = null)
 		{
 			GetDelegatesToPin();
-			var result = new CesiumRendererResourceCallbacks();
-			result.userData = userData;
+			var result = new RendererResourceCallbacks();
+			result.UserData = userData;
 			if (PrepareInLoadThread != null)
-				result.prepareInLoadThread = Marshal.GetFunctionPointerForDelegate(PrepareInLoadThread);
+				result.PrepareInLoadThread = Marshal.GetFunctionPointerForDelegate(PrepareInLoadThread);
 			if (PrepareInMainThread != null)
-				result.prepareInMainThread = Marshal.GetFunctionPointerForDelegate(PrepareInMainThread);
+				result.PrepareInMainThread = Marshal.GetFunctionPointerForDelegate(PrepareInMainThread);
 			if (FreeResources != null)
-				result.freeResources = Marshal.GetFunctionPointerForDelegate(FreeResources);
+				result.FreeResources = Marshal.GetFunctionPointerForDelegate(FreeResources);
 			if (PrepareRasterInLoadThread != null)
-				result.prepareRasterInLoadThread = Marshal.GetFunctionPointerForDelegate(PrepareRasterInLoadThread);
+				result.PrepareRasterInLoadThread = Marshal.GetFunctionPointerForDelegate(PrepareRasterInLoadThread);
 			if (PrepareRasterInMainThread != null)
-				result.prepareRasterInMainThread = Marshal.GetFunctionPointerForDelegate(PrepareRasterInMainThread);
+				result.PrepareRasterInMainThread = Marshal.GetFunctionPointerForDelegate(PrepareRasterInMainThread);
 			if (FreeRasterResources != null)
-				result.freeRasterResources = Marshal.GetFunctionPointerForDelegate(FreeRasterResources);
+				result.FreeRasterResources = Marshal.GetFunctionPointerForDelegate(FreeRasterResources);
 			if (AttachRasterInMainThread != null)
-				result.attachRasterInMainThread = Marshal.GetFunctionPointerForDelegate(AttachRasterInMainThread);
+				result.AttachRasterInMainThread = Marshal.GetFunctionPointerForDelegate(AttachRasterInMainThread);
 			if (DetachRasterInMainThread != null)
-				result.detachRasterInMainThread = Marshal.GetFunctionPointerForDelegate(DetachRasterInMainThread);
+				result.DetachRasterInMainThread = Marshal.GetFunctionPointerForDelegate(DetachRasterInMainThread);
 			return result;
 		}
 	}
 
-	public unsafe partial struct CesiumTilesetExternals
+	public unsafe partial struct TilesetExternals
 	{
-		private static readonly ConcurrentDictionary<IntPtr, CesiumRendererResourceCallbacksSet> _callbackSets = new();
+		private static readonly ConcurrentDictionary<IntPtr, RendererResourceCallbacksSet> _callbackSets = new();
 
 		/// <summary>
-		/// Registers managed callbacks from a <see cref="CesiumRendererResourceCallbacksSet"/>.
+		/// Registers managed callbacks from a <see cref="RendererResourceCallbacksSet"/>.
 		/// The callback set is pinned to prevent garbage collection.
 		/// </summary>
-		public void SetRendererResourceCallbacks(CesiumRendererResourceCallbacksSet callbacks, void* userData = null)
+		public void SetRendererResourceCallbacks(RendererResourceCallbacksSet callbacks, void* userData = null)
 		{
 			var native = callbacks.ToNative(userData);
 			_callbackSets[Handle] = callbacks;
@@ -166,7 +166,7 @@ namespace Evergine.Bindings.CesiumNative
 		public void ClearRendererResourceCallbacks()
 		{
 			_callbackSets.TryRemove(Handle, out _);
-			SetRendererResourceCallbacks((CesiumRendererResourceCallbacks*)null);
+			SetRendererResourceCallbacks((RendererResourceCallbacks*)null);
 		}
 	}
 }

@@ -6,21 +6,21 @@ using System.Runtime.InteropServices;
 
 namespace Evergine.Bindings.CesiumNative
 {
-	public unsafe partial struct CesiumCartographic
+	public unsafe partial struct Cartographic
 	{
 		/// <summary>
 		/// @brief Creates a cartographic position from degrees (converted to radians).
 		/// </summary>
-		public static CesiumCartographic FromDegrees(double longitudeDegrees, double latitudeDegrees, double heightMeters)
+		public static Cartographic FromDegrees(double longitudeDegrees, double latitudeDegrees, double heightMeters)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.CartographicFromDegrees(longitudeDegrees, latitudeDegrees, heightMeters);
 	}
 
-	public unsafe partial struct CesiumGlobeRectangle
+	public unsafe partial struct GlobeRectangle
 	{
 		/// <summary>
 		/// @brief Creates a globe rectangle from degrees (converted to radians).
 		/// </summary>
-		public static CesiumGlobeRectangle FromDegrees(double westDegrees, double southDegrees, double eastDegrees, double northDegrees)
+		public static GlobeRectangle FromDegrees(double westDegrees, double southDegrees, double eastDegrees, double northDegrees)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleFromDegrees(westDegrees, southDegrees, eastDegrees, northDegrees);
 
 		/// <summary>
@@ -38,13 +38,13 @@ namespace Evergine.Bindings.CesiumNative
 		/// <summary>
 		/// @brief Computes the center of the globe rectangle.
 		/// </summary>
-		public CesiumCartographic ComputeCenter()
+		public Cartographic ComputeCenter()
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleComputeCenter(this);
 
 		/// <summary>
 		/// @brief Returns 1 if the rectangle contains the given cartographic point.
 		/// </summary>
-		public bool Contains(CesiumCartographic point)
+		public bool Contains(Cartographic point)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleContains(this, point) != 0;
 	}
 }

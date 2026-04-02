@@ -8,11 +8,11 @@ namespace Evergine.Bindings.CesiumNative
 	/// <summary>
 	/// @brief Type discriminator for CesiumBoundingVolume.
 	/// </summary>
-	public enum CesiumBoundingVolumeType
+	public enum BoundingVolumeType
 	{
-		CESIUM_BOUNDING_VOLUME_SPHERE = 0,
-		CESIUM_BOUNDING_VOLUME_ORIENTED_BOX = 1,
-		CESIUM_BOUNDING_VOLUME_REGION = 2,
+		Sphere = 0,
+		OrientedBox = 1,
+		Region = 2,
 	}
 
 	/// <summary>
@@ -20,14 +20,14 @@ namespace Evergine.Bindings.CesiumNative
 	/// Tile load state enum
 	/// =========================================================================
 	/// </summary>
-	public enum CesiumTileLoadState
+	public enum TileLoadState
 	{
-		CESIUM_TILE_LOAD_STATE_UNLOADING = -2,
-		CESIUM_TILE_LOAD_STATE_FAILED_TEMPORARILY = -1,
-		CESIUM_TILE_LOAD_STATE_UNLOADED = 0,
-		CESIUM_TILE_LOAD_STATE_CONTENT_LOADING = 1,
-		CESIUM_TILE_LOAD_STATE_CONTENT_LOADED = 2,
-		CESIUM_TILE_LOAD_STATE_DONE = 3,
-		CESIUM_TILE_LOAD_STATE_FAILED = 4,
+		Unloading = -2,
+		FailedTemporarily = -1,
+		Unloaded = 0,
+		ContentLoading = 1,
+		ContentLoaded = 2,
+		Done = 3,
+		Failed = 4,
 	}
 }

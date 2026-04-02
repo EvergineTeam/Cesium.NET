@@ -608,13 +608,23 @@ namespace CesiumGen
 					if (isFlags)
 						writer.WriteLine("\t[Flags]");
 
-					writer.WriteLine($"\tpublic enum {e.Name}");
+					var enumName = Helpers.GetCsCleanName(e.Name);
+					writer.WriteLine($"\tpublic enum {enumName}");
 					writer.WriteLine("\t{");
+
+					var enumCommonPrefix = Helpers.FindCommonPrefix(e.Items.Select(it => it.Name));
 
 					foreach (var item in e.Items)
 					{
 						Helpers.PrintComments(writer, item.Comment, "\t\t");
-						writer.WriteLine($"\t\t{item.Name} = {item.Value},");
+
+						var rawName = item.Name;
+						if (!string.IsNullOrEmpty(enumCommonPrefix) && rawName.StartsWith(enumCommonPrefix))
+							rawName = rawName.Substring(enumCommonPrefix.Length);
+
+						var itemName = Helpers.ScreamingToPascalCase(rawName);
+						itemName = Helpers.EscapeReservedKeyword(itemName);
+						writer.WriteLine($"\t\t{itemName} = {item.Value},");
 					}
 
 					writer.WriteLine("\t}");
@@ -673,8 +683,9 @@ namespace CesiumGen
 
 					var returnType = Helpers.ConvertToCSharpType(funcType.ReturnType);
 					var parameters = BuildDelegateParameters(funcType);
+					var delegateName = Helpers.GetCsCleanName(d.Name);
 
-					writer.Write($"\tpublic unsafe delegate {returnType} {d.Name}(");
+					writer.Write($"\tpublic unsafe delegate {returnType} {delegateName}(");
 					writer.Write(string.Join(", ", parameters));
 					writer.WriteLine(");");
 
@@ -756,7 +767,7 @@ namespace CesiumGen
 		private void WriteStruct(StreamWriter writer, CppClass s, string indent)
 		{
 			bool isUnion = s.ClassKind == CppClassKind.Union;
-			string structName = s.Name;
+			string structName = Helpers.GetCsCleanName(s.Name);
 
 			Helpers.PrintComments(writer, s.Comment, indent);
 
@@ -778,7 +789,8 @@ namespace CesiumGen
 					&& nestedClass.Fields.Count > 0
 					&& (nestedClass.ClassKind == CppClassKind.Struct || nestedClass.ClassKind == CppClassKind.Union))
 				{
-					string nestedName = $"{structName}_{field.Name}";
+					string nestedName = $"{structName}_{Helpers.PascalCaseField(field.Name)}";
+					string nestedFieldName = Helpers.PascalCaseField(field.Name);
 
 					// Write the nested type inline
 					WriteAnonymousStructAsNamed(writer, nestedClass, nestedName, indent + "\t");
@@ -788,7 +800,7 @@ namespace CesiumGen
 						writer.WriteLine($"{indent}\t[FieldOffset(0)]");
 
 					Helpers.PrintComments(writer, field.Comment, indent + "\t");
-					writer.WriteLine($"{indent}\tpublic {nestedName} {field.Name};");
+					writer.WriteLine($"{indent}\tpublic {nestedName} {nestedFieldName};");
 				}
 				else
 				{
@@ -821,6 +833,8 @@ namespace CesiumGen
 
 		private void WriteStructField(StreamWriter writer, CppField field, bool parentIsUnion, string indent)
 		{
+			var fieldName = Helpers.PascalCaseField(field.Name);
+
 			if (parentIsUnion)
 				writer.WriteLine($"{indent}[FieldOffset(0)]");
 
@@ -830,7 +844,7 @@ namespace CesiumGen
 			if (field.Type is CppArrayType arrayType && arrayType.Size > 0)
 			{
 				var elementCsType = Helpers.ConvertToCSharpType(arrayType.ElementType);
-				writer.WriteLine($"{indent}public fixed {elementCsType} {field.Name}[{arrayType.Size}];");
+				writer.WriteLine($"{indent}public fixed {elementCsType} {fieldName}[{arrayType.Size}];");
 			}
 			else
 			{
@@ -840,7 +854,7 @@ namespace CesiumGen
 				if (csType == "bool")
 					csType = "byte";
 
-				writer.WriteLine($"{indent}public {csType} {field.Name};");
+				writer.WriteLine($"{indent}public {csType} {fieldName};");
 			}
 		}
 
@@ -924,10 +938,10 @@ namespace CesiumGen
 				var paramName = string.IsNullOrEmpty(param.Name) ? $"arg{j}" : param.Name;
 				paramName = Helpers.EscapeReservedKeyword(paramName);
 
-				// const char* parameters → [MarshalAs(UnmanagedType.LPStr)] string
+				// const char* parameters → [MarshalAs(UnmanagedType.LPUTF8Str)] string
 				if (Helpers.IsConstCharPointer(param.Type))
 				{
-					parameters.Add($"[MarshalAs(UnmanagedType.LPStr)] string {paramName}");
+					parameters.Add($"[MarshalAs(UnmanagedType.LPUTF8Str)] string {paramName}");
 				}
 				else
 				{
@@ -974,8 +988,9 @@ namespace CesiumGen
 				for (int i = 0; i < groupList.Count; i++)
 				{
 					var name = groupList[i].Name;
+					var csName = Helpers.GetCsCleanName(name);
 					bool isOwnable = _ownableHandleTypes.Contains(name);
-					var interfaces = isOwnable ? $"IEquatable<{name}>, IDisposable" : $"IEquatable<{name}>";
+					var interfaces = isOwnable ? $"IEquatable<{csName}>, IDisposable" : $"IEquatable<{csName}>";
 
 					// Get all functions belonging to this handle type
 					var handleFunctions = _analyzedFunctions
@@ -985,21 +1000,21 @@ namespace CesiumGen
 					// Check if any method on this handle accepts delegate parameters
 					bool hasDelegateParams = handleFunctions.Any(f => HasDelegateParameters(f.CppFunction));
 
-					writer.WriteLine($"\tpublic unsafe partial struct {name} : {interfaces}");
+					writer.WriteLine($"\tpublic unsafe partial struct {csName} : {interfaces}");
 					writer.WriteLine("\t{");
 
 					// Core handle boilerplate
 					writer.WriteLine($"\t\tpublic readonly IntPtr Handle;");
-					writer.WriteLine($"\t\tpublic {name}(IntPtr existingHandle) {{ Handle = existingHandle; }}");
-					writer.WriteLine($"\t\tpublic static {name} Null => new {name}(IntPtr.Zero);");
-					writer.WriteLine($"\t\tpublic static implicit operator {name}(IntPtr handle) => new {name}(handle);");
-					writer.WriteLine($"\t\tpublic static implicit operator IntPtr({name} handle) => handle.Handle;");
-					writer.WriteLine($"\t\tpublic static bool operator ==({name} left, {name} right) => left.Handle == right.Handle;");
-					writer.WriteLine($"\t\tpublic static bool operator !=({name} left, {name} right) => left.Handle != right.Handle;");
-					writer.WriteLine($"\t\tpublic bool Equals({name} h) => Handle == h.Handle;");
-					writer.WriteLine($"\t\tpublic override bool Equals(object o) => o is {name} h && Equals(h);");
+					writer.WriteLine($"\t\tpublic {csName}(IntPtr existingHandle) {{ Handle = existingHandle; }}");
+					writer.WriteLine($"\t\tpublic static {csName} Null => new {csName}(IntPtr.Zero);");
+					writer.WriteLine($"\t\tpublic static implicit operator {csName}(IntPtr handle) => new {csName}(handle);");
+					writer.WriteLine($"\t\tpublic static implicit operator IntPtr({csName} handle) => handle.Handle;");
+					writer.WriteLine($"\t\tpublic static bool operator ==({csName} left, {csName} right) => left.Handle == right.Handle;");
+					writer.WriteLine($"\t\tpublic static bool operator !=({csName} left, {csName} right) => left.Handle != right.Handle;");
+					writer.WriteLine($"\t\tpublic bool Equals({csName} h) => Handle == h.Handle;");
+					writer.WriteLine($"\t\tpublic override bool Equals(object o) => o is {csName} h && Equals(h);");
 					writer.WriteLine($"\t\tpublic override int GetHashCode() => Handle.GetHashCode();");
-					writer.WriteLine($"\t\tpublic override string ToString() => $\"{name}[0x{{Handle:x}}]\";");
+					writer.WriteLine($"\t\tpublic override string ToString() => $\"{csName}[0x{{Handle:x}}]\";");
 
 					// Static dictionary to prevent delegate garbage collection
 					if (hasDelegateParams)
@@ -1037,7 +1052,7 @@ namespace CesiumGen
 					foreach (var ctor in constructors)
 					{
 						writer.WriteLine();
-						WriteHandleStaticFactory(writer, ctor, name, "\t\t");
+						WriteHandleStaticFactory(writer, ctor, csName, "\t\t");
 					}
 
 					// --- Properties ---
@@ -1057,7 +1072,7 @@ namespace CesiumGen
 					foreach (var method in instanceMethods)
 					{
 						writer.WriteLine();
-						WriteInstanceMethod(writer, method, name, "\t\t");
+						WriteInstanceMethod(writer, method, csName, "\t\t");
 					}
 
 					// --- Static methods (not constructors) ---
@@ -1449,9 +1464,10 @@ namespace CesiumGen
 				{
 					var structGroup = structGroups[si];
 					var structName = structGroup.Key;
+					var csStructName = Helpers.GetCsCleanName(structName);
 
 					if (si > 0) writer.WriteLine();
-					writer.WriteLine($"\tpublic unsafe partial struct {structName}");
+					writer.WriteLine($"\tpublic unsafe partial struct {csStructName}");
 					writer.WriteLine("\t{");
 
 					var funcs = structGroup.ToList();
@@ -1477,7 +1493,7 @@ namespace CesiumGen
 							var csParams = BuildWrapperParameters(f, skipFirstParam: false);
 							var callArgs = BuildWrapperCallArgs(f, skipFirstParam: false);
 
-							writer.WriteLine($"\t\tpublic static {structName} {func.MethodName}({string.Join(", ", csParams)})");
+							writer.WriteLine($"\t\tpublic static {csStructName} {func.MethodName}({string.Join(", ", csParams)})");
 							writer.WriteLine($"\t\t\t=> {apiRef}.{cleanedName}({string.Join(", ", callArgs)});");
 						}
 						else if (isInstanceMethod)
@@ -1620,7 +1636,7 @@ namespace CesiumGen
 		/// </summary>
 		private void WriteCallbackSetClass(StreamWriter writer, CppClass callbackStruct, string indent)
 		{
-			var structName = callbackStruct.Name;
+			var structName = Helpers.GetCsCleanName(callbackStruct.Name);
 			var className = structName + "Set";
 
 			// Collect function-pointer fields
@@ -1668,13 +1684,13 @@ namespace CesiumGen
 			writer.WriteLine($"{indent}\t{{");
 			writer.WriteLine($"{indent}\t\tGetDelegatesToPin();");
 			writer.WriteLine($"{indent}\t\tvar result = new {structName}();");
-			writer.WriteLine($"{indent}\t\tresult.userData = userData;");
+			writer.WriteLine($"{indent}\t\tresult.{Helpers.PascalCaseField("userData")} = userData;");
 
 			foreach (var field in fpFields)
 			{
 				var fieldName = Helpers.SnakeToPascalCase(field.Name);
 				writer.WriteLine($"{indent}\t\tif ({fieldName} != null)");
-				writer.WriteLine($"{indent}\t\t\tresult.{field.Name} = Marshal.GetFunctionPointerForDelegate({fieldName});");
+				writer.WriteLine($"{indent}\t\t\tresult.{Helpers.PascalCaseField(field.Name)} = Marshal.GetFunctionPointerForDelegate({fieldName});");
 			}
 
 			writer.WriteLine($"{indent}\t\treturn result;");
@@ -1691,7 +1707,8 @@ namespace CesiumGen
 		/// </summary>
 		private void WriteCallbackHandleExtensions(StreamWriter writer, CppClass callbackStruct, string indent)
 		{
-			var structName = callbackStruct.Name;
+			var callbackStructRawName = callbackStruct.Name;
+			var structName = Helpers.GetCsCleanName(callbackStructRawName);
 			var className = structName + "Set";
 
 			// Find handle instance methods that take {structName}* as a parameter
@@ -1699,7 +1716,7 @@ namespace CesiumGen
 				.Where(f => f.Role == FunctionRole.InstanceMethod
 					&& f.OwnerType != null
 					&& Helpers.OpaqueHandleTypes.Contains(f.OwnerType)
-					&& HasCallbackStructParameter(f.CppFunction, structName))
+					&& HasCallbackStructParameter(f.CppFunction, callbackStructRawName))
 				.ToList();
 
 			if (matchingFunctions.Count == 0) return;
@@ -1707,7 +1724,7 @@ namespace CesiumGen
 			// Group by owner handle type
 			foreach (var handleGroup in matchingFunctions.GroupBy(f => f.OwnerType))
 			{
-				var handleName = handleGroup.Key;
+				var handleName = Helpers.GetCsCleanName(handleGroup.Key);
 
 				writer.WriteLine();
 				writer.WriteLine($"{indent}public unsafe partial struct {handleName}");

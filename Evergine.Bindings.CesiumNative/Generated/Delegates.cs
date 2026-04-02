@@ -13,7 +13,7 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param message The log message string.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumLogCallback(void* userData, int level, byte* message);
+	public unsafe delegate void LogCallback(void* userData, int level, byte* message);
 
 	/// <summary>
 	/// @brief Callback invoked when a tileset resource fails to load.
@@ -21,14 +21,14 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param message Error description.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumTilesetLoadErrorCallback(void* userData, byte* message);
+	public unsafe delegate void TilesetLoadErrorCallback(void* userData, byte* message);
 
 	/// <summary>
 	/// @brief Callback invoked when the root tile becomes available.
 	/// @param userData User-provided context.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumRootTileAvailableCallback(void* userData);
+	public unsafe delegate void RootTileAvailableCallback(void* userData);
 
 	/// <summary>
 	/// @brief Callback invoked when asset listing completes.
@@ -36,7 +36,7 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param assetList The asset list result (caller must destroy), or NULL on error.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumIonAssetsCompleteCallback(void* userData, CesiumIonAssetList assetList);
+	public unsafe delegate void IonAssetsCompleteCallback(void* userData, IonAssetList assetList);
 
 	/// <summary>
 	/// @brief Callback invoked when token listing completes.
@@ -44,7 +44,7 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param tokenList The token list result (caller must destroy), or NULL on error.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumIonTokensCompleteCallback(void* userData, CesiumIonTokenList tokenList);
+	public unsafe delegate void IonTokensCompleteCallback(void* userData, IonTokenList tokenList);
 
 	/// <summary>
 	/// @brief Callback invoked during OAuth with the authorization URL.
@@ -53,7 +53,7 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param url The URL to open.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumIonAuthorizeUrlCallback(void* userData, byte* url);
+	public unsafe delegate void IonAuthorizeUrlCallback(void* userData, byte* url);
 
 	/// <summary>
 	/// @brief Callback invoked when OAuth authorization completes.
@@ -61,5 +61,5 @@ namespace Evergine.Bindings.CesiumNative
 	/// @param connection The resulting connection (caller must destroy), or NULL on error.
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public unsafe delegate void CesiumIonAuthorizeCompleteCallback(void* userData, CesiumIonConnection connection);
+	public unsafe delegate void IonAuthorizeCompleteCallback(void* userData, IonConnection connection);
 }

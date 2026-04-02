@@ -57,13 +57,13 @@ namespace CesiumGen
 					return ConvertToCSharpType(qualified.ElementType);
 
 				case CppEnum enumType:
-					return enumType.Name;
+					return GetCsCleanName(enumType.Name);
 
 				case CppTypedef typedef:
 					return ConvertTypedef(typedef);
 
 				case CppClass classType:
-					return classType.Name;
+					return GetCsCleanName(classType.Name);
 
 				case CppPointerType pointer:
 					return ConvertPointerType(pointer);
@@ -107,10 +107,13 @@ namespace CesiumGen
 				return mapped;
 
 			if (OpaqueHandleTypes.Contains(name))
-				return name;
+				return GetCsCleanName(name);
 
 			if (DelegateNames.Contains(name))
-				return name;
+				return GetCsCleanName(name);
+
+			if (DefinedStructNames.Contains(name))
+				return GetCsCleanName(name);
 
 			return ConvertToCSharpType(typedef.ElementType);
 		}
@@ -137,11 +140,11 @@ namespace CesiumGen
 
 			// Pointer to opaque handle struct → typed handle (blittable struct with IntPtr)
 			if (elementType is CppClass cls && OpaqueHandleTypes.Contains(cls.Name))
-				return cls.Name;
+				return GetCsCleanName(cls.Name);
 
 			// Pointer to typedef of opaque handle → typed handle
 			if (elementType is CppTypedef td && OpaqueHandleTypes.Contains(td.Name))
-				return td.Name;
+				return GetCsCleanName(td.Name);
 
 			// For other pointer types, recurse
 			var inner = ConvertToCSharpType(elementType);
@@ -205,9 +208,34 @@ namespace CesiumGen
 		{
 			if (name.StartsWith("cesium_"))
 				name = name.Substring(7);
-			name = string.Concat(name.Split("_").Select(word => char.ToUpper(word[0]) + word.Substring(1)));
+			name = SnakeToPascalCase(name);
 
 			return name;
+		}
+
+		public static string StripPrefix(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return name;
+
+			if (name.StartsWith("CESIUM_"))
+				return name.Substring("CESIUM_".Length);
+
+			if (name.StartsWith("cesium_"))
+				return name.Substring("cesium_".Length);
+
+			if (name.StartsWith("Cesium") && name.Length > "Cesium".Length && char.IsUpper(name["Cesium".Length]))
+				return name.Substring("Cesium".Length);
+
+			return name;
+		}
+
+		public static string GetCsCleanName(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return name;
+			if (csNameMappings.TryGetValue(name, out var mapped))
+				return mapped;
+
+			return StripPrefix(name);
 		}
 
 		/// <summary>
@@ -289,6 +317,64 @@ namespace CesiumGen
 			if (string.IsNullOrEmpty(snake)) return snake;
 			return string.Concat(snake.Split('_', StringSplitOptions.RemoveEmptyEntries)
 				.Select(word => char.ToUpper(word[0]) + word.Substring(1)));
+		}
+
+		public static string PascalCaseField(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return name;
+
+			if (name.Contains('_'))
+				return SnakeToPascalCase(name);
+
+			if (name.Length == 1)
+				return name.ToUpperInvariant();
+
+			return char.ToUpperInvariant(name[0]) + name.Substring(1);
+		}
+
+		public static string FindCommonPrefix(IEnumerable<string> names)
+		{
+			var list = names.Where(n => !string.IsNullOrEmpty(n)).ToList();
+			if (list.Count == 0) return string.Empty;
+
+			var prefix = list[0];
+			for (int i = 1; i < list.Count; i++)
+			{
+				var current = list[i];
+				int len = Math.Min(prefix.Length, current.Length);
+				int common = 0;
+				for (int c = 0; c < len; c++)
+				{
+					if (prefix[c] != current[c]) break;
+					common = c + 1;
+				}
+
+				prefix = prefix.Substring(0, common);
+				if (prefix.Length == 0)
+					return string.Empty;
+			}
+
+			int lastUnderscore = prefix.LastIndexOf('_');
+			if (lastUnderscore >= 0)
+				return prefix.Substring(0, lastUnderscore + 1);
+
+			return string.Empty;
+		}
+
+		public static string ScreamingToPascalCase(string screaming)
+		{
+			if (string.IsNullOrEmpty(screaming)) return screaming;
+
+			var parts = screaming.Split('_', StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length == 0) return screaming;
+
+			return string.Concat(parts.Select(p =>
+			{
+				if (p.Length == 0) return p;
+				if (char.IsDigit(p[0])) return p;
+				var lower = p.ToLowerInvariant();
+				return char.ToUpperInvariant(lower[0]) + lower.Substring(1);
+			}));
 		}
 
 		/// <summary>

@@ -10,30 +10,30 @@ namespace Evergine.Bindings.CesiumNative
 	/// @brief A 2D vector (x, y).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumVec2
+	public unsafe partial struct Vec2
 	{
-		public double x;
-		public double y;
+		public double X;
+		public double Y;
 	}
 
 	/// <summary>
 	/// @brief A 3D Cartesian coordinate (x, y, z).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumVec3
+	public unsafe partial struct Vec3
 	{
-		public double x;
-		public double y;
-		public double z;
+		public double X;
+		public double Y;
+		public double Z;
 	}
 
 	/// <summary>
 	/// @brief A 4x4 matrix stored in column-major order (matches glm and OpenGL).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumMat4
+	public unsafe partial struct Mat4
 	{
-		public fixed double m[16];
+		public fixed double M[16];
 	}
 
 	/// <summary>
@@ -41,78 +41,78 @@ namespace Evergine.Bindings.CesiumNative
 	/// Longitude and latitude are in radians; height in meters.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumCartographic
+	public unsafe partial struct Cartographic
 	{
-		public double longitude;
-		public double latitude;
-		public double height;
+		public double Longitude;
+		public double Latitude;
+		public double Height;
 	}
 
 	/// <summary>
 	/// @brief A globe rectangle defined by west, south, east, north in radians.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumGlobeRectangle
+	public unsafe partial struct GlobeRectangle
 	{
-		public double west;
-		public double south;
-		public double east;
-		public double north;
+		public double West;
+		public double South;
+		public double East;
+		public double North;
 	}
 
 	/// <summary>
 	/// @brief A bounding sphere: center (x,y,z) and radius.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumBoundingSphere
+	public unsafe partial struct BoundingSphere
 	{
-		public CesiumVec3 center;
-		public double radius;
+		public Vec3 Center;
+		public double Radius;
 	}
 
 	/// <summary>
 	/// @brief An oriented bounding box: center and half-axes (3x3 matrix, column-major).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumOrientedBoundingBox
+	public unsafe partial struct OrientedBoundingBox
 	{
-		public CesiumVec3 center;
+		public Vec3 Center;
 		/// <summary>
 		/// 3x3 matrix, column-major
 		/// </summary>
-		public fixed double halfAxes[9];
+		public fixed double HalfAxes[9];
 	}
 
 	/// <summary>
 	/// @brief A bounding region: globe rectangle with min/max heights.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumBoundingRegion
+	public unsafe partial struct BoundingRegion
 	{
-		public CesiumGlobeRectangle rectangle;
-		public double minimumHeight;
-		public double maximumHeight;
+		public GlobeRectangle Rectangle;
+		public double MinimumHeight;
+		public double MaximumHeight;
 	}
 
 	/// <summary>
 	/// @brief A bounding volume represented as a tagged union.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumBoundingVolume
+	public unsafe partial struct BoundingVolume
 	{
-		public CesiumBoundingVolumeType type;
+		public BoundingVolumeType Type;
 		[StructLayout(LayoutKind.Explicit)]
-		public unsafe struct CesiumBoundingVolume_volume
+		public unsafe struct BoundingVolume_Volume
 		{
 			[FieldOffset(0)]
-			public CesiumBoundingSphere sphere;
+			public BoundingSphere Sphere;
 			[FieldOffset(0)]
-			public CesiumOrientedBoundingBox orientedBox;
+			public OrientedBoundingBox OrientedBox;
 			[FieldOffset(0)]
-			public CesiumBoundingRegion region;
+			public BoundingRegion Region;
 		}
 
-		public CesiumBoundingVolume_volume volume;
+		public BoundingVolume_Volume Volume;
 	}
 
 	/// <summary>
@@ -120,164 +120,164 @@ namespace Evergine.Bindings.CesiumNative
 	/// buffer data. Returned by cesium_gltf_accessor_get_data.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumAccessorData
+	public unsafe partial struct AccessorData
 	{
 		/// <summary>
 		/// Pointer to the first element in the buffer (owned by the model).
 		/// </summary>
-		public void* data;
+		public void* Data;
 		/// <summary>
 		/// Byte stride between consecutive elements.
 		/// </summary>
-		public nuint stride;
+		public nuint Stride;
 		/// <summary>
 		/// Number of elements.
 		/// </summary>
-		public int count;
+		public int Count;
 		/// <summary>
 		/// glTF component type (5126=FLOAT, 5123=UNSIGNED_SHORT, 5125=UNSIGNED_INT, etc.).
 		/// </summary>
-		public int componentType;
+		public int ComponentType;
 		/// <summary>
 		/// Number of components per element (1=SCALAR, 2=VEC2, 3=VEC3, 4=VEC4, 9=MAT3, 16=MAT4).
 		/// </summary>
-		public int numberOfComponents;
+		public int NumberOfComponents;
 		/// <summary>
 		/// Total byte length of the accessible data region.
 		/// </summary>
-		public nuint byteLength;
+		public nuint ByteLength;
 	}
 
 	/// <summary>
 	/// @brief A reference to a texture, as used by material properties.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumTextureInfo
+	public unsafe partial struct TextureInfo
 	{
 		/// <summary>
 		/// Index into Model.textures (-1 if not set).
 		/// </summary>
-		public int textureIndex;
+		public int TextureIndex;
 		/// <summary>
 		/// Texture coordinate set index (e.g. 0 for TEXCOORD_0).
 		/// </summary>
-		public int texCoord;
+		public int TexCoord;
 		/// <summary>
 		/// Per-property extra scale (normalTexture.scale or occlusionTexture.strength, 1.0 otherwise).
 		/// </summary>
-		public double scale;
+		public double Scale;
 	}
 
 	/// <summary>
 	/// @brief PBR metallic-roughness material data.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumMaterialData
+	public unsafe partial struct MaterialData
 	{
 		/// <summary>
 		/// Base color factor (RGBA, linear).
 		/// </summary>
-		public fixed double baseColorFactor[4];
+		public fixed double BaseColorFactor[4];
 		/// <summary>
 		/// Metallic factor [0..1].
 		/// </summary>
-		public double metallicFactor;
+		public double MetallicFactor;
 		/// <summary>
 		/// Roughness factor [0..1].
 		/// </summary>
-		public double roughnessFactor;
+		public double RoughnessFactor;
 		/// <summary>
 		/// Emissive factor (RGB, linear).
 		/// </summary>
-		public fixed double emissiveFactor[3];
+		public fixed double EmissiveFactor[3];
 		/// <summary>
 		/// Alpha cutoff threshold (used when alphaMode == 1).
 		/// </summary>
-		public double alphaCutoff;
+		public double AlphaCutoff;
 		/// <summary>
 		/// Alpha mode: 0 = OPAQUE, 1 = MASK, 2 = BLEND.
 		/// </summary>
-		public int alphaMode;
+		public int AlphaMode;
 		/// <summary>
 		/// 1 if double-sided, 0 otherwise.
 		/// </summary>
-		public int doubleSided;
+		public int DoubleSided;
 		/// <summary>
 		/// Base color texture. textureIndex == -1 if not set.
 		/// </summary>
-		public CesiumTextureInfo baseColorTexture;
+		public TextureInfo BaseColorTexture;
 		/// <summary>
 		/// Metallic-roughness texture. textureIndex == -1 if not set.
 		/// </summary>
-		public CesiumTextureInfo metallicRoughnessTexture;
+		public TextureInfo MetallicRoughnessTexture;
 		/// <summary>
 		/// Normal map texture. textureIndex == -1 if not set.
 		/// </summary>
-		public CesiumTextureInfo normalTexture;
+		public TextureInfo NormalTexture;
 		/// <summary>
 		/// Occlusion texture. textureIndex == -1 if not set.
 		/// </summary>
-		public CesiumTextureInfo occlusionTexture;
+		public TextureInfo OcclusionTexture;
 		/// <summary>
 		/// Emissive texture. textureIndex == -1 if not set.
 		/// </summary>
-		public CesiumTextureInfo emissiveTexture;
+		public TextureInfo EmissiveTexture;
 	}
 
 	/// <summary>
 	/// @brief Sampler data with filter and wrap modes.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumSamplerData
+	public unsafe partial struct SamplerData
 	{
 		/// <summary>
 		/// Magnification filter (9728=NEAREST, 9729=LINEAR), -1 if not set.
 		/// </summary>
-		public int magFilter;
+		public int MagFilter;
 		/// <summary>
 		/// Minification filter (9728..9987), -1 if not set.
 		/// </summary>
-		public int minFilter;
+		public int MinFilter;
 		/// <summary>
 		/// Wrap mode S (10497=REPEAT, 33071=CLAMP_TO_EDGE, 33648=MIRRORED_REPEAT).
 		/// </summary>
-		public int wrapS;
+		public int WrapS;
 		/// <summary>
 		/// Wrap mode T.
 		/// </summary>
-		public int wrapT;
+		public int WrapT;
 	}
 
 	/// <summary>
 	/// @brief Decoded image data (pixel buffer).
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumImageData
+	public unsafe partial struct ImageData
 	{
 		/// <summary>
 		/// Pointer to the pixel data (owned by the model).
 		/// </summary>
-		public void* pixelData;
+		public void* PixelData;
 		/// <summary>
 		/// Total size of the pixel data in bytes.
 		/// </summary>
-		public nuint pixelDataSize;
+		public nuint PixelDataSize;
 		/// <summary>
 		/// Image width in pixels.
 		/// </summary>
-		public int width;
+		public int Width;
 		/// <summary>
 		/// Image height in pixels.
 		/// </summary>
-		public int height;
+		public int Height;
 		/// <summary>
 		/// Number of channels (1=grey, 2=grey+alpha, 3=RGB, 4=RGBA).
 		/// </summary>
-		public int channels;
+		public int Channels;
 		/// <summary>
 		/// Bytes per channel (typically 1).
 		/// </summary>
-		public int bytesPerChannel;
+		public int BytesPerChannel;
 	}
 
 	/// <summary>
@@ -286,9 +286,9 @@ namespace Evergine.Bindings.CesiumNative
 	/// NULL, in which case a no-op default is used for that operation.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe partial struct CesiumRendererResourceCallbacks
+	public unsafe partial struct RendererResourceCallbacks
 	{
-		public void* userData;
+		public void* UserData;
 		/// <summary>
 		/// @brief Called in a worker thread to prepare render resources from a glTF model.
 		/// @param userData User context.
@@ -296,7 +296,7 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param transform The tile's 4x4 transform matrix.
 		/// @return Opaque pointer to load-thread render resources, or NULL.
 		/// </summary>
-		public IntPtr prepareInLoadThread;
+		public IntPtr PrepareInLoadThread;
 		/// <summary>
 		/// @brief Called in the main thread to finalize render resources.
 		/// @param userData User context.
@@ -304,7 +304,7 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param pLoadThreadResult The result from prepareInLoadThread.
 		/// @return Opaque pointer to main-thread render resources, or NULL.
 		/// </summary>
-		public IntPtr prepareInMainThread;
+		public IntPtr PrepareInMainThread;
 		/// <summary>
 		/// @brief Called in the main thread to free render resources.
 		/// @param userData User context.
@@ -312,7 +312,7 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param pLoadThreadResult Result from prepareInLoadThread (NULL if prepareInMainThread was called).
 		/// @param pMainThreadResult Result from prepareInMainThread (NULL if not yet called).
 		/// </summary>
-		public IntPtr freeResources;
+		public IntPtr FreeResources;
 		/// <summary>
 		/// @brief Called in a worker thread to prepare raster overlay resources.
 		/// @param userData User context.
@@ -326,20 +326,20 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param bytesPerChannel Bytes per channel (typically 1).
 		/// @return Opaque pointer to raster load-thread resources, or NULL.
 		/// </summary>
-		public IntPtr prepareRasterInLoadThread;
+		public IntPtr PrepareRasterInLoadThread;
 		/// <summary>
 		/// @brief Called in the main thread to finalize raster overlay resources.
 		/// @param userData User context.
 		/// @param pLoadThreadResult The result from prepareRasterInLoadThread.
 		/// @return Opaque pointer to raster main-thread resources, or NULL.
 		/// </summary>
-		public IntPtr prepareRasterInMainThread;
+		public IntPtr PrepareRasterInMainThread;
 		/// <summary>
 		/// @brief Called in the main thread to free raster resources.
 		/// @param userData User context.
 		/// @param pMainThreadResult The main-thread raster resources to free.
 		/// </summary>
-		public IntPtr freeRasterResources;
+		public IntPtr FreeRasterResources;
 		/// <summary>
 		/// @brief Called in the main thread to attach a raster overlay to a tile.
 		/// @param userData User context.
@@ -349,7 +349,7 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param translation Texture coordinate translation (x, y).
 		/// @param scale Texture coordinate scale (x, y).
 		/// </summary>
-		public IntPtr attachRasterInMainThread;
+		public IntPtr AttachRasterInMainThread;
 		/// <summary>
 		/// @brief Called in the main thread to detach a raster overlay from a tile.
 		/// @param userData User context.
@@ -357,6 +357,6 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param overlayTextureCoordinateID The texture coordinate set index.
 		/// @param pMainThreadRasterResources The raster resources to detach.
 		/// </summary>
-		public IntPtr detachRasterInMainThread;
+		public IntPtr DetachRasterInMainThread;
 	}
 }

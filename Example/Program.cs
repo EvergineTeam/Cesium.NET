@@ -8,7 +8,7 @@ internal unsafe static class Program
 {
     const string IonAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1MDFhMjM5Ny04YjZiLTRhYTUtYmIwMy00NGUzZjhmZGIwYTAiLCJpZCI6Mzk2NjYxLCJpYXQiOjE3NzQyNjg5Mjd9.14FZkunpT9N4c-YKnJgvleu6kZGg-7b1_HNwJbDlVkA";
 
-    private static readonly CesiumRendererResourceCallbacksSet RendererCallbacks = new()
+    private static readonly RendererResourceCallbacksSet RendererCallbacks = new()
     {
         PrepareInLoadThread = PrepareInLoadThread,
         PrepareInMainThread = PrepareInMainThread,
@@ -22,26 +22,26 @@ internal unsafe static class Program
         public int CurrentTileID; // Example of user data that could be passed to callbacks. This could be a memory allocator or other context needed for resource preparation.
     }
 
-    public static CesiumViewState createViewState(CesiumCartographic worldCoordinates)
+    public static ViewState createViewState(Cartographic worldCoordinates)
     {
-        CesiumEllipsoid wgs84 = CesiumEllipsoid.Wgs84();
-        CesiumVec3 position = wgs84.CartographicToCartesian(worldCoordinates);
+        Ellipsoid wgs84 = Ellipsoid.Wgs84();
+        Vec3 position = wgs84.CartographicToCartesian(worldCoordinates);
 
         //Console.WriteLine($"Camera Position (Cartesian): ({position.x}, {position.y}, {position.z})");
 
-        CesiumVec3 direction = new CesiumVec3
+        Vec3 direction = new Vec3
         {
-            x = 0,
-            y = -1,
-            z = 0
+            X = 0,
+            Y = -1,
+            Z = 0
         };
 
 
         //Console.WriteLine($"Camera Direction (Cartesian): ({direction.x}, {direction.y}, {direction.z})");
 
-        CesiumVec3 up = wgs84.GeodeticSurfaceNormalCartesian(position);
-        CesiumVec2 viewport = new CesiumVec2 { x = 1920, y = 1080 };
-        return CesiumViewState.CreatePerspective(position, direction, up, viewport, 45.0, 45.0, wgs84);
+        Vec3 up = wgs84.GeodeticSurfaceNormalCartesian(position);
+        Vec2 viewport = new Vec2 { X = 1920, Y = 1080 };
+        return ViewState.CreatePerspective(position, direction, up, viewport, 45.0, 45.0, wgs84);
     }
 
     public static void Main(string[] args)
@@ -52,19 +52,19 @@ internal unsafe static class Program
         ((UserData*)userData)->CurrentTileID = 0;
 
         // Initialize core Cesium systems with automatic disposal via 'using'.
-        using CesiumAsyncSystem asyncSystem = CesiumAsyncSystem.Create();
-        using CesiumAssetAccessor assetAccessor = CesiumAssetAccessor.Create("EvergineCesiumNative/1.0");
-        using CesiumCreditSystem creditSystem = CesiumCreditSystem.Create();
+        using AsyncSystem asyncSystem = AsyncSystem.Create();
+        using AssetAccessor assetAccessor = AssetAccessor.Create("EvergineCesiumNative/1.0");
+        using CreditSystem creditSystem = CreditSystem.Create();
 
-        using CesiumTilesetExternals externals = CesiumTilesetExternals.Create(asyncSystem, assetAccessor, creditSystem);
+        using TilesetExternals externals = TilesetExternals.Create(asyncSystem, assetAccessor, creditSystem);
         externals.SetRendererResourceCallbacks(RendererCallbacks, userData);
 
-        CesiumRasterOverlay overlay = CesiumRasterOverlay.IonRasterOverlayCreate(3, IonAccessToken, null);
+        RasterOverlay overlay = RasterOverlay.IonRasterOverlayCreate(3, IonAccessToken, null);
 
         try
         {
             // Configure tileset options using C# properties.
-            var options = CesiumTilesetOptions.Create();
+            var options = TilesetOptions.Create();
             options.MaximumScreenSpaceError = 32;
             options.EnableFrustumCulling = true;
             options.EnableOcclusionCulling = true;
@@ -75,10 +75,10 @@ internal unsafe static class Program
             bool printFrameDetails = false;
 
             // Create tileset from Ion.
-            using CesiumTileset tileset = CesiumTileset.CreateFromIon(externals, 1, IonAccessToken, options, null);
+            using Tileset tileset = Tileset.CreateFromIon(externals, 1, IonAccessToken, options, null);
             tileset.Overlays.Add(overlay);
 
-            if (tileset == CesiumTileset.Null)
+            if (tileset == Tileset.Null)
             {
                 string errorMessage = CesiumNativeApi.GetLastError() ?? "Unknown error";
                 Console.WriteLine($"Failed to create tileset: {errorMessage}");
@@ -105,10 +105,10 @@ internal unsafe static class Program
                 double lat = initLat + (lastLat - initLat) * i / numSteps;
                 double height = initHeight + (lastHeight - initHeight) * i / numSteps;
 
-                // CesiumCartographic expects radians, so use FromDegrees to convert
-                CesiumCartographic interpolatedPos = CesiumCartographic.FromDegrees(lon, lat, height);
-                CesiumViewState state = createViewState(interpolatedPos);
-                CesiumViewUpdateResult result = tileset.UpdateView(&state, 1, 0.016f);
+                // Cartographic expects radians, so use FromDegrees to convert
+                Cartographic interpolatedPos = Cartographic.FromDegrees(lon, lat, height);
+                ViewState state = createViewState(interpolatedPos);
+                ViewUpdateResult result = tileset.UpdateView(&state, 1, 0.016f);
 
                 if (printFrameDetails)
                 {
@@ -119,7 +119,7 @@ internal unsafe static class Program
                     Console.WriteLine($"MaxDepth: {result.MaxDepthVisited}");
                     for (int j = 0; j < result.TilesToRenderCount; j++)
                     {
-                        CesiumTile tile = result.GetTileToRender(j);
+                        Tile tile = result.GetTileToRender(j);
                         Console.WriteLine($"  Tile {j}: LoadState={tile.LoadState}, GeometricError={tile.GeometricError}, HasRenderContent={tile.HasRenderContent()}");
                     }
                     Console.WriteLine("----------------------------------------------------------------");
@@ -144,11 +144,11 @@ internal unsafe static class Program
         public uint BytesPerChannel;
     }
 
-    private static void* PrepareInLoadThread(void* userData, CesiumGltfModel model, CesiumMat4 transform)
+    private static void* PrepareInLoadThread(void* userData, GltfModel model, Mat4 transform)
     {
         UserData* data = (UserData*)userData;
         int currentTile = data->CurrentTileID++;
-        if (model != CesiumGltfModel.Null)
+        if (model != GltfModel.Null)
         {
             Console.WriteLine($"[Callback] ID{currentTile} glTF model received. Meshes={model.MeshCount}, Materials={model.MaterialCount}, Buffers={model.BufferCount}, Images={model.ImageCount}");
         }
@@ -165,7 +165,7 @@ internal unsafe static class Program
         return id; //Whatever we return here will be passed to the PrepareInMainThread callback. This could be a pointer to prepared GPU resources, or any other data needed for final preparation on the main thread.
     }
 
-    private static void* PrepareInMainThread(void* userData, CesiumTile tile, void* pLoadData)
+    private static void* PrepareInMainThread(void* userData, Tile tile, void* pLoadData)
     {
         int* id = (int*)pLoadData;
         return pLoadData; //Whatever we return here, will be saved into Tile.RenderResources and can be used in rendering or in the AttachRasterInMainThread callback. In this example, we just pass the data through without modification.
@@ -200,7 +200,7 @@ internal unsafe static class Program
         return pLoadThreadResult;
     }
 
-    private static void AttachRasterInMainThread(void* userData, CesiumTile tile, int overlayTextureCoordinateID, void* pMainThreadRasterResources, CesiumVec2 translation, CesiumVec2 scale)
+    private static void AttachRasterInMainThread(void* userData, Tile tile, int overlayTextureCoordinateID, void* pMainThreadRasterResources, Vec2 translation, Vec2 scale)
     {
         // This function would be called after PrepareRasterInMainThread to associate the prepared raster resources with a specific tile.
         // The implementation would depend on how your rendering system manages tile and raster resources.
