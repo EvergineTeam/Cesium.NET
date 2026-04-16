@@ -392,6 +392,20 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		public int WriteGlb(byte** out_data, nuint* out_size)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelWriteGlb(this, out_data, out_size);
+
+		/// <summary>
+		/// @brief Strips EXT_mesh_features and EXT_structural_metadata from a model.
+		/// This removes _FEATURE_ID_* vertex attributes from all mesh primitives,
+		/// removes the EXT_mesh_features extension from each primitive, removes the
+		/// EXT_structural_metadata extension from both primitives and the model root,
+		/// and cleans up extensionsUsed / extensionsRequired.
+		/// Call this in prepareInLoadThread if you do not need feature ID data.
+		/// The model pointer must be non-const (obtained via cesium_tile_get_render_content_model
+		/// is const — use this on models you own, e.g. from a reader result).
+		/// @param model The model to mutate (non-const).
+		/// </summary>
+		public void StripFeatureIds()
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfModelStripFeatureIds(this);
 	}
 
 	public unsafe partial struct CGltfReaderResult : IEquatable<CGltfReaderResult>, IDisposable

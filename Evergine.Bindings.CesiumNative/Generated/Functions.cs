@@ -461,6 +461,20 @@ namespace Evergine.Bindings.CesiumNative
 		public static extern void GltfFreeGlb(byte* data);
 
 		/// <summary>
+		/// @brief Strips EXT_mesh_features and EXT_structural_metadata from a model.
+		/// This removes _FEATURE_ID_* vertex attributes from all mesh primitives,
+		/// removes the EXT_mesh_features extension from each primitive, removes the
+		/// EXT_structural_metadata extension from both primitives and the model root,
+		/// and cleans up extensionsUsed / extensionsRequired.
+		/// Call this in prepareInLoadThread if you do not need feature ID data.
+		/// The model pointer must be non-const (obtained via cesium_tile_get_render_content_model
+		/// is const — use this on models you own, e.g. from a reader result).
+		/// @param model The model to mutate (non-const).
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_model_strip_feature_ids")]
+		public static extern void GltfModelStripFeatureIds(GltfModel model);
+
+		/// <summary>
 		/// @brief Creates an async system with a built-in thread pool.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_async_system_create")]

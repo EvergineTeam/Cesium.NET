@@ -508,6 +508,26 @@ CESIUM_API int cesium_gltf_model_write_glb(
  */
 CESIUM_API void cesium_gltf_free_glb(uint8_t* data);
 
+/* ============================================================================
+ * Model mutation — strip metadata extensions
+ * ========================================================================= */
+
+/**
+ * @brief Strips EXT_mesh_features and EXT_structural_metadata from a model.
+ *
+ * This removes _FEATURE_ID_* vertex attributes from all mesh primitives,
+ * removes the EXT_mesh_features extension from each primitive, removes the
+ * EXT_structural_metadata extension from both primitives and the model root,
+ * and cleans up extensionsUsed / extensionsRequired.
+ *
+ * Call this in prepareInLoadThread if you do not need feature ID data.
+ * The model pointer must be non-const (obtained via cesium_tile_get_render_content_model
+ * is const — use this on models you own, e.g. from a reader result).
+ *
+ * @param model The model to mutate (non-const).
+ */
+CESIUM_API void cesium_gltf_model_strip_feature_ids(CesiumGltfModel* model);
+
 #ifdef __cplusplus
 }
 #endif
