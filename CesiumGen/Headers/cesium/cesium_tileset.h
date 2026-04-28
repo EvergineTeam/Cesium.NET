@@ -484,6 +484,16 @@ CESIUM_API const CesiumTile* cesium_view_update_result_get_tile_to_render(
 CESIUM_API int cesium_view_update_result_get_tiles_fading_out_count(const CesiumViewUpdateResult* result);
 
 /**
+ * @brief Gets a fading-out tile by index.
+ * @param result The update result.
+ * @param index Index in [0, count).
+ * @return Borrowed pointer to the tile.
+ */
+CESIUM_API const CesiumTile* cesium_view_update_result_get_tile_fading_out(
+    const CesiumViewUpdateResult* result,
+    int index);
+
+/**
  * @brief Gets the current frame number.
  */
 CESIUM_API int32_t cesium_view_update_result_get_frame_number(const CesiumViewUpdateResult* result);

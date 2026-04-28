@@ -790,6 +790,15 @@ namespace Evergine.Bindings.CesiumNative
 		public static extern int ViewUpdateResultGetTilesFadingOutCount(ViewUpdateResult result);
 
 		/// <summary>
+		/// @brief Gets a fading-out tile by index.
+		/// @param result The update result.
+		/// @param index Index in [0, count).
+		/// @return Borrowed pointer to the tile.
+		/// </summary>
+		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_tile_fading_out")]
+		public static extern Tile ViewUpdateResultGetTileFadingOut(ViewUpdateResult result, int index);
+
+		/// <summary>
 		/// @brief Gets the current frame number.
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_view_update_result_get_frame_number")]

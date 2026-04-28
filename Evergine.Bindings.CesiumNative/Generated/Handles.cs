@@ -915,6 +915,15 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		public Tile GetTileToRender(int index)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetTileToRender(this, index);
+
+		/// <summary>
+		/// @brief Gets a fading-out tile by index.
+		/// @param result The update result.
+		/// @param index Index in [0, count).
+		/// @return Borrowed pointer to the tile.
+		/// </summary>
+		public Tile GetTileFadingOut(int index)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.ViewUpdateResultGetTileFadingOut(this, index);
 	}
 
 	public unsafe partial struct Tile : IEquatable<Tile>
