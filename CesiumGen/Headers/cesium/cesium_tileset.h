@@ -129,10 +129,13 @@ typedef struct CesiumRendererResourceCallbacks {
     /**
      * @brief Called in the main thread to free raster resources.
      * @param userData User context.
-     * @param pMainThreadResult The main-thread raster resources to free.
+     * @param pLoadThreadResult Result from prepareRasterInLoadThread.
+     *        NULL if prepareRasterInMainThread has already been called.
+     * @param pMainThreadResult Result from prepareRasterInMainThread.
+     *        NULL if prepareRasterInMainThread has not yet been called.
      */
-    void (*freeRasterResources)(void* userData, void* pMainThreadResult);
-
+    void (*freeRasterResources)(void* userData, void* pLoadThreadResult, void* pMainThreadResult);
+    
     /**
      * @brief Called in the main thread to attach a raster overlay to a tile.
      * @param userData User context.

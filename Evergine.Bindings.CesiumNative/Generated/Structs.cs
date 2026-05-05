@@ -337,7 +337,10 @@ namespace Evergine.Bindings.CesiumNative
 		/// <summary>
 		/// @brief Called in the main thread to free raster resources.
 		/// @param userData User context.
-		/// @param pMainThreadResult The main-thread raster resources to free.
+		/// @param pLoadThreadResult Result from prepareRasterInLoadThread.
+		/// NULL if prepareRasterInMainThread has already been called.
+		/// @param pMainThreadResult Result from prepareRasterInMainThread.
+		/// NULL if prepareRasterInMainThread has not yet been called.
 		/// </summary>
 		public IntPtr FreeRasterResources;
 		/// <summary>
