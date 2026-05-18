@@ -782,6 +782,19 @@ namespace Evergine.Bindings.CesiumNative
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetSetRootTileAvailableCallback(this, callback, userData);
 
 		/// <summary>
+		/// @brief Starts asynchronous sampleHeightMostDetailed request.
+		/// Callback runs in main-thread task queue. Caller must pump
+		/// cesium_async_system_dispatch_main_thread_tasks.
+		/// @param tileset The tileset.
+		/// @param positions Input cartographic positions.
+		/// @param positionCount Number of positions.
+		/// @param callback Completion callback.
+		/// @param userData User context passed to callback.
+		/// </summary>
+		public void SampleHeightMostDetailed(Cartographic* positions, int positionCount, SampleHeightMostDetailedCallback callback, void* userData)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetSampleHeightMostDetailed(this, positions, positionCount, callback, userData);
+
+		/// <summary>
 		/// @brief Computes the percentage of tiles loaded for the default view group.
 		/// @return A value between 0.0 and 100.0.
 		/// </summary>

@@ -61,6 +61,21 @@ typedef void (*CesiumTilesetLoadErrorCallback)(void* userData, const char* messa
  */
 typedef void (*CesiumRootTileAvailableCallback)(void* userData);
 
+/**
+ * @brief Callback invoked when sampleHeightMostDetailed completes.
+ * @param userData User-provided context.
+ * @param positions Sampled positions (lon/lat from input, sampled height output).
+ *                  Pointer valid only for callback duration.
+ * @param sampleSuccess Per-position success flags (1=true, 0=false).
+ *                      Pointer valid only for callback duration.
+ * @param positionCount Number of items in positions/sampleSuccess.
+ */
+typedef void (*CesiumSampleHeightMostDetailedCallback)(
+    void* userData,
+    const CesiumCartographic* positions,
+    const int* sampleSuccess,
+    int positionCount);
+
 /* ============================================================================
  * IPrepareRendererResources — C function pointer bridge
  *
@@ -444,6 +459,25 @@ CESIUM_API int cesium_tileset_is_root_tile_available(const CesiumTileset* tilese
 CESIUM_API void cesium_tileset_set_root_tile_available_callback(
     CesiumTileset* tileset,
     CesiumRootTileAvailableCallback callback,
+    void* userData);
+
+/**
+ * @brief Starts asynchronous sampleHeightMostDetailed request.
+ *
+ * Callback runs in main-thread task queue. Caller must pump
+ * cesium_async_system_dispatch_main_thread_tasks.
+ *
+ * @param tileset The tileset.
+ * @param positions Input cartographic positions.
+ * @param positionCount Number of positions.
+ * @param callback Completion callback.
+ * @param userData User context passed to callback.
+ */
+CESIUM_API void cesium_tileset_sample_height_most_detailed(
+    CesiumTileset* tileset,
+    const CesiumCartographic* positions,
+    int positionCount,
+    CesiumSampleHeightMostDetailedCallback callback,
     void* userData);
 
 /**

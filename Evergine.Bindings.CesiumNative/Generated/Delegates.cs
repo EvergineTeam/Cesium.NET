@@ -31,6 +31,18 @@ namespace Evergine.Bindings.CesiumNative
 	public unsafe delegate void RootTileAvailableCallback(void* userData);
 
 	/// <summary>
+	/// @brief Callback invoked when sampleHeightMostDetailed completes.
+	/// @param userData User-provided context.
+	/// @param positions Sampled positions (lon/lat from input, sampled height output).
+	/// Pointer valid only for callback duration.
+	/// @param sampleSuccess Per-position success flags (1=true, 0=false).
+	/// Pointer valid only for callback duration.
+	/// @param positionCount Number of items in positions/sampleSuccess.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate void SampleHeightMostDetailedCallback(void* userData, Cartographic* positions, int* sampleSuccess, int positionCount);
+
+	/// <summary>
 	/// @brief Callback invoked when asset listing completes.
 	/// @param userData User-provided context.
 	/// @param assetList The asset list result (caller must destroy), or NULL on error.
