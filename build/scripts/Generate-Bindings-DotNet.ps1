@@ -51,6 +51,50 @@ function Get-BuildOutputPath {
     return $buildPath
 }
 
+function Resolve-BuildOutputPath {
+    param(
+        [string]$GeneratorDir,
+        [string]$BuildConfiguration,
+        [string]$TargetFramework,
+        [string]$RuntimeIdentifier
+    )
+
+    $requestedPath = Get-BuildOutputPath -GeneratorDir $GeneratorDir -BuildConfiguration $BuildConfiguration -TargetFramework $TargetFramework -RuntimeIdentifier $RuntimeIdentifier
+    if (Test-Path $requestedPath) {
+        return $requestedPath
+    }
+
+    LogDebug "Requested build path not found: $requestedPath"
+    LogDebug "Trying to locate generated output path under '$GeneratorDir/bin/$BuildConfiguration'"
+
+    $searchRoot = Join-Path $GeneratorDir "bin" $BuildConfiguration
+    if (-not (Test-Path $searchRoot)) {
+        throw "Build output folder not found: $searchRoot"
+    }
+
+    # Prefer output folder containing the requested runtime identifier, then newest by write time.
+    $candidates = Get-ChildItem -Path $searchRoot -Directory -Recurse |
+        Where-Object { Test-Path (Join-Path $_.FullName "publish") }
+
+    if (-not [string]::IsNullOrWhiteSpace($RuntimeIdentifier)) {
+        $ridCandidates = $candidates | Where-Object { $_.FullName -match [regex]::Escape($RuntimeIdentifier) }
+        if ($ridCandidates) {
+            $candidates = $ridCandidates
+        }
+    }
+
+    $resolvedPath = $candidates |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1 -ExpandProperty FullName
+
+    if ([string]::IsNullOrWhiteSpace($resolvedPath)) {
+        throw "Unable to locate generator build output folder under: $searchRoot"
+    }
+
+    LogDebug "Resolved build path: $resolvedPath"
+    return $resolvedPath
+}
+
 function Get-ProjectNameFromPath {
     param([string]$ProjectPath)
     # Normalize separators for cross-platform compatibility
@@ -120,7 +164,7 @@ LogDebug "START $GeneratorName binding generator process"
 
 $generatorDir = Split-Path $GeneratorProject -Parent
 $projectName = Get-ProjectNameFromPath $GeneratorProject
-$buildPath = Get-BuildOutputPath $generatorDir $BuildConfiguration $TargetFramework $RuntimeIdentifier
+$buildPath = Resolve-BuildOutputPath $generatorDir $BuildConfiguration $TargetFramework $RuntimeIdentifier
 
 Push-Location $buildPath
 try {
