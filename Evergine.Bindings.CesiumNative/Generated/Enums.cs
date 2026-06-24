@@ -16,6 +16,29 @@ namespace Evergine.Bindings.CesiumNative
 	}
 
 	/// <summary>
+	/// @brief GPU compressed pixel format of an image, or NONE if uncompressed.
+	/// Values mirror CesiumGltf::GpuCompressedPixelFormat one-to-one (same order).
+	/// </summary>
+	public enum GpuCompressedPixelFormat
+	{
+		None = 0,
+		Etc1Rgb = 1,
+		Etc2Rgba = 2,
+		Bc1Rgb = 3,
+		Bc3Rgba = 4,
+		Bc4R = 5,
+		Bc5Rg = 6,
+		Bc7Rgba = 7,
+		Pvrtc14Rgb = 8,
+		Pvrtc14Rgba = 9,
+		Astc4x4Rgba = 10,
+		Pvrtc24Rgb = 11,
+		Pvrtc24Rgba = 12,
+		Etc2EacR11 = 13,
+		Etc2EacRg11 = 14,
+	}
+
+	/// <summary>
 	/// ============================================================================
 	/// Tile load state enum
 	/// =========================================================================

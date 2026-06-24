@@ -137,6 +137,60 @@ typedef struct CesiumBoundingVolume {
 } CesiumBoundingVolume;
 
 /* ============================================================================
+ * Image / GPU texture types
+ * ========================================================================= */
+
+/**
+ * @brief GPU compressed pixel format of an image, or NONE if uncompressed.
+ *
+ * Values mirror CesiumGltf::GpuCompressedPixelFormat one-to-one (same order).
+ */
+typedef enum CesiumGpuCompressedPixelFormat {
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_NONE = 0,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_ETC1_RGB,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_ETC2_RGBA,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_BC1_RGB,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_BC3_RGBA,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_BC4_R,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_BC5_RG,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_BC7_RGBA,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_PVRTC1_4_RGB,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_PVRTC1_4_RGBA,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_ASTC_4x4_RGBA,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_PVRTC2_4_RGB,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_PVRTC2_4_RGBA,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_ETC2_EAC_R11,
+    CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_ETC2_EAC_RG11
+} CesiumGpuCompressedPixelFormat;
+
+/**
+ * @brief The byte range of a single mip level within an image's pixel data.
+ *
+ * Layout-compatible with CesiumGltf::ImageAssetMipPosition.
+ */
+typedef struct CesiumImageMipPosition {
+    size_t byteOffset; /**< Byte index where this mip begins. */
+    size_t byteSize;   /**< Size in bytes of this mip. */
+} CesiumImageMipPosition;
+
+/**
+ * @brief Target GPU-compressed formats to transcode KTX2 textures into.
+ *
+ * Mirrors CesiumGltf::Ktx2TranscodeTargets. A field set to NONE means images of
+ * that source type are fully decompressed to raw pixels instead of transcoded.
+ */
+typedef struct CesiumKtx2TranscodeTargets {
+    CesiumGpuCompressedPixelFormat ETC1S_R;
+    CesiumGpuCompressedPixelFormat ETC1S_RG;
+    CesiumGpuCompressedPixelFormat ETC1S_RGB;
+    CesiumGpuCompressedPixelFormat ETC1S_RGBA;
+    CesiumGpuCompressedPixelFormat UASTC_R;
+    CesiumGpuCompressedPixelFormat UASTC_RG;
+    CesiumGpuCompressedPixelFormat UASTC_RGB;
+    CesiumGpuCompressedPixelFormat UASTC_RGBA;
+} CesiumKtx2TranscodeTargets;
+
+/* ============================================================================
  * Callback function pointer convention
  *
  * All callbacks include a void* userData parameter for closure capture.

@@ -47,4 +47,13 @@ namespace Evergine.Bindings.CesiumNative
 		public bool Contains(Cartographic point)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GlobeRectangleContains(this, point) != 0;
 	}
+
+	public unsafe partial struct RasterOverlayOptions
+	{
+		/// <summary>
+		/// @brief Fills out with the library default raster overlay options.
+		/// </summary>
+		public void Default()
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.RasterOverlayOptionsDefault(this);
+	}
 }

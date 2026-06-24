@@ -105,6 +105,62 @@ CESIUM_API CesiumRasterOverlay* cesium_web_map_service_raster_overlay_create(
     int32_t tileWidth,
     int32_t tileHeight);
 
+/* ============================================================================
+ * RasterOverlayOptions — tuning parameters shared by all overlay types
+ * ========================================================================= */
+
+/**
+ * @brief Tuning options common to every raster overlay type.
+ *
+ * Mirrors the C++ CesiumRasterOverlays::RasterOverlayOptions. Initialize with
+ * cesium_raster_overlay_options_default to obtain the library defaults, override
+ * the fields you care about, then apply them with cesium_raster_overlay_set_options
+ * before adding the overlay to a collection (the options are read when the
+ * overlay is activated).
+ */
+typedef struct CesiumRasterOverlayOptions {
+    /** @brief Max overlay tiles loading simultaneously. Default 20. */
+    int32_t maximumSimultaneousTileLoads;
+    /** @brief Max bytes used to cache sub-tiles in memory. Default 16 MiB. */
+    int64_t subTileCacheBytes;
+    /** @brief Max overlay texture size in pixels, in either direction. Default 2048. */
+    int32_t maximumTextureSize;
+    /** @brief Max screen-space error in pixels, used for level-of-detail. Default 2.0. */
+    double maximumScreenSpaceError;
+    /** @brief Non-zero to display credits on screen. Default 0. */
+    int32_t showCreditsOnScreen;
+    /**
+     * @brief Target GPU-compressed formats for KTX2 imagery.
+     *
+     * Set the fields matching the formats your renderer supports so KTX2
+     * overlay textures are transcoded directly to a GPU format (reported back
+     * through the prepareRasterInLoadThread callback). All-NONE (the default)
+     * fully decompresses KTX2 textures to raw pixels.
+     */
+    CesiumKtx2TranscodeTargets ktx2TranscodeTargets;
+} CesiumRasterOverlayOptions;
+
+/**
+ * @brief Fills out with the library default raster overlay options.
+ */
+CESIUM_API void cesium_raster_overlay_options_default(CesiumRasterOverlayOptions* out);
+
+/**
+ * @brief Reads the current options of an overlay into out.
+ * @return 1 on success, 0 on failure.
+ */
+CESIUM_API int cesium_raster_overlay_get_options(
+    const CesiumRasterOverlay* overlay,
+    CesiumRasterOverlayOptions* out);
+
+/**
+ * @brief Applies options to an overlay. Call before adding it to a collection.
+ * @return 1 on success, 0 on failure.
+ */
+CESIUM_API int cesium_raster_overlay_set_options(
+    CesiumRasterOverlay* overlay,
+    const CesiumRasterOverlayOptions* options);
+
 /**
  * @brief Destroys a raster overlay.
  * Remove it from any collections first.

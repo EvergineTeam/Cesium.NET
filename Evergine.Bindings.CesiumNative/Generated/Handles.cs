@@ -384,8 +384,12 @@ namespace Evergine.Bindings.CesiumNative
 
 		/// <summary>
 		/// @brief Serializes a CesiumGltfModel to GLB (binary glTF 2.0) format.
+		/// Serializes the model directly without copying it first, which avoids
+		/// duplicating all buffer and image bytes. As a side effect the model is mutated
+		/// (overlay attributes are renamed to TEXCOORD_N and all buffers are collapsed
+		/// into one), so it must not be reused after this call.
 		/// The returned buffer is heap-allocated and must be freed with cesium_gltf_free_glb.
-		/// @param model The model to serialize.
+		/// @param model The model to serialize (non-const; left in a modified state).
 		/// @param out_data Receives a pointer to the GLB byte buffer.
 		/// @param out_size Receives the size of the GLB buffer in bytes.
 		/// @return 1 on success, 0 on failure.
@@ -1073,6 +1077,20 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		public static RasterOverlay WebMapServiceRasterOverlayCreate(string name, string url, string layers, int tileWidth, int tileHeight)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.WebMapServiceRasterOverlayCreate(name, url, layers, tileWidth, tileHeight);
+
+		/// <summary>
+		/// @brief Reads the current options of an overlay into out.
+		/// @return 1 on success, 0 on failure.
+		/// </summary>
+		public int GetOptions(RasterOverlayOptions* @out)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.RasterOverlayGetOptions(this, @out);
+
+		/// <summary>
+		/// @brief Applies options to an overlay. Call before adding it to a collection.
+		/// @return 1 on success, 0 on failure.
+		/// </summary>
+		public int SetOptions(RasterOverlayOptions* options)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.RasterOverlaySetOptions(this, options);
 	}
 
 	public unsafe partial struct RasterOverlayCollection : IEquatable<RasterOverlayCollection>
