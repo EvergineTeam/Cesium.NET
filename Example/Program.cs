@@ -60,6 +60,32 @@ internal unsafe static class Program
         externals.SetRendererResourceCallbacks(RendererCallbacks, userData);
 
         RasterOverlay overlay = RasterOverlay.IonRasterOverlayCreate(3, IonAccessToken, null);
+        Ktx2TranscodeTargets transcodeTargets = new Ktx2TranscodeTargets()
+        {
+            ETC1SR = GpuCompressedPixelFormat.Bc7Rgba,
+            ETC1SRG = GpuCompressedPixelFormat.Bc7Rgba,
+            ETC1SRGB = GpuCompressedPixelFormat.Bc7Rgba,
+            ETC1SRGBA = GpuCompressedPixelFormat.Bc7Rgba,
+            UASTCR = GpuCompressedPixelFormat.Bc7Rgba,
+            UASTCRG = GpuCompressedPixelFormat.Bc7Rgba,
+            UASTCRGB = GpuCompressedPixelFormat.Bc7Rgba,
+            UASTCRGBA = GpuCompressedPixelFormat.Bc7Rgba
+        };
+
+        RasterOverlayOptions rasterOptions = new RasterOverlayOptions()
+        {
+            MaximumSimultaneousTileLoads = 8,
+            SubTileCacheBytes = 100 * 1024 * 1024, // 100 MB
+            MaximumTextureSize = 4096,
+            MaximumScreenSpaceError = 16.0,
+            ShowCreditsOnScreen = 1,
+            Ktx2TranscodeTargets = transcodeTargets
+        };
+
+        unsafe
+        {
+            overlay.SetOptions(&rasterOptions);
+        }
 
         try
         {
@@ -171,9 +197,9 @@ internal unsafe static class Program
         return pLoadData; //Whatever we return here, will be saved into Tile.RenderResources and can be used in rendering or in the AttachRasterInMainThread callback. In this example, we just pass the data through without modification.
     }
 
-    private static void* PrepareRasterInLoadThread(void* userData, byte* imageData, nuint imageDataSize, int width, int height, int channels, int bytesPerChannel)
+    private static void* PrepareRasterInLoadThread(void* userData, byte* imageData, nuint imageDataSize, int width, int height, int channels, int bytesPerChannel, GpuCompressedPixelFormat compressedPixelFormat, ImageMipPosition* mips, int mipCount)
     {
-        Console.WriteLine($"[Raster Callback] Raster overlay image received. Size={imageDataSize} bytes");
+        Console.WriteLine($"[Raster Callback] Raster overlay image received. Size={imageDataSize} bytes. NumMips={mipCount}. CompressedFormat={compressedPixelFormat}");
         // Allocate unmanaged memory for RasterData
         RasterData* rasterData = (RasterData*)Marshal.AllocHGlobal(sizeof(RasterData));
 

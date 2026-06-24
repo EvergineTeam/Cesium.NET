@@ -54,6 +54,9 @@ namespace Evergine.Bindings.CesiumNative
 		/// @brief Fills out with the library default raster overlay options.
 		/// </summary>
 		public void Default()
-			=> Evergine.Bindings.CesiumNative.CesiumAPI.RasterOverlayOptionsDefault(this);
+		{
+			fixed (RasterOverlayOptions* self = &this)
+				Evergine.Bindings.CesiumNative.CesiumAPI.RasterOverlayOptionsDefault(self);
+		}
 	}
 }

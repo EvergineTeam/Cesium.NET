@@ -564,6 +564,25 @@ namespace CesiumGen
 			return false;
 		}
 
+		/// <summary>
+		/// Returns true if the parameter is a pointer to the given struct type
+		/// (e.g. CesiumRasterOverlayOptions*), as opposed to the struct passed by value.
+		/// Such parameters are out/in-out and require passing a pinned pointer to 'this'.
+		/// </summary>
+		private bool IsPointerToType(CppParameter param, string typeName)
+		{
+			if (param.Type is CppPointerType pt)
+			{
+				var elem = pt.ElementType;
+				while (elem is CppQualifiedType qt) elem = qt.ElementType;
+
+				if (elem is CppClass cls && cls.Name == typeName) return true;
+				if (elem is CppTypedef td && td.Name == typeName) return true;
+			}
+
+			return false;
+		}
+
 		// =====================================================================
 		// Enums
 		// =====================================================================
@@ -1396,12 +1415,12 @@ namespace CesiumGen
 		}
 
 		/// <summary>Builds the argument list for calling the internal CesiumAPI method.</summary>
-		private List<string> BuildWrapperCallArgs(CppFunction f, bool skipFirstParam, bool prependThis = false)
+		private List<string> BuildWrapperCallArgs(CppFunction f, bool skipFirstParam, bool prependThis = false, string thisArg = "this")
 		{
 			var result = new List<string>();
 
 			if (prependThis)
-				result.Add("this");
+				result.Add(thisArg);
 
 			int start = skipFirstParam ? 1 : 0;
 			for (int i = start; i < f.Parameters.Count; i++)
@@ -1498,31 +1517,51 @@ namespace CesiumGen
 						}
 						else if (isInstanceMethod)
 						{
+							// When the first parameter is a pointer to the struct (an out/in-out
+							// parameter, e.g. cesium_..._default(Struct* out)), we must pass a pinned
+							// pointer to 'this' rather than 'this' by value — otherwise native
+							// mutations are lost and the generated code does not compile.
+							bool selfByPointer = IsPointerToType(f.Parameters[0], structName);
+							var selfArg = selfByPointer ? "self" : "this";
+
 							var csParams = BuildWrapperParameters(f, skipFirstParam: true);
-							var callArgs = BuildWrapperCallArgs(f, skipFirstParam: true, prependThis: true);
+							var callArgs = BuildWrapperCallArgs(f, skipFirstParam: true, prependThis: true, thisArg: selfArg);
 
 							var returnType = Helpers.ConvertToCSharpType(f.ReturnType);
+							var call = $"{apiRef}.{cleanedName}({string.Join(", ", callArgs)})";
 
-							// Bool return
+							// Determine the C# return type and the result expression
+							string methodReturnType;
+							string resultExpr;
 							if (func.IsBoolReturn || (returnType == "int" && Helpers.IsBooleanFunction(func.StrippedSnakeName)))
 							{
-								writer.WriteLine($"\t\tpublic bool {func.MethodName}({string.Join(", ", csParams)})");
-								writer.WriteLine($"\t\t\t=> {apiRef}.{cleanedName}({string.Join(", ", callArgs)}) != 0;");
+								methodReturnType = "bool";
+								resultExpr = $"{call} != 0";
 							}
 							else if (func.IsStringReturn)
 							{
-								writer.WriteLine($"\t\tpublic string {func.MethodName}({string.Join(", ", csParams)})");
-								writer.WriteLine($"\t\t\t=> Marshal.PtrToStringUTF8((IntPtr){apiRef}.{cleanedName}({string.Join(", ", callArgs)}));");
-							}
-							else if (returnType == "void")
-							{
-								writer.WriteLine($"\t\tpublic void {func.MethodName}({string.Join(", ", csParams)})");
-								writer.WriteLine($"\t\t\t=> {apiRef}.{cleanedName}({string.Join(", ", callArgs)});");
+								methodReturnType = "string";
+								resultExpr = $"Marshal.PtrToStringUTF8((IntPtr){call})";
 							}
 							else
 							{
-								writer.WriteLine($"\t\tpublic {returnType} {func.MethodName}({string.Join(", ", csParams)})");
-								writer.WriteLine($"\t\t\t=> {apiRef}.{cleanedName}({string.Join(", ", callArgs)});");
+								methodReturnType = returnType;
+								resultExpr = call;
+							}
+
+							bool hasReturn = methodReturnType != "void";
+
+							writer.WriteLine($"\t\tpublic {methodReturnType} {func.MethodName}({string.Join(", ", csParams)})");
+							if (selfByPointer)
+							{
+								writer.WriteLine("\t\t{");
+								writer.WriteLine($"\t\t\tfixed ({csStructName}* self = &this)");
+								writer.WriteLine($"\t\t\t\t{(hasReturn ? "return " : string.Empty)}{resultExpr};");
+								writer.WriteLine("\t\t}");
+							}
+							else
+							{
+								writer.WriteLine($"\t\t\t=> {resultExpr};");
 							}
 						}
 						else
