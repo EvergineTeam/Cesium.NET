@@ -387,28 +387,28 @@ namespace Evergine.Bindings.CesiumNative
 		/// with the identity default in that case if the node has no explicit matrix set).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_matrix")]
-		public static extern int GltfNodeGetMatrix(GltfModel model, int nodeIndex, double @out);
+		public static extern int GltfNodeGetMatrix(GltfModel model, int nodeIndex, double* @out);
 
 		/// <summary>
 		/// @brief Gets the translation of a node.
 		/// @param out Array of 3 doubles (x, y, z).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_translation")]
-		public static extern void GltfNodeGetTranslation(GltfModel model, int nodeIndex, double @out);
+		public static extern void GltfNodeGetTranslation(GltfModel model, int nodeIndex, double* @out);
 
 		/// <summary>
 		/// @brief Gets the rotation quaternion of a node.
 		/// @param out Array of 4 doubles (x, y, z, w).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_rotation")]
-		public static extern void GltfNodeGetRotation(GltfModel model, int nodeIndex, double @out);
+		public static extern void GltfNodeGetRotation(GltfModel model, int nodeIndex, double* @out);
 
 		/// <summary>
 		/// @brief Gets the scale of a node.
 		/// @param out Array of 3 doubles (x, y, z).
 		/// </summary>
 		[DllImport("CesiumNativeC", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_gltf_node_get_scale")]
-		public static extern void GltfNodeGetScale(GltfModel model, int nodeIndex, double @out);
+		public static extern void GltfNodeGetScale(GltfModel model, int nodeIndex, double* @out);
 
 		/// <summary>
 		/// @brief Fills a CesiumMaterialData struct with the properties of a material.

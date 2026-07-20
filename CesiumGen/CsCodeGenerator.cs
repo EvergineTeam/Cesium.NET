@@ -964,12 +964,23 @@ namespace CesiumGen
 				}
 				else
 				{
-					var paramType = Helpers.ConvertToCSharpType(param.Type);
+					var paramType = ConvertParameterType(param.Type);
 					parameters.Add($"{paramType} {paramName}");
 				}
 			}
 
 			return parameters;
+		}
+
+		private string ConvertParameterType(CppType type)
+		{
+			if (type is CppArrayType arrayType)
+			{
+				var elementType = Helpers.ConvertToCSharpType(arrayType.ElementType);
+				return elementType.EndsWith("*") ? elementType : elementType + "*";
+			}
+
+			return Helpers.ConvertToCSharpType(type);
 		}
 
 		// =====================================================================
@@ -1406,7 +1417,7 @@ namespace CesiumGen
 				}
 				else
 				{
-					var paramType = Helpers.ConvertToCSharpType(param.Type);
+					var paramType = ConvertParameterType(param.Type);
 					result.Add($"{paramType} {paramName}");
 				}
 			}

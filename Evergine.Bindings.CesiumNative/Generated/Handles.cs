@@ -325,28 +325,28 @@ namespace Evergine.Bindings.CesiumNative
 		/// @return 1 if the node uses an explicit matrix, 0 if it uses TRS decomposition (out is still filled
 		/// with the identity default in that case if the node has no explicit matrix set).
 		/// </summary>
-		public int NodeGetMatrix(int nodeIndex, double @out)
+		public int NodeGetMatrix(int nodeIndex, double* @out)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetMatrix(this, nodeIndex, @out);
 
 		/// <summary>
 		/// @brief Gets the translation of a node.
 		/// @param out Array of 3 doubles (x, y, z).
 		/// </summary>
-		public void NodeGetTranslation(int nodeIndex, double @out)
+		public void NodeGetTranslation(int nodeIndex, double* @out)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetTranslation(this, nodeIndex, @out);
 
 		/// <summary>
 		/// @brief Gets the rotation quaternion of a node.
 		/// @param out Array of 4 doubles (x, y, z, w).
 		/// </summary>
-		public void NodeGetRotation(int nodeIndex, double @out)
+		public void NodeGetRotation(int nodeIndex, double* @out)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetRotation(this, nodeIndex, @out);
 
 		/// <summary>
 		/// @brief Gets the scale of a node.
 		/// @param out Array of 3 doubles (x, y, z).
 		/// </summary>
-		public void NodeGetScale(int nodeIndex, double @out)
+		public void NodeGetScale(int nodeIndex, double* @out)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfNodeGetScale(this, nodeIndex, @out);
 
 		/// <summary>
