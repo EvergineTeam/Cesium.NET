@@ -1,0 +1,40 @@
+# Binding manifest — see https://github.com/EvergineTeam/Evergine.Bindings
+# Schema: https://github.com/EvergineTeam/Evergine.Bindings/blob/main/binding.schema.json
+toolbox: 1.0.0
+
+package:
+  id: Evergine.Bindings.CesiumNative
+  project: Evergine.Bindings.CesiumNative/Evergine.Bindings.CesiumNative.csproj
+  target-framework: net10.0
+  runtime-identifier: linux-x64
+
+upstream:
+  kind: git-tree
+  language: cpp
+  # cesium-native is C++; EvergineTeam/CesiumC is our own C API wrapper over it, and it
+  # is that wrapper -- not cesium-native itself -- that this binding is generated from.
+  project: https://github.com/EvergineTeam/CesiumC
+  version-from: git-release
+  sources:
+    - repo: EvergineTeam/CesiumC
+      ref: main
+      remote-path: include/cesium-native-api.h
+      path: CesiumGen/Headers/cesium-native-api.h
+      format: c-header
+    - repo: EvergineTeam/CesiumC
+      ref: main
+      remote-path: include/cesium
+      path: CesiumGen/Headers/cesium
+      format: c-header
+
+generator:
+  project: CesiumGen/CesiumGen.csproj
+  name: CesiumGen
+  output:
+    - Evergine.Bindings.CesiumNative/Generated
+
+# NOTE — the upstream here is a repository we own, which changes the economics. When the
+# C wrapper needs a new function, the right fix is usually a pull request to CesiumC, not
+# a workaround in the generator. An agent finding a gap should say so rather than paper
+# over it. CesiumC in turn carries cesium-native as a submodule, so a real upstream bump
+# is a two-step change and always needs a human.
