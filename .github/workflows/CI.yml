@@ -27,7 +27,23 @@ jobs:
       binding-project: "Evergine.Bindings.CesiumNative/Evergine.Bindings.CesiumNative.csproj"
       target-framework: "net10.0"
       dotnet-version: "10.x"
-      runtime-identifier: "linux-x64"
+      # Windows, because cesium-native-api.h includes <stdint.h> and <stddef.h> and libclang
+      # cannot resolve those on ubuntu-latest, which is where this ran until now.
+      #
+      # Measured, not inferred. Run 30719935892 on main reported success and its log says:
+      #
+      #   error: 'stdint.h' file not found
+      #   Analyzed 0 functions
+      #   Output path: .../CesiumGen/Evergine.Bindings.CesiumNative/Generated
+      #   Generation complete!
+      #
+      # Zero functions, written into a directory that is not the one the package packs, and a
+      # green run. The two faults were hiding each other: had the path been right, that run
+      # would have replaced 169 committed P/Invokes with none and shipped an empty binding.
+      # The path bug is the only reason it did not. Both are fixed -- the parse is fatal now
+      # and the output path is anchored on binding.yml -- so neither can cover for the other.
+      runner-os: "windows-latest"
+      runtime-identifier: "win-x64"
       build-configuration: "Release"
       nuget-artifacts: ${{ inputs.publish-artifacts || false }}
       revision: ${{ github.run_number }}

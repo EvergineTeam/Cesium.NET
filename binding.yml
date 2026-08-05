@@ -1,12 +1,18 @@
 # Binding manifest — see https://github.com/EvergineTeam/Evergine.Bindings
 # Schema: https://github.com/EvergineTeam/Evergine.Bindings/blob/main/binding.schema.json
-toolbox: 1.0.0
+toolbox: 1.24.1
 
 package:
   id: Evergine.Bindings.CesiumNative
   project: Evergine.Bindings.CesiumNative/Evergine.Bindings.CesiumNative.csproj
   target-framework: net10.0
-  runtime-identifier: linux-x64
+  # The generator's runtime, not the package's. Generate-NuGets-DotNet.ps1 never passes a
+  # runtime to `dotnet build` or `dotnet pack`, so this reaches only the generator's publish
+  # and cannot narrow what ships. It says win-x64 because cesium-native-api.h includes
+  # <stdint.h> and <stddef.h>, which libclang cannot resolve on a runner with no C toolchain
+  # in its default search path. It used to say linux-x64, which is a platform this package
+  # ships nothing for.
+  runtime-identifier: win-x64
 
 upstream:
   kind: git-tree
@@ -32,6 +38,11 @@ generator:
   name: CesiumGen
   output:
     - Evergine.Bindings.CesiumNative/Generated
+
+# NOTE — the Windows and macOS payloads are asymmetric on purpose, not by omission. Windows
+# ships CesiumNativeC.dll plus its 19 dependencies as separate DLLs; osx-arm64 ships a single
+# 24 MB libCesiumNativeC.dylib with everything linked in. Both export the same 169 symbols, so
+# the coherence check reads them the same way. There is no linux-x64 payload at all.
 
 # NOTE — the upstream here is a repository we own, which changes the economics. When the
 # C wrapper needs a new function, the right fix is usually a pull request to CesiumC, not
