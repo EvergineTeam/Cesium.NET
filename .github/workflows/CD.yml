@@ -1,11 +1,11 @@
-# Binding Simple CD - Template
-
-# This template is for pure .NET bindings (no XML update) to publish NuGets to Nuget.org.
-# Copy this file to your repository as `.github/workflows/CD.yml` and customize the inputs below.
-
 name: CD
 
 on:
+  # Monthly, so a new CesiumC release reaches the package without anybody asking. Previously
+  # dispatch-only, which is one reason the shipped binaries had no record of where they came
+  # from: nothing ran unless somebody remembered to run it.
+  schedule:
+    - cron: "0 3 1 * *"
   workflow_dispatch:
     inputs:
       skip-assets-publishing:
@@ -13,25 +13,55 @@ on:
         required: false
         type: boolean
         default: false
+      force-publish:
+        description: 'Publish even when the generated code is unchanged'
+        required: false
+        type: boolean
+        default: false
+      publish-only:
+        description: 'Publish main exactly as it stands, without looking at upstream'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  cd:
+  # Reports how far behind the tracked CesiumC release we are, without touching the tree. Its
+  # answer decides nothing here -- the fetch inside the CD resolves the same release -- but it
+  # puts the version in the run summary before anything is committed, which is what makes a
+  # surprise visible rather than archaeological.
+  resolve:
     if: github.event_name != 'schedule' || github.ref == 'refs/heads/main'
-    uses: EvergineTeam/Evergine.Bindings/.github/workflows/binding-simple-cd.yml@v1
+    uses: EvergineTeam/Evergine.Bindings/.github/workflows/binding-resolve-upstream.yml@v1
+
+  cd:
+    needs: resolve
+    if: always() && needs.resolve.result == 'success' && !cancelled()
+    # binding-tracked-cd, not binding-simple-cd. simple-cd builds and publishes
+    # unconditionally, which is why a cron could not be added to it: it would ship a package
+    # every month whether or not the API moved. tracked-cd reads binding.yml, fetches what it
+    # declares -- headers and the seven release archives -- and publishes only when the
+    # generated code changed.
+    uses: EvergineTeam/Evergine.Bindings/.github/workflows/binding-tracked-cd.yml@v1
     with:
+      # Windows, and this is not a preference. CppAst's libclang cannot resolve <stdint.h> or
+      # <stddef.h> on the Linux runner: the parse aborts, the generator emits a *smaller*
+      # binding rather than none, and the run reports success. That happened here -- run
+      # 30719935892 generated zero functions on main and said nothing.
+      runner-os: windows-latest
       generator-project: "CesiumGen/CesiumGen.csproj"
       generator-name: "CesiumGen"
       binding-project: "Evergine.Bindings.CesiumNative/Evergine.Bindings.CesiumNative.csproj"
       target-framework: "net10.0"
       dotnet-version: "10.x"
       nuget-version: "6.x"
-      # Same as CI, and for the same measured reason -- see the note there. This matters more
-      # here: CD is what publishes, so an empty generation reaching this workflow with the
-      # output path fixed would have packed a binding with no P/Invokes in it.
-      runner-os: "windows-latest"
       runtime-identifier: "win-x64"
       build-configuration: "Release"
       revision: ${{ github.run_number }}
+      # No natives-artifact-pattern: the seven libraries are not built here. They come from
+      # the release assets the manifest declares, unpacked by the fetch step, which is also
+      # what satisfies the CD's refusal to commit a source bump with no matching natives.
+      force-publish: ${{ inputs.force-publish || false }}
+      publish-only: ${{ inputs.publish-only || false }}
       publish-enabled: ${{ !inputs.skip-assets-publishing }}
       enable-email-notifications: true
     secrets:
