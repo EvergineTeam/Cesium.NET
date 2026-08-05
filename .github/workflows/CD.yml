@@ -25,7 +25,11 @@ jobs:
       target-framework: "net10.0"
       dotnet-version: "10.x"
       nuget-version: "6.x"
-      runtime-identifier: "linux-x64"
+      # Same as CI, and for the same measured reason -- see the note there. This matters more
+      # here: CD is what publishes, so an empty generation reaching this workflow with the
+      # output path fixed would have packed a binding with no P/Invokes in it.
+      runner-os: "windows-latest"
+      runtime-identifier: "win-x64"
       build-configuration: "Release"
       revision: ${{ github.run_number }}
       publish-enabled: ${{ !inputs.skip-assets-publishing }}

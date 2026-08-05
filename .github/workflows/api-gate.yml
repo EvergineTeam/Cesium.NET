@@ -1,0 +1,50 @@
+# Measures what a pull request does to the public API surface, and checks that every P/Invoke
+# the binding declares actually exists in the libraries the package ships.
+#
+# Added because this repository demonstrated it could publish an empty binding. Run
+# 30719935892 on main reported success while generating zero functions -- libclang could not
+# resolve <stdint.h> on ubuntu-latest -- and only a second, unrelated bug in the output path
+# kept the 169 committed P/Invokes from being overwritten with nothing. Both are fixed, but
+# nothing was measuring the surface, so nothing would have said a word either way.
+#
+# The surface diff is what catches that class of failure directly: 169 declarations going to 0
+# is a removal of the entire public API, which is impossible to read as anything but broken.
+
+name: api
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  api:
+    uses: EvergineTeam/Evergine.Bindings/.github/workflows/binding-api-gate.yml@v1
+    with:
+      binding-project: "Evergine.Bindings.CesiumNative/Evergine.Bindings.CesiumNative.csproj"
+      dotnet-version: "10.x"
+      # Windows, same reason as CI and CD: on ubuntu the parse aborts and the surface it
+      # measures is empty, which would read as a total removal on every pull request.
+      runner-os: windows-latest
+
+      # On from the start, unlike the repos where this was retrofitted, because it was verified
+      # against the shipped binaries before being switched on. Measured across all three RIDs:
+      # 169 declarations, and CesiumNativeC exports exactly 169 symbols -- the wrapper exports
+      # precisely what it declares, with nothing spare on either side. check-native-arch agrees
+      # on all 41 files.
+      #
+      # Note the payloads are not symmetric: win-x64 and win-arm64 ship CesiumNativeC.dll plus
+      # 19 dependency DLLs each, osx-arm64 ships one 24 MB dylib with everything linked in.
+      # Both export the same 169 symbols, so the check reads them identically.
+      native-coherence: true
+
+      # Off for now. The upstream here is EvergineTeam/CesiumC, a C wrapper we own, so a
+      # regeneration can carry a deliberate API change rather than only an upstream spec bump.
+      # Turn it on after the chain has run cleanly a few times, as with ImGui.Net.
+      auto-merge: false
+      app-client-id: ${{ vars.APP_CLIENT_ID }}
+    secrets:
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
