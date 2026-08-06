@@ -1,6 +1,6 @@
 # Binding manifest — see https://github.com/EvergineTeam/Evergine.Bindings
 # Schema: https://github.com/EvergineTeam/Evergine.Bindings/blob/main/binding.schema.json
-toolbox: 1.24.1
+toolbox: 1.25.0
 
 package:
   id: Evergine.Bindings.CesiumNative
@@ -21,17 +21,45 @@ upstream:
   # is that wrapper -- not cesium-native itself -- that this binding is generated from.
   project: https://github.com/EvergineTeam/CesiumC
   version-from: git-release
+
+  release:
+    repo: EvergineTeam/CesiumC
+    # `stable`, not the `tags` track CesiumC itself needs. CesiumC publishes real GitHub
+    # Releases; cesium-native, one link further up, only tags -- which is why that track had
+    # to exist at all. Here the ordinary one works.
+    #
+    # The tag is what ties the headers to the seven native libraries: they are built from the
+    # same commit and published together. Following `main` took headers from whatever was
+    # pushed last, against binaries from whenever somebody last copied them by hand.
+    track: stable
+    current: v0.61.0
+
   sources:
+    # No `ref` any more, so these follow the tracked release. They read `main`, which recorded
+    # no SHA and had no drift check: the vendored headers happened to match and nothing would
+    # have said so if they stopped.
     - repo: EvergineTeam/CesiumC
-      ref: main
       remote-path: include/cesium-native-api.h
       path: CesiumGen/Headers/cesium-native-api.h
       format: c-header
     - repo: EvergineTeam/CesiumC
-      ref: main
       remote-path: include/cesium
       path: CesiumGen/Headers/cesium
       format: c-header
+
+  # The seven libraries, from the same release as the headers above. Each archive already
+  # carries runtimes/<rid>/native/, so unpacking is the whole mapping.
+  #
+  # They stay committed as well. The fetch keeps them current and is idempotent when the
+  # release has not moved, and CI needs them present to check that all 169 P/Invokes resolve --
+  # a pull request does not fetch.
+  #
+  # This is what replaces copying binaries by hand. Until now three RIDs were committed with no
+  # record of which CesiumC they came from; the release tag is that record.
+  assets:
+    - name: 'cesiumnativec-*.zip'
+      unpack: zip
+      into: Evergine.Bindings.CesiumNative
 
 generator:
   project: CesiumGen/CesiumGen.csproj
