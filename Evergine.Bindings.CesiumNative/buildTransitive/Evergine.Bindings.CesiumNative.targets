@@ -1,0 +1,23 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<!--
+	  browser-wasm has no dynamic loading, so runtimes/browser-wasm/native is not probed at
+	  run time the way the desktop identifiers are: the archive has to be linked into the
+	  application when it publishes. That is what this does, and without it the package would
+	  carry the library and no consumer would ever link it.
+
+	  ScanForPInvokes is what makes the DllImports resolve. It has the build read the managed
+	  assembly's P/Invokes and emit the table the runtime looks them up in; the reference alone
+	  puts the code in the module and leaves every call unresolved.
+
+	  The archive is packed as CesiumNativeC.a rather than the libCesiumNativeC.a that CMake
+	  produces, because the module name comes from the file name and the DllImports say
+	  "CesiumNativeC". Evergine.Bindings.Imgui ships cimgui.a against DllImport("cimgui") and
+	  Evergine's ktx.a does the same; both work, and neither carries a lib prefix.
+	-->
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'browser-wasm'">
+		<NativeFileReference Include="$(MSBuildThisFileDirectory)../runtimes/browser-wasm/native/CesiumNativeC.a"
+		                     ScanForPInvokes="true" />
+	</ItemGroup>
+
+</Project>

@@ -16,8 +16,32 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="runtimes\**" PackagePath="runtimes"
+		<!-- The wasm archive is packed separately, under the name the DllImports use. -->
+		<Content Include="runtimes\**"
+				 Exclude="runtimes\browser-wasm\native\libCesiumNativeC.a"
+				 PackagePath="runtimes"
 				 Visible="true" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<!--
+	  browser-wasm links statically, and the module name a DllImport resolves against comes from
+	  the file name. CMake produces libCesiumNativeC.a while every DllImport in Generated says
+	  "CesiumNativeC", so the package renames it. Evergine.Bindings.Imgui ships cimgui.a against
+	  DllImport("cimgui"), which is the same arrangement and is known to work.
+
+	  Conditioned on the file existing because it does not: the seven libraries are fetched from
+	  the CesiumC release the manifest records, so this is empty in a fresh clone and populated
+	  in CI. Without the condition, packing before a fetch would fail on a missing file.
+	-->
+	<ItemGroup Condition="Exists('runtimes\browser-wasm\native\libCesiumNativeC.a')">
+		<Content Include="runtimes\browser-wasm\native\libCesiumNativeC.a"
+				 PackagePath="runtimes\browser-wasm\native\CesiumNativeC.a"
+				 Visible="true" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="buildTransitive\Evergine.Bindings.CesiumNative.targets"
+				 PackagePath="buildTransitive" Visible="true" />
 	</ItemGroup>
 
 	<ItemGroup>
