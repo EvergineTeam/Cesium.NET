@@ -283,7 +283,13 @@ namespace CesiumGen
 						info.MethodName = "Destroy";
 						if (isHandleType) _ownableHandleTypes.Add(ownerType);
 					}
-					else if (stripped.StartsWith("create") || IsFactoryFunction(f, ownerType))
+					// A constructor has to return something. Matching on the name alone emitted
+					// `return CesiumAPI.IonConnectionCreateAsync(...)` for a function returning
+					// void, which does not compile -- cesium_ion_connection_create_async reports
+					// through a callback rather than a return value, and the name says create.
+					// IsFactoryFunction already checks the return type; the name test ran first
+					// and short-circuited it.
+					else if ((stripped.StartsWith("create") && !ReturnsVoid(f)) || IsFactoryFunction(f, ownerType))
 					{
 						info.Role = FunctionRole.Constructor;
 						info.MethodName = Helpers.SnakeToPascalCase(stripped);
@@ -482,6 +488,16 @@ namespace CesiumGen
 					return td.Name;
 			}
 			return null;
+		}
+
+		/// <summary>
+		/// True when the function returns nothing, so it cannot be a constructor whatever it is called.
+		/// </summary>
+		private static bool ReturnsVoid(CppFunction f)
+		{
+			var ret = f.ReturnType;
+			while (ret is CppQualifiedType qt) ret = qt.ElementType;
+			return ret is CppPrimitiveType prim && prim.Kind == CppPrimitiveKind.Void;
 		}
 
 		/// <summary>
