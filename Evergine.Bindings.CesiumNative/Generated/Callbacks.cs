@@ -104,6 +104,23 @@ namespace Evergine.Bindings.CesiumNative
 	/// Managed wrapper for <see cref="RendererResourceCallbacks"/>.
 	/// Holds typed delegate fields with GC pinning and marshals to the native struct.
 	/// </summary>
+	/// <remarks>
+	/// <para><b>Desktop only. This does not work on browser-wasm.</b></para>
+	/// <para>
+	/// It builds the native struct with Marshal.GetFunctionPointerForDelegate, and the
+	/// WebAssembly runtime refuses a managed method reached from native code unless that
+	/// method carries [UnmanagedCallersOnly]: ahead-of-time compilation has to know the
+	/// callback at build time in order to place it in the table. The failure arrives at
+	/// run time, on the first call from native code, as
+	/// "No native to managed transition for method ..., missing [UnmanagedCallersOnly]
+	/// attribute".
+	/// </para>
+	/// <para>
+	/// On browser-wasm, fill <see cref="RendererResourceCallbacks"/> yourself. Each callback is a static
+	/// method marked [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })],
+	/// and each field takes (IntPtr)(delegate* unmanaged[Cdecl]&lt;...&gt;)&amp;Method.
+	/// </para>
+	/// </remarks>
 	public unsafe class RendererResourceCallbacksSet
 	{
 		public PrepareInLoadThreadDelegate PrepareInLoadThread;
@@ -229,6 +246,23 @@ namespace Evergine.Bindings.CesiumNative
 	/// Managed wrapper for <see cref="AssetAccessorCallbacks"/>.
 	/// Holds typed delegate fields with GC pinning and marshals to the native struct.
 	/// </summary>
+	/// <remarks>
+	/// <para><b>Desktop only. This does not work on browser-wasm.</b></para>
+	/// <para>
+	/// It builds the native struct with Marshal.GetFunctionPointerForDelegate, and the
+	/// WebAssembly runtime refuses a managed method reached from native code unless that
+	/// method carries [UnmanagedCallersOnly]: ahead-of-time compilation has to know the
+	/// callback at build time in order to place it in the table. The failure arrives at
+	/// run time, on the first call from native code, as
+	/// "No native to managed transition for method ..., missing [UnmanagedCallersOnly]
+	/// attribute".
+	/// </para>
+	/// <para>
+	/// On browser-wasm, fill <see cref="AssetAccessorCallbacks"/> yourself. Each callback is a static
+	/// method marked [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })],
+	/// and each field takes (IntPtr)(delegate* unmanaged[Cdecl]&lt;...&gt;)&amp;Method.
+	/// </para>
+	/// </remarks>
 	public unsafe class AssetAccessorCallbacksSet
 	{
 		public BeginRequestDelegate BeginRequest;
