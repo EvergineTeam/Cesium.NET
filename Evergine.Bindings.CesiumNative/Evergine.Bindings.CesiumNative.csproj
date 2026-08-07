@@ -9,6 +9,20 @@
 		<RepositoryUrl>https://github.com/EvergineTeam/Cesium.NET</RepositoryUrl>
 		<PackageIcon>icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+
+		<!--
+		  Without this the package ships the assembly alone and every doc comment the generator
+		  emits is invisible to whoever consumes it. That was not academic: the remark saying
+		  AssetAccessorCallbacksSet does not work on browser-wasm was added, regenerated and
+		  packed, and a consumer would still have seen nothing.
+
+		  CS1591 is suppressed rather than answered. It asks for a comment on every public
+		  member, and 604 of them are generated from C headers that carry no documentation for
+		  the generator to copy. Silencing it keeps the comments that do exist useful instead of
+		  drowning the build in warnings about the ones that cannot.
+		-->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
