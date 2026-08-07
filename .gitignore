@@ -1,4 +1,17 @@
-﻿**/.vs
+**/.vs
 **/bin
 **/obj
 .claude/settings.local.json
+
+# The browser-wasm archive is fetched, never committed.
+#
+# The other six runtimes are committed on purpose: CI checks that all 169 P/Invokes resolve
+# against them, and a pull request does not fetch, so without them in the tree that check has
+# nothing to read. That reasoning does not reach wasm. A static archive cannot be loaded to
+# look up symbols, so the check skips it either way, and the file is the largest of the seven
+# by a distance -- 12.8 MB per release, against 64 MB for all seven together.
+#
+# Committing it would cost roughly 0.8 GB a year of history, for a file no check reads and
+# that git could never be made to forget. The CD fetches it from the CesiumC release the
+# manifest records, which is the moment it is actually needed: packing.
+Evergine.Bindings.CesiumNative/runtimes/browser-wasm/

@@ -32,7 +32,7 @@ upstream:
     # same commit and published together. Following `main` took headers from whatever was
     # pushed last, against binaries from whenever somebody last copied them by hand.
     track: stable
-    current: v0.61.0
+    current: v0.63.0
 
   sources:
     # No `ref` any more, so these follow the tracked release. They read `main`, which recorded
