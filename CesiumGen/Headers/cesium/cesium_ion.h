@@ -57,6 +57,16 @@ typedef void (*CesiumIonAuthorizeUrlCallback)(void* userData, const char* url);
  */
 typedef void (*CesiumIonAuthorizeCompleteCallback)(void* userData, CesiumIonConnection* connection);
 
+/**
+ * @brief Callback invoked when an asynchronous connection attempt finishes.
+ * @param userData User-provided context.
+ * @param connection The resulting connection (caller must destroy), or NULL on error.
+ * @param error A description of the failure when connection is NULL, otherwise NULL. The
+ *        string is borrowed and is only valid for the duration of the call.
+ */
+typedef void (*CesiumIonConnectionCompleteCallback)(
+    void* userData, CesiumIonConnection* connection, const char* error);
+
 /* ============================================================================
  * IonConnection
  * ========================================================================= */
@@ -67,12 +77,54 @@ typedef void (*CesiumIonAuthorizeCompleteCallback)(void* userData, CesiumIonConn
  * @param accessor The asset accessor for HTTP requests.
  * @param accessToken The Cesium Ion access token.
  * @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com/".
+ *
+ * @warning This blocks. It fetches the server's ApplicationData before it can build the
+ * connection, and waits for that by pumping the main thread in a 5000 x 10ms loop -- so an
+ * unreachable or slow host costs up to fifty seconds on the calling thread, and the function
+ * then returns NULL. Do not call it on a frame thread.
+ *
+ * On a single-threaded build (Emscripten without -pthread, which is how .NET's browser-wasm
+ * links native code) it is worse than slow: the loop sleeps the only thread there is, so
+ * nothing else -- including the fetch it is waiting for -- can make progress. It is
+ * effectively unusable there until it grows an asynchronous form.
+ *
+ * @see cesium_ion_connection_create_async, which is that form. Prefer it everywhere.
  */
 CESIUM_API CesiumIonConnection* cesium_ion_connection_create(
     CesiumAsyncSystem* asyncSystem,
     CesiumAssetAccessor* accessor,
     const char* accessToken,
     const char* apiUrl);
+
+/**
+ * @brief Creates an Ion connection from an existing access token, without blocking.
+ * @param asyncSystem The async system.
+ * @param accessor The asset accessor for HTTP requests.
+ * @param accessToken The Cesium Ion access token.
+ * @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com".
+ * @param callback Invoked exactly once when the attempt finishes. Required.
+ * @param userData Passed back to the callback untouched.
+ *
+ * This returns immediately. The callback runs later on the main thread, from inside a call
+ * to cesium_async_system_dispatch_main_thread_tasks -- so a caller that never dispatches
+ * never hears back. It is never invoked before this function returns, with one exception:
+ * if an argument is invalid, it is called synchronously with an error so that no caller is
+ * left waiting for an attempt that was never started.
+ *
+ * None of the pointer arguments are retained. The async system and the accessor are held by
+ * reference for as long as the attempt is in flight, so they may be destroyed by the caller
+ * at any point without invalidating anything -- though an accessor destroyed mid-flight will
+ * cancel the request and the attempt will report failure.
+ *
+ * This is the only form that works on a single-threaded Emscripten build.
+ */
+CESIUM_API void cesium_ion_connection_create_async(
+    CesiumAsyncSystem* asyncSystem,
+    CesiumAssetAccessor* accessor,
+    const char* accessToken,
+    const char* apiUrl,
+    CesiumIonConnectionCompleteCallback callback,
+    void* userData);
 
 /**
  * @brief Destroys an Ion connection.

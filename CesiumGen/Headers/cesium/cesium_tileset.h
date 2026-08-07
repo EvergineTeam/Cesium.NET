@@ -213,23 +213,222 @@ CESIUM_API CesiumAsyncSystem* cesium_async_system_create(void);
 CESIUM_API void cesium_async_system_destroy(CesiumAsyncSystem* asyncSystem);
 
 /**
- * @brief Dispatches pending main-thread tasks. Must be called each frame
- * from the main thread.
+ * @brief Dispatches pending main-thread tasks. Must be called each frame from the main thread.
+ *
+ * On a platform with threads this runs continuations that were scheduled back to the main thread,
+ * while the work itself happens on background workers. On a single-threaded build -- Emscripten
+ * without -pthread, which is how .NET's browser-wasm links native code -- there are no workers, so
+ * this call is what runs the background work as well. Skipping it there does not merely delay
+ * callbacks: nothing loads at all.
  */
 CESIUM_API void cesium_async_system_dispatch_main_thread_tasks(CesiumAsyncSystem* asyncSystem);
 
 /* ============================================================================
- * AssetAccessor (HTTP client via libcurl)
+ * AssetAccessor (HTTP client)
  * ========================================================================= */
 
 /**
- * @brief Creates an asset accessor using libcurl.
- * @param userAgent The User-Agent header string, or NULL for default.
+ * @brief Creates an asset accessor backed by libcurl.
+ *
+ * Available on every platform where CesiumCurl is, which upstream defines as everything
+ * except wasm32. On Emscripten there is no libcurl, so this returns an accessor with no
+ * transport attached: every request fails with status 0. A browser consumer wants
+ * cesium_asset_accessor_create_from_callbacks instead.
+ *
+ * @param userAgent The User-Agent header string, or NULL for default. Ignored on Emscripten.
  */
 CESIUM_API CesiumAssetAccessor* cesium_asset_accessor_create(const char* userAgent);
 
 /**
+ * @brief Identifies one in-flight request handed to the host.
+ *
+ * A counter rather than a pointer, and deliberately so. The host holds this value across an
+ * asynchronous round trip that may outlive the request, the accessor, and the tileset that
+ * asked for it -- and there is no ordering the host can impose to prevent that, because its
+ * continuation is scheduled by its own runtime rather than by its frame code. A pointer would
+ * dangle. An id that is never reused turns "answered too late" into a lookup miss, which is a
+ * no-op.
+ *
+ * Unique across every accessor in the process. 0 is never issued.
+ */
+typedef uint64_t CesiumAssetRequestId;
+
+#define CESIUM_ASSET_REQUEST_ID_INVALID ((CesiumAssetRequestId)0)
+
+/**
+ * @brief A set of function pointers by which the host supplies HTTP transport.
+ *
+ * All callbacks receive userData as the first argument, and any may be NULL, in which case a
+ * no-op default is used -- the same convention as CesiumRendererResourceCallbacks. With
+ * beginRequest NULL every request fails with status 0, which is what a consumer reading only
+ * local data still wants.
+ *
+ * This is how the browser gets HTTP: browser-wasm has no libcurl, and the host already has a
+ * working stack. It is not browser-only, though. Any platform may use it to own networking
+ * for authentication, caching or a proxy.
+ */
+typedef struct CesiumAssetAccessorCallbacks {
+    void* userData;
+
+    /**
+     * @brief Starts one HTTP request. The host must eventually call exactly one of
+     *        cesium_asset_request_complete or cesium_asset_request_fail with this requestId --
+     *        or neither, if cancelRequest arrives first.
+     *
+     * Must return promptly. Performing the I/O here blocks the caller, and on a
+     * single-threaded build that is the only thread there is.
+     *
+     * @param requestId   Identifies this request in the completion call.
+     * @param method      "GET", "POST", ... Borrowed; valid only during this call.
+     * @param url         Absolute URL, already resolved. Borrowed.
+     * @param headers     Request headers, borrowed. May be NULL when headerCount is 0.
+     * @param headerCount Number of entries in headers.
+     * @param body        Request payload or NULL, borrowed.
+     * @param bodySize    Size of body in bytes; 0 when body is NULL.
+     *
+     * Called on the main thread by default -- from inside
+     * cesium_async_system_dispatch_main_thread_tasks -- so a host sees one thread on all
+     * platforms. See allowBeginRequestOnWorkerThread to opt out.
+     */
+    void (*beginRequest)(
+        void* userData,
+        CesiumAssetRequestId requestId,
+        const char* method,
+        const char* url,
+        const CesiumHttpHeader* headers,
+        int32_t headerCount,
+        const uint8_t* body,
+        size_t bodySize);
+
+    /**
+     * @brief Called when a request will no longer be waited on, so the host can abort it and
+     *        drop whatever it holds for requestId. Completing it afterwards is harmless: the
+     *        id is already retired and the completion call returns 0.
+     *
+     * Today the only thing that cancels is the accessor being destroyed with requests in
+     * flight; cesium-native 0.63.0 has no per-request cancellation to forward.
+     */
+    void (*cancelRequest)(void* userData, CesiumAssetRequestId requestId);
+
+    /**
+     * @brief Gives a host that polls its transport somewhere to poll from. A host driven by
+     *        its own event loop can leave this NULL.
+     */
+    void (*tick)(void* userData);
+
+    /**
+     * @brief Called once, when the last reference to the accessor goes away, after every
+     *        in-flight request has been cancelled and failed. Nothing in this struct is
+     *        called again afterwards, so userData may be freed.
+     *
+     * Without this a managed host has no signal for when to release the handle backing
+     * userData.
+     */
+    void (*destroy)(void* userData);
+
+    /**
+     * @brief 0 to have beginRequest marshalled to the main thread; non-zero to have it called
+     *        on whichever thread cesium-native asked from, which is lower latency and harder
+     *        to get right.
+     *
+     * The polarity is chosen so a zeroed struct gets the safe behaviour, like NULL meaning
+     * no-op. On a single-threaded build there is one thread and the two are the same.
+     */
+    int allowBeginRequestOnWorkerThread;
+} CesiumAssetAccessorCallbacks;
+
+/**
+ * @brief Creates an asset accessor whose transport is supplied by the host.
+ *
+ * @param callbacks Copied by value. NULL, or a struct with beginRequest NULL, produces an
+ *        accessor that fails every request with status 0.
+ */
+CESIUM_API CesiumAssetAccessor* cesium_asset_accessor_create_from_callbacks(
+    const CesiumAssetAccessorCallbacks* callbacks);
+
+/**
+ * @brief Delivers a response for an in-flight request.
+ *
+ * May be called from any thread, at any time, including re-entrantly from inside
+ * beginRequest. The response reaches cesium-native on the main thread during the next
+ * cesium_async_system_dispatch_main_thread_tasks.
+ *
+ * @param statusCode  The HTTP status. 0 means a transport-level failure, which is what
+ *                    callers already handle.
+ * @param headers     Response headers or NULL. **Copied** before this returns.
+ * @param body        Response bytes or NULL. **Copied** before this returns, so the caller
+ *                    may free or reuse the buffer on the next line. It cannot be borrowed:
+ *                    cesium-native holds the response for the whole load pipeline and there
+ *                    is no callback announcing when it lets go.
+ *
+ * @return 1 if requestId identified an in-flight request and it was completed; 0 if it did
+ *         not -- unknown, already completed, cancelled, or belonging to an accessor that no
+ *         longer exists. 0 is not an error and nothing is logged: an id arriving too late is
+ *         the normal outcome of a race the host cannot win.
+ */
+CESIUM_API int cesium_asset_request_complete(
+    CesiumAssetRequestId requestId,
+    uint16_t statusCode,
+    const CesiumHttpHeader* headers,
+    int32_t headerCount,
+    const uint8_t* body,
+    size_t bodySize);
+
+/**
+ * @brief Fails an in-flight request. Equivalent to completing it with status 0 and no body.
+ *
+ * @param message Optional diagnostic, readable through cesium_get_last_error on the calling
+ *        thread. It travels no further: cesium-native's response type has no error channel,
+ *        so the tileset's own load error will say "status code 0" and nothing about why.
+ *
+ * @return 1 if the request was in flight, 0 otherwise.
+ */
+CESIUM_API int cesium_asset_request_fail(
+    CesiumAssetRequestId requestId,
+    const char* message);
+
+/**
+ * @brief Cancels and fails every request in flight on this accessor.
+ *
+ * Each cancelled request gets its cancelRequest callback and is failed with status 0, and its
+ * id becomes inert -- completing it afterwards returns 0 rather than reaching a tileset that
+ * has moved on.
+ *
+ * @warning Call this when the host stops answering. Do not rely on destruction to do it.
+ *
+ * The accessor's destructor does cancel, but it cannot help in the case that matters. An
+ * unanswered request leaves a continuation pending inside cesium-native; that continuation
+ * holds a copy of TilesetExternals, and TilesetExternals holds this accessor. So while any
+ * request is outstanding the accessor cannot be destroyed, and the cancellation in its
+ * destructor cannot run. Destroying every handle you own is not enough -- measured, not
+ * assumed, in test_host_accessor_never_answered_is_released.
+ *
+ * There is no timeout. Adding one would mean this library owns a clock and decides how long
+ * a host is allowed to take, which is the host's call. Use
+ * cesium_asset_accessor_get_pending_request_count to notice a host that has gone quiet.
+ *
+ * @note Keep dispatching after this returns, and before you tear the async system down.
+ * Cancelling resolves each promise, but resolution is marshalled to the main thread like
+ * every other completion, so the continuations that hold the accessor only let go once they
+ * run. Cancel, pump, then destroy.
+ */
+CESIUM_API void cesium_asset_accessor_cancel_all_requests(CesiumAssetAccessor* accessor);
+
+/**
+ * @brief The number of requests handed to the host and not yet answered.
+ *
+ * For diagnostics, and for a host that wants to drain before shutting down. Nothing enforces
+ * a timeout, so this is how a host notices one that will never be answered.
+ */
+CESIUM_API int32_t cesium_asset_accessor_get_pending_request_count(
+    const CesiumAssetAccessor* accessor);
+
+/**
  * @brief Destroys the asset accessor.
+ *
+ * Releases this handle's reference. The accessor itself lives while a CesiumTilesetExternals
+ * still holds it, so cancelRequest and destroy fire when the last reference drops rather than
+ * necessarily here.
  */
 CESIUM_API void cesium_asset_accessor_destroy(CesiumAssetAccessor* accessor);
 

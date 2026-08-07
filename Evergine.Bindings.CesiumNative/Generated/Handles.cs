@@ -385,11 +385,14 @@ namespace Evergine.Bindings.CesiumNative
 		/// <summary>
 		/// @brief Serializes a CesiumGltfModel to GLB (binary glTF 2.0) format.
 		/// Serializes the model directly without copying it first, which avoids
-		/// duplicating all buffer and image bytes. As a side effect the model is mutated
-		/// (overlay attributes are renamed to TEXCOORD_N and all buffers are collapsed
-		/// into one), so it must not be reused after this call.
+		/// duplicating all buffer and image bytes. Overlay attributes are renamed to
+		/// TEXCOORD_N for the written GLB only and restored afterwards, so the model's
+		/// _CESIUMOVERLAY_n attributes are preserved (cesium-native needs them to refine
+		/// to the most detailed level of detail). Its buffers are, however, collapsed
+		/// into a single buffer as a side effect (a lossless transformation), so the
+		/// model remains valid and usable after this call.
 		/// The returned buffer is heap-allocated and must be freed with cesium_gltf_free_glb.
-		/// @param model The model to serialize (non-const; left in a modified state).
+		/// @param model The model to serialize (non-const; buffers are collapsed in place).
 		/// @param out_data Receives a pointer to the GLB byte buffer.
 		/// @param out_size Receives the size of the GLB buffer in bytes.
 		/// @return 1 on success, 0 on failure.
@@ -491,8 +494,12 @@ namespace Evergine.Bindings.CesiumNative
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.AsyncSystemCreate();
 
 		/// <summary>
-		/// @brief Dispatches pending main-thread tasks. Must be called each frame
-		/// from the main thread.
+		/// @brief Dispatches pending main-thread tasks. Must be called each frame from the main thread.
+		/// On a platform with threads this runs continuations that were scheduled back to the main thread,
+		/// while the work itself happens on background workers. On a single-threaded build -- Emscripten
+		/// without -pthread, which is how .NET's browser-wasm links native code -- there are no workers, so
+		/// this call is what runs the background work as well. Skipping it there does not merely delay
+		/// callbacks: nothing loads at all.
 		/// </summary>
 		public void DispatchMainThreadTasks()
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.AsyncSystemDispatchMainThreadTasks(this);
@@ -516,11 +523,54 @@ namespace Evergine.Bindings.CesiumNative
 		public void Dispose() => Evergine.Bindings.CesiumNative.CesiumAPI.AssetAccessorDestroy(this);
 
 		/// <summary>
-		/// @brief Creates an asset accessor using libcurl.
-		/// @param userAgent The User-Agent header string, or NULL for default.
+		/// @brief Creates an asset accessor backed by libcurl.
+		/// Available on every platform where CesiumCurl is, which upstream defines as everything
+		/// except wasm32. On Emscripten there is no libcurl, so this returns an accessor with no
+		/// transport attached: every request fails with status 0. A browser consumer wants
+		/// cesium_asset_accessor_create_from_callbacks instead.
+		/// @param userAgent The User-Agent header string, or NULL for default. Ignored on Emscripten.
 		/// </summary>
 		public static AssetAccessor Create(string userAgent)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.AssetAccessorCreate(userAgent);
+
+		/// <summary>
+		/// @brief Creates an asset accessor whose transport is supplied by the host.
+		/// @param callbacks Copied by value. NULL, or a struct with beginRequest NULL, produces an
+		/// accessor that fails every request with status 0.
+		/// </summary>
+		public static AssetAccessor CreateFromCallbacks(AssetAccessorCallbacks* callbacks)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.AssetAccessorCreateFromCallbacks(callbacks);
+
+		/// <summary>
+		/// @brief The number of requests handed to the host and not yet answered.
+		/// For diagnostics, and for a host that wants to drain before shutting down. Nothing enforces
+		/// a timeout, so this is how a host notices one that will never be answered.
+		/// </summary>
+		public int PendingRequestCount
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.AssetAccessorGetPendingRequestCount(this);
+
+		/// <summary>
+		/// @brief Cancels and fails every request in flight on this accessor.
+		/// Each cancelled request gets its cancelRequest callback and is failed with status 0, and its
+		/// id becomes inert -- completing it afterwards returns 0 rather than reaching a tileset that
+		/// has moved on.
+		/// @warning Call this when the host stops answering. Do not rely on destruction to do it.
+		/// The accessor's destructor does cancel, but it cannot help in the case that matters. An
+		/// unanswered request leaves a continuation pending inside cesium-native; that continuation
+		/// holds a copy of TilesetExternals, and TilesetExternals holds this accessor. So while any
+		/// request is outstanding the accessor cannot be destroyed, and the cancellation in its
+		/// destructor cannot run. Destroying every handle you own is not enough -- measured, not
+		/// assumed, in test_host_accessor_never_answered_is_released.
+		/// There is no timeout. Adding one would mean this library owns a clock and decides how long
+		/// a host is allowed to take, which is the host's call. Use
+		/// cesium_asset_accessor_get_pending_request_count to notice a host that has gone quiet.
+		/// @note Keep dispatching after this returns, and before you tear the async system down.
+		/// Cancelling resolves each promise, but resolution is marshalled to the main thread like
+		/// every other completion, so the continuations that hold the accessor only let go once they
+		/// run. Cancel, pump, then destroy.
+		/// </summary>
+		public void CancelAllRequests()
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.AssetAccessorCancelAllRequests(this);
 	}
 
 	public unsafe partial struct CreditSystem : IEquatable<CreditSystem>, IDisposable
@@ -1143,9 +1193,40 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param accessor The asset accessor for HTTP requests.
 		/// @param accessToken The Cesium Ion access token.
 		/// @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com/".
+		/// @warning This blocks. It fetches the server's ApplicationData before it can build the
+		/// connection, and waits for that by pumping the main thread in a 5000 x 10ms loop -- so an
+		/// unreachable or slow host costs up to fifty seconds on the calling thread, and the function
+		/// then returns NULL. Do not call it on a frame thread.
+		/// On a single-threaded build (Emscripten without -pthread, which is how .NET's browser-wasm
+		/// links native code) it is worse than slow: the loop sleeps the only thread there is, so
+		/// nothing else -- including the fetch it is waiting for -- can make progress. It is
+		/// effectively unusable there until it grows an asynchronous form.
+		/// @see cesium_ion_connection_create_async, which is that form. Prefer it everywhere.
 		/// </summary>
 		public static IonConnection Create(AsyncSystem asyncSystem, AssetAccessor accessor, string accessToken, string apiUrl)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionCreate(asyncSystem, accessor, accessToken, apiUrl);
+
+		/// <summary>
+		/// @brief Creates an Ion connection from an existing access token, without blocking.
+		/// @param asyncSystem The async system.
+		/// @param accessor The asset accessor for HTTP requests.
+		/// @param accessToken The Cesium Ion access token.
+		/// @param apiUrl The Ion API URL, or NULL for "https://api.cesium.com".
+		/// @param callback Invoked exactly once when the attempt finishes. Required.
+		/// @param userData Passed back to the callback untouched.
+		/// This returns immediately. The callback runs later on the main thread, from inside a call
+		/// to cesium_async_system_dispatch_main_thread_tasks -- so a caller that never dispatches
+		/// never hears back. It is never invoked before this function returns, with one exception:
+		/// if an argument is invalid, it is called synchronously with an error so that no caller is
+		/// left waiting for an attempt that was never started.
+		/// None of the pointer arguments are retained. The async system and the accessor are held by
+		/// reference for as long as the attempt is in flight, so they may be destroyed by the caller
+		/// at any point without invalidating anything -- though an accessor destroyed mid-flight will
+		/// cancel the request and the attempt will report failure.
+		/// This is the only form that works on a single-threaded Emscripten build.
+		/// </summary>
+		public static IonConnection CreateAsync(AsyncSystem asyncSystem, AssetAccessor accessor, string accessToken, string apiUrl, IonConnectionCompleteCallback callback, void* userData)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionCreateAsync(asyncSystem, accessor, accessToken, apiUrl, callback, userData);
 
 		/// <summary>
 		/// @brief Requests the list of assets from Cesium Ion (async).
@@ -1282,5 +1363,35 @@ namespace Evergine.Bindings.CesiumNative
 		/// </summary>
 		public static void GltfFreeGlb(byte* data)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.GltfFreeGlb(data);
+
+		/// <summary>
+		/// @brief Delivers a response for an in-flight request.
+		/// May be called from any thread, at any time, including re-entrantly from inside
+		/// beginRequest. The response reaches cesium-native on the main thread during the next
+		/// cesium_async_system_dispatch_main_thread_tasks.
+		/// @param statusCode The HTTP status. 0 means a transport-level failure, which is what
+		/// callers already handle.
+		/// @param headers Response headers or NULL. **Copied** before this returns.
+		/// @param body Response bytes or NULL. **Copied** before this returns, so the caller
+		/// may free or reuse the buffer on the next line. It cannot be borrowed:
+		/// cesium-native holds the response for the whole load pipeline and there
+		/// is no callback announcing when it lets go.
+		/// @return 1 if requestId identified an in-flight request and it was completed; 0 if it did
+		/// not -- unknown, already completed, cancelled, or belonging to an accessor that no
+		/// longer exists. 0 is not an error and nothing is logged: an id arriving too late is
+		/// the normal outcome of a race the host cannot win.
+		/// </summary>
+		public static int AssetRequestComplete(ulong requestId, ushort statusCode, HttpHeader* headers, int headerCount, byte* body, nuint bodySize)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.AssetRequestComplete(requestId, statusCode, headers, headerCount, body, bodySize);
+
+		/// <summary>
+		/// @brief Fails an in-flight request. Equivalent to completing it with status 0 and no body.
+		/// @param message Optional diagnostic, readable through cesium_get_last_error on the calling
+		/// thread. It travels no further: cesium-native's response type has no error channel,
+		/// so the tileset's own load error will say "status code 0" and nothing about why.
+		/// @return 1 if the request was in flight, 0 otherwise.
+		/// </summary>
+		public static int AssetRequestFail(ulong requestId, string message)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.AssetRequestFail(requestId, message);
 	}
 }

@@ -49,6 +49,20 @@ namespace Evergine.Bindings.CesiumNative
 	}
 
 	/// <summary>
+	/// @brief One HTTP header, as a pair of NUL-terminated UTF-8 strings.
+	/// @warning Both pointers are **borrowed**, in either direction, and valid only for the
+	/// duration of the call that carries them. That is the rule for everything crossing this API:
+	/// URLs, methods, header arrays, request and response bodies. Anything the receiver needs
+	/// afterwards it copies before returning.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public unsafe partial struct HttpHeader
+	{
+		public byte* Name;
+		public byte* Value;
+	}
+
+	/// <summary>
 	/// @brief A globe rectangle defined by west, south, east, north in radians.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
@@ -117,7 +131,7 @@ namespace Evergine.Bindings.CesiumNative
 
 	/// <summary>
 	/// @brief The byte range of a single mip level within an image's pixel data.
-	/// Layout-compatible with CesiumGltf::ImageAssetMipPosition.
+	/// Layout-compatible with CesiumImage::ImageAssetMipPosition.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public unsafe partial struct ImageMipPosition
@@ -134,7 +148,7 @@ namespace Evergine.Bindings.CesiumNative
 
 	/// <summary>
 	/// @brief Target GPU-compressed formats to transcode KTX2 textures into.
-	/// Mirrors CesiumGltf::Ktx2TranscodeTargets. A field set to NONE means images of
+	/// Mirrors CesiumImage::Ktx2TranscodeTargets. A field set to NONE means images of
 	/// that source type are fully decompressed to raw pixels instead of transcoded.
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
@@ -401,6 +415,69 @@ namespace Evergine.Bindings.CesiumNative
 		/// @param pMainThreadRasterResources The raster resources to detach.
 		/// </summary>
 		public IntPtr DetachRasterInMainThread;
+	}
+
+	/// <summary>
+	/// @brief A set of function pointers by which the host supplies HTTP transport.
+	/// All callbacks receive userData as the first argument, and any may be NULL, in which case a
+	/// no-op default is used -- the same convention as CesiumRendererResourceCallbacks. With
+	/// beginRequest NULL every request fails with status 0, which is what a consumer reading only
+	/// local data still wants.
+	/// This is how the browser gets HTTP: browser-wasm has no libcurl, and the host already has a
+	/// working stack. It is not browser-only, though. Any platform may use it to own networking
+	/// for authentication, caching or a proxy.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public unsafe partial struct AssetAccessorCallbacks
+	{
+		public void* UserData;
+		/// <summary>
+		/// @brief Starts one HTTP request. The host must eventually call exactly one of
+		/// cesium_asset_request_complete or cesium_asset_request_fail with this requestId --
+		/// or neither, if cancelRequest arrives first.
+		/// Must return promptly. Performing the I/O here blocks the caller, and on a
+		/// single-threaded build that is the only thread there is.
+		/// @param requestId Identifies this request in the completion call.
+		/// @param method "GET", "POST", ... Borrowed; valid only during this call.
+		/// @param url Absolute URL, already resolved. Borrowed.
+		/// @param headers Request headers, borrowed. May be NULL when headerCount is 0.
+		/// @param headerCount Number of entries in headers.
+		/// @param body Request payload or NULL, borrowed.
+		/// @param bodySize Size of body in bytes; 0 when body is NULL.
+		/// Called on the main thread by default -- from inside
+		/// cesium_async_system_dispatch_main_thread_tasks -- so a host sees one thread on all
+		/// platforms. See allowBeginRequestOnWorkerThread to opt out.
+		/// </summary>
+		public IntPtr BeginRequest;
+		/// <summary>
+		/// @brief Called when a request will no longer be waited on, so the host can abort it and
+		/// drop whatever it holds for requestId. Completing it afterwards is harmless: the
+		/// id is already retired and the completion call returns 0.
+		/// Today the only thing that cancels is the accessor being destroyed with requests in
+		/// flight; cesium-native 0.63.0 has no per-request cancellation to forward.
+		/// </summary>
+		public IntPtr CancelRequest;
+		/// <summary>
+		/// @brief Gives a host that polls its transport somewhere to poll from. A host driven by
+		/// its own event loop can leave this NULL.
+		/// </summary>
+		public IntPtr Tick;
+		/// <summary>
+		/// @brief Called once, when the last reference to the accessor goes away, after every
+		/// in-flight request has been cancelled and failed. Nothing in this struct is
+		/// called again afterwards, so userData may be freed.
+		/// Without this a managed host has no signal for when to release the handle backing
+		/// userData.
+		/// </summary>
+		public IntPtr Destroy;
+		/// <summary>
+		/// @brief 0 to have beginRequest marshalled to the main thread; non-zero to have it called
+		/// on whichever thread cesium-native asked from, which is lower latency and harder
+		/// to get right.
+		/// The polarity is chosen so a zeroed struct gets the safe behaviour, like NULL meaning
+		/// no-op. On a single-threaded build there is one thread and the two are the same.
+		/// </summary>
+		public int AllowBeginRequestOnWorkerThread;
 	}
 
 	/// <summary>

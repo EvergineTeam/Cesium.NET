@@ -177,4 +177,92 @@ namespace Evergine.Bindings.CesiumNative
 			SetRendererResourceCallbacks((RendererResourceCallbacks*)null);
 		}
 	}
+
+	/// <summary>
+	/// @brief Starts one HTTP request. The host must eventually call exactly one of
+	/// cesium_asset_request_complete or cesium_asset_request_fail with this requestId --
+	/// or neither, if cancelRequest arrives first.
+	/// Must return promptly. Performing the I/O here blocks the caller, and on a
+	/// single-threaded build that is the only thread there is.
+	/// @param requestId Identifies this request in the completion call.
+	/// @param method "GET", "POST", ... Borrowed; valid only during this call.
+	/// @param url Absolute URL, already resolved. Borrowed.
+	/// @param headers Request headers, borrowed. May be NULL when headerCount is 0.
+	/// @param headerCount Number of entries in headers.
+	/// @param body Request payload or NULL, borrowed.
+	/// @param bodySize Size of body in bytes; 0 when body is NULL.
+	/// Called on the main thread by default -- from inside
+	/// cesium_async_system_dispatch_main_thread_tasks -- so a host sees one thread on all
+	/// platforms. See allowBeginRequestOnWorkerThread to opt out.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate void BeginRequestDelegate(void* userData, ulong requestId, byte* method, byte* url, HttpHeader* headers, int headerCount, byte* body, nuint bodySize);
+
+	/// <summary>
+	/// @brief Called when a request will no longer be waited on, so the host can abort it and
+	/// drop whatever it holds for requestId. Completing it afterwards is harmless: the
+	/// id is already retired and the completion call returns 0.
+	/// Today the only thing that cancels is the accessor being destroyed with requests in
+	/// flight; cesium-native 0.63.0 has no per-request cancellation to forward.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate void CancelRequestDelegate(void* userData, ulong requestId);
+
+	/// <summary>
+	/// @brief Gives a host that polls its transport somewhere to poll from. A host driven by
+	/// its own event loop can leave this NULL.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate void TickDelegate(void* userData);
+
+	/// <summary>
+	/// @brief Called once, when the last reference to the accessor goes away, after every
+	/// in-flight request has been cancelled and failed. Nothing in this struct is
+	/// called again afterwards, so userData may be freed.
+	/// Without this a managed host has no signal for when to release the handle backing
+	/// userData.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate void DestroyDelegate(void* userData);
+
+	/// <summary>
+	/// Managed wrapper for <see cref="AssetAccessorCallbacks"/>.
+	/// Holds typed delegate fields with GC pinning and marshals to the native struct.
+	/// </summary>
+	public unsafe class AssetAccessorCallbacksSet
+	{
+		public BeginRequestDelegate BeginRequest;
+		public CancelRequestDelegate CancelRequest;
+		public TickDelegate Tick;
+		public DestroyDelegate Destroy;
+
+		private Delegate[] _pinned;
+
+		/// <summary>Pins all assigned delegates so they are not garbage collected.</summary>
+		public Delegate[] GetDelegatesToPin()
+		{
+			_pinned = new Delegate[] { BeginRequest, CancelRequest, Tick, Destroy };
+			return _pinned;
+		}
+
+		/// <summary>
+		/// Marshals the managed delegates into a native <see cref="AssetAccessorCallbacks"/> struct.
+		/// Calls GetDelegatesToPin() to ensure delegates remain alive.
+		/// </summary>
+		public AssetAccessorCallbacks ToNative(void* userData = null)
+		{
+			GetDelegatesToPin();
+			var result = new AssetAccessorCallbacks();
+			result.UserData = userData;
+			if (BeginRequest != null)
+				result.BeginRequest = Marshal.GetFunctionPointerForDelegate(BeginRequest);
+			if (CancelRequest != null)
+				result.CancelRequest = Marshal.GetFunctionPointerForDelegate(CancelRequest);
+			if (Tick != null)
+				result.Tick = Marshal.GetFunctionPointerForDelegate(Tick);
+			if (Destroy != null)
+				result.Destroy = Marshal.GetFunctionPointerForDelegate(Destroy);
+			return result;
+		}
+	}
 }

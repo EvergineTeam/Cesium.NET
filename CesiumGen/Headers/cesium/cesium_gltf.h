@@ -494,12 +494,15 @@ CESIUM_API int cesium_gltf_image_get_data(
  * @brief Serializes a CesiumGltfModel to GLB (binary glTF 2.0) format.
  *
  * Serializes the model directly without copying it first, which avoids
- * duplicating all buffer and image bytes. As a side effect the model is mutated
- * (overlay attributes are renamed to TEXCOORD_N and all buffers are collapsed
- * into one), so it must not be reused after this call.
+ * duplicating all buffer and image bytes. Overlay attributes are renamed to
+ * TEXCOORD_N for the written GLB only and restored afterwards, so the model's
+ * _CESIUMOVERLAY_n attributes are preserved (cesium-native needs them to refine
+ * to the most detailed level of detail). Its buffers are, however, collapsed
+ * into a single buffer as a side effect (a lossless transformation), so the
+ * model remains valid and usable after this call.
  *
  * The returned buffer is heap-allocated and must be freed with cesium_gltf_free_glb.
- * @param model The model to serialize (non-const; left in a modified state).
+ * @param model The model to serialize (non-const; buffers are collapsed in place).
  * @param out_data Receives a pointer to the GLB byte buffer.
  * @param out_size Receives the size of the GLB buffer in bytes.
  * @return 1 on success, 0 on failure.

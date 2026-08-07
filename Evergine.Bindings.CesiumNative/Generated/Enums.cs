@@ -17,7 +17,7 @@ namespace Evergine.Bindings.CesiumNative
 
 	/// <summary>
 	/// @brief GPU compressed pixel format of an image, or NONE if uncompressed.
-	/// Values mirror CesiumGltf::GpuCompressedPixelFormat one-to-one (same order).
+	/// Values mirror CesiumImage::GpuCompressedPixelFormat one-to-one (same order).
 	/// </summary>
 	public enum GpuCompressedPixelFormat
 	{

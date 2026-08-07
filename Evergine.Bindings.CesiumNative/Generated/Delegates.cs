@@ -74,4 +74,14 @@ namespace Evergine.Bindings.CesiumNative
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public unsafe delegate void IonAuthorizeCompleteCallback(void* userData, IonConnection connection);
+
+	/// <summary>
+	/// @brief Callback invoked when an asynchronous connection attempt finishes.
+	/// @param userData User-provided context.
+	/// @param connection The resulting connection (caller must destroy), or NULL on error.
+	/// @param error A description of the failure when connection is NULL, otherwise NULL. The
+	/// string is borrowed and is only valid for the duration of the call.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate void IonConnectionCompleteCallback(void* userData, IonConnection connection, byte* error);
 }

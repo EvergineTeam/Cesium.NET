@@ -24,6 +24,22 @@ extern "C" {
 #endif
 
 /* ============================================================================
+ * Version
+ *
+ * Which cesium-native this wrapper is built against. It is the only statement of that a
+ * consumer can read without cloning this repository and inspecting a submodule pointer, and
+ * Cesium.NET has no other way to say which Cesium it binds to.
+ *
+ * Must agree with upstream.release.current in binding.yml. Nothing enforces that
+ * mechanically, so a bump changes both or it lies.
+ * ========================================================================= */
+
+#define CESIUMC_CESIUM_NATIVE_VERSION_MAJOR 0
+#define CESIUMC_CESIUM_NATIVE_VERSION_MINOR 63
+#define CESIUMC_CESIUM_NATIVE_VERSION_PATCH 0
+#define CESIUMC_CESIUM_NATIVE_VERSION "0.63.0"
+
+/* ============================================================================
  * Error handling
  * ========================================================================= */
 
@@ -75,6 +91,19 @@ typedef struct CesiumCartographic {
     double latitude;
     double height;
 } CesiumCartographic;
+
+/**
+ * @brief One HTTP header, as a pair of NUL-terminated UTF-8 strings.
+ *
+ * @warning Both pointers are **borrowed**, in either direction, and valid only for the
+ * duration of the call that carries them. That is the rule for everything crossing this API:
+ * URLs, methods, header arrays, request and response bodies. Anything the receiver needs
+ * afterwards it copies before returning.
+ */
+typedef struct CesiumHttpHeader {
+    const char* name;
+    const char* value;
+} CesiumHttpHeader;
 
 /**
  * @brief A globe rectangle defined by west, south, east, north in radians.
@@ -143,7 +172,7 @@ typedef struct CesiumBoundingVolume {
 /**
  * @brief GPU compressed pixel format of an image, or NONE if uncompressed.
  *
- * Values mirror CesiumGltf::GpuCompressedPixelFormat one-to-one (same order).
+ * Values mirror CesiumImage::GpuCompressedPixelFormat one-to-one (same order).
  */
 typedef enum CesiumGpuCompressedPixelFormat {
     CESIUM_GPU_COMPRESSED_PIXEL_FORMAT_NONE = 0,
@@ -166,7 +195,7 @@ typedef enum CesiumGpuCompressedPixelFormat {
 /**
  * @brief The byte range of a single mip level within an image's pixel data.
  *
- * Layout-compatible with CesiumGltf::ImageAssetMipPosition.
+ * Layout-compatible with CesiumImage::ImageAssetMipPosition.
  */
 typedef struct CesiumImageMipPosition {
     size_t byteOffset; /**< Byte index where this mip begins. */
@@ -176,7 +205,7 @@ typedef struct CesiumImageMipPosition {
 /**
  * @brief Target GPU-compressed formats to transcode KTX2 textures into.
  *
- * Mirrors CesiumGltf::Ktx2TranscodeTargets. A field set to NONE means images of
+ * Mirrors CesiumImage::Ktx2TranscodeTargets. A field set to NONE means images of
  * that source type are fully decompressed to raw pixels instead of transcoded.
  */
 typedef struct CesiumKtx2TranscodeTargets {
