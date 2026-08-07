@@ -1207,6 +1207,18 @@ namespace Evergine.Bindings.CesiumNative
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionCreate(asyncSystem, accessor, accessToken, apiUrl);
 
 		/// <summary>
+		/// @brief Requests the list of assets from Cesium Ion (async).
+		/// </summary>
+		public void ListAssets(IonAssetsCompleteCallback callback, void* userData)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionListAssets(this, callback, userData);
+
+		/// <summary>
+		/// @brief Requests the list of tokens from Cesium Ion (async).
+		/// </summary>
+		public void ListTokens(IonTokensCompleteCallback callback, void* userData)
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionListTokens(this, callback, userData);
+
+		/// <summary>
 		/// @brief Creates an Ion connection from an existing access token, without blocking.
 		/// @param asyncSystem The async system.
 		/// @param accessor The asset accessor for HTTP requests.
@@ -1225,20 +1237,8 @@ namespace Evergine.Bindings.CesiumNative
 		/// cancel the request and the attempt will report failure.
 		/// This is the only form that works on a single-threaded Emscripten build.
 		/// </summary>
-		public static IonConnection CreateAsync(AsyncSystem asyncSystem, AssetAccessor accessor, string accessToken, string apiUrl, IonConnectionCompleteCallback callback, void* userData)
+		public static void CreateAsync(AsyncSystem asyncSystem, AssetAccessor accessor, string accessToken, string apiUrl, IonConnectionCompleteCallback callback, void* userData)
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionCreateAsync(asyncSystem, accessor, accessToken, apiUrl, callback, userData);
-
-		/// <summary>
-		/// @brief Requests the list of assets from Cesium Ion (async).
-		/// </summary>
-		public void ListAssets(IonAssetsCompleteCallback callback, void* userData)
-			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionListAssets(this, callback, userData);
-
-		/// <summary>
-		/// @brief Requests the list of tokens from Cesium Ion (async).
-		/// </summary>
-		public void ListTokens(IonTokensCompleteCallback callback, void* userData)
-			=> Evergine.Bindings.CesiumNative.CesiumAPI.IonConnectionListTokens(this, callback, userData);
 
 		/// <summary>
 		/// @brief Starts the OAuth authorization flow.
