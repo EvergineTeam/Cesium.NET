@@ -11,6 +11,17 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 
 		<!--
+		  The repository has carried an MIT LICENSE all along and the package never said so, which
+		  nuget.org reports on every push: "warn : License missing". A package without a licence
+		  expression is one an organisation with a compliance scanner cannot accept, so the
+		  omission is not cosmetic.
+
+		  The expression rather than the file, because it is what nuget.org renders as a link on
+		  the package page and what tooling reads. The LICENSE itself stays where it is.
+		-->
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+		<!--
 		  Without this the package ships the assembly alone and every doc comment the generator
 		  emits is invisible to whoever consumes it. That was not academic: the remark saying
 		  AssetAccessorCallbacksSet does not work on browser-wasm was added, regenerated and
