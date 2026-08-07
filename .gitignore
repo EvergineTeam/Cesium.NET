@@ -19,3 +19,4 @@ Evergine.Bindings.CesiumNative/runtimes/browser-wasm/
 # The package under test is downloaded from a CD run, never committed. It is the whole
 # 67 MB NuGet, including all seven native runtimes.
 WasmSmokeTest/local-packages/
+DesktopSmokeTest/local-packages/

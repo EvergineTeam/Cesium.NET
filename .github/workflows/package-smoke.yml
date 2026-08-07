@@ -1,0 +1,74 @@
+# Runs the package on every runtime identifier it ships, before it is published.
+#
+# The CD proves the package builds. This proves it works: each leg installs the .nupkg a CD run
+# produced, calls into the native library through it, drives a tileset to its root tile from a
+# host written in C#, and fails the job if any of that does not happen.
+#
+# Two of the six are cross-compiled in CesiumC -- win-arm64 is built on an x64 Windows runner
+# and osx-x64 on an arm64 mac -- so their libraries have never been executed anywhere. This is
+# the first thing that runs them.
+name: Package smoke test
+
+on:
+  workflow_dispatch:
+    inputs:
+      cd-run-id:
+        description: >-
+          The CD run whose nuget-packages artifact to test, e.g. 31220702712. Take it from a run
+          started with skip-assets-publishing, so nothing has been published yet.
+        required: true
+        type: string
+
+jobs:
+  desktop:
+    name: ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+          - rid: win-arm64
+            os: windows-11-arm
+          - rid: linux-x64
+            os: ubuntu-latest
+          - rid: linux-arm64
+            os: ubuntu-24.04-arm
+          - rid: osx-arm64
+            os: macos-14
+          - rid: osx-x64
+            os: macos-13
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      # From the CD run rather than packed here, so the thing under test is the artifact that
+      # would be published, byte for byte.
+      - name: Fetch the package under test
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p DesktopSmokeTest/local-packages
+          gh run download "${{ inputs.cd-run-id }}" --repo "$GITHUB_REPOSITORY" \
+            -n nuget-packages -D DesktopSmokeTest/local-packages
+          ls -la DesktopSmokeTest/local-packages/
+
+          pkg=$(ls DesktopSmokeTest/local-packages/*.nupkg | head -1)
+          version=$(basename "$pkg" .nupkg | sed 's/^Evergine\.Bindings\.CesiumNative\.//')
+          echo "CESIUM_NATIVE_VERSION=$version" >> "$GITHUB_ENV"
+          echo "testing $version on ${{ matrix.rid }}"
+
+      - name: Run the package on ${{ matrix.rid }}
+        shell: bash
+        working-directory: DesktopSmokeTest
+        run: |
+          set -euo pipefail
+          dotnet run -c Release -r ${{ matrix.rid }} --self-contained false \
+            -p:CesiumNativeVersion="$CESIUM_NATIVE_VERSION"
