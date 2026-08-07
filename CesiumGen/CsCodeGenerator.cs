@@ -1714,6 +1714,23 @@ namespace CesiumGen
 			writer.WriteLine($"{indent}/// Managed wrapper for <see cref=\"{structName}\"/>.");
 			writer.WriteLine($"{indent}/// Holds typed delegate fields with GC pinning and marshals to the native struct.");
 			writer.WriteLine($"{indent}/// </summary>");
+			writer.WriteLine($"{indent}/// <remarks>");
+			writer.WriteLine($"{indent}/// <para><b>Desktop only. This does not work on browser-wasm.</b></para>");
+			writer.WriteLine($"{indent}/// <para>");
+			writer.WriteLine($"{indent}/// It builds the native struct with Marshal.GetFunctionPointerForDelegate, and the");
+			writer.WriteLine($"{indent}/// WebAssembly runtime refuses a managed method reached from native code unless that");
+			writer.WriteLine($"{indent}/// method carries [UnmanagedCallersOnly]: ahead-of-time compilation has to know the");
+			writer.WriteLine($"{indent}/// callback at build time in order to place it in the table. The failure arrives at");
+			writer.WriteLine($"{indent}/// run time, on the first call from native code, as");
+			writer.WriteLine($"{indent}/// \"No native to managed transition for method ..., missing [UnmanagedCallersOnly]");
+			writer.WriteLine($"{indent}/// attribute\".");
+			writer.WriteLine($"{indent}/// </para>");
+			writer.WriteLine($"{indent}/// <para>");
+			writer.WriteLine($"{indent}/// On browser-wasm, fill <see cref=\"{structName}\"/> yourself. Each callback is a static");
+			writer.WriteLine($"{indent}/// method marked [UnmanagedCallersOnly(CallConvs = new[] {{ typeof(CallConvCdecl) }})],");
+			writer.WriteLine($"{indent}/// and each field takes (IntPtr)(delegate* unmanaged[Cdecl]&lt;...&gt;)&amp;Method.");
+			writer.WriteLine($"{indent}/// </para>");
+			writer.WriteLine($"{indent}/// </remarks>");
 			writer.WriteLine($"{indent}public unsafe class {className}");
 			writer.WriteLine($"{indent}{{");
 

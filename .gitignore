@@ -15,3 +15,7 @@
 # that git could never be made to forget. The CD fetches it from the CesiumC release the
 # manifest records, which is the moment it is actually needed: packing.
 Evergine.Bindings.CesiumNative/runtimes/browser-wasm/
+
+# The package under test is downloaded from a CD run, never committed. It is the whole
+# 67 MB NuGet, including all seven native runtimes.
+WasmSmokeTest/local-packages/

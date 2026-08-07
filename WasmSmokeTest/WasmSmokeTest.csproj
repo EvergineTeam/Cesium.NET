@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <WasmMainJSPath>main.mjs</WasmMainJSPath>
+
+    <!--
+      The archive is linked at publish time, so the native build has to run. Without this the
+      package's NativeFileReference is carried and never used, and every DllImport fails at
+      run time with the module already loaded, which reads as a runtime bug rather than the
+      packaging one it is.
+    -->
+    <WasmBuildNative>true</WasmBuildNative>
+
+    <!-- Not a library consumer's concern, but this project exists to be run in CI. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <!--
+    A PackageReference on purpose, not a ProjectReference. The thing under test is the package:
+    its targets file, the name the archive is packed under, and whether the two together make
+    the DllImports resolve. A project reference would bypass all three and pass regardless.
+
+    The version is supplied by the workflow, which restores from the folder holding the .nupkg
+    the CD produced.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Evergine.Bindings.CesiumNative" Version="$(CesiumNativeVersion)" />
+  </ItemGroup>
+
+</Project>
