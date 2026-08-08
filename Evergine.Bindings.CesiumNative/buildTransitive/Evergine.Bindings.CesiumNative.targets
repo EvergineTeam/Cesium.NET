@@ -39,8 +39,8 @@
 
 	  What ForceLoad protects against is real, though: the linker keeps only the members
 	  something references, and a symbol reached solely through a P/Invoke could be dropped. The
-	  package smoke test is what makes this safe to turn off -- it reads the built executable
-	  and fails if cesium_async_system_create is not among its defined symbols.
+	  package smoke test is what makes this safe to turn off rather than hopeful: it reads the
+	  built executable and fails if cesium_async_system_create is not among its defined symbols.
 
 	  Which runtime identifier to pick is decided by the platform rather than by
 	  $(RuntimeIdentifier), unlike the wasm block above: an iOS build may be for a device or for
