@@ -39,10 +39,11 @@ Go to the original repository for more details: https://github.com/CesiumGS/cesi
 - [x] macOS ARM64
 - [x] Browser WebAssembly
 
-The five desktop identifiers are executed before the package is published, not merely built:
-every release installs the `.nupkg` and drives a tileset to its root tile on each of them, and a
-failure stops the publish. WebAssembly is checked one step upstream instead — CesiumC publishes
-its archive only after linking it into a real .NET wasm application and running it under node.
+All six are executed before the package is published, not merely built: every release installs
+the `.nupkg` and drives a tileset to its root tile on each of them, and a failure stops the
+publish. WebAssembly is checked twice over, because it is the one that fails in a way nothing
+else would notice — CesiumC links its archive into a .NET application and runs it under node
+before publishing it as a release asset, and the package is then linked and run again here.
 
 WebAssembly needs no extra setup on your side, but it does work differently: the archive is
 linked into your application at publish time rather than loaded at run time, and the generated
