@@ -357,7 +357,12 @@ jobs:
   # says about ios-arm64 is indirect.
   ios:
     name: iossimulator-arm64
-    runs-on: macos-14
+    # macos-latest and not a pin, which is the opposite of what the other legs do. .NET for iOS
+    # refuses to build against an Xcode older than the one it was built for, and it moves fast:
+    # 26.5.10315 wants Xcode 26.6, while macos-14 ships 15.4 and the first attempt died on
+    # exactly that. A pin here would have to be bumped every time the workload advances, and
+    # falling behind stops the leg rather than degrading it.
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v6
@@ -365,6 +370,13 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.x'
+
+      # Printed because the failure it explains does not mention the runner. The error names the
+      # Xcode the SDK wants and the one it found, and nothing says which image that was.
+      - name: Show what Xcode this runner has
+        run: |
+          xcodebuild -version
+          echo "image: $ImageOS"
 
       - name: Install the ios workload
         run: dotnet workload install ios
