@@ -18,27 +18,77 @@ on:
           started with skip-assets-publishing, so nothing has been published yet.
         required: true
         type: string
+      rids:
+        description: >-
+          Comma-separated runtime identifiers to run, e.g. osx-x64. Leave empty for all six.
+          Retrying one identifier should not drag the five that already passed along with it,
+          and osx-x64 needs retrying because macos-13 is the last Intel runner in the catalogue
+          and is hard to get.
+        required: false
+        type: string
 
 jobs:
+  # The matrix is built here rather than filtered in the job below, because an `if` on a matrix
+  # job does not stop it queueing for a runner -- it would sit waiting for the very machine that
+  # is scarce, and then skip.
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        shell: bash
+        env:
+          WANTED: ${{ inputs.rids }}
+        run: |
+          set -euo pipefail
+
+          # Plain shell rather than jq, so the whole thing can be run on a developer machine
+          # before it is pushed. Where each identifier is exercised is a fact worth stating
+          # once: win-arm64 and osx-x64 are cross-compiled in CesiumC, so this workflow is the
+          # only place their binaries ever execute.
+          ORDER="win-x64 win-arm64 linux-x64 linux-arm64 osx-arm64 osx-x64"
+          runner_for() {
+            case "$1" in
+              win-x64)     echo windows-latest ;;
+              win-arm64)   echo windows-11-arm ;;
+              linux-x64)   echo ubuntu-latest ;;
+              linux-arm64) echo ubuntu-24.04-arm ;;
+              osx-arm64)   echo macos-14 ;;
+              osx-x64)     echo macos-13 ;;
+              *)           echo "" ;;
+            esac
+          }
+
+          selected="${WANTED:-}"
+          if [ -z "$selected" ]; then
+            selected="$ORDER"
+          else
+            selected=$(echo "$selected" | tr ',' ' ')
+          fi
+
+          entries=""
+          for rid in $selected; do
+            os=$(runner_for "$rid")
+            if [ -z "$os" ]; then
+              echo "::error::'$rid' is not a runtime identifier this workflow knows"
+              for known in $ORDER; do echo "  known: $known"; done
+              exit 1
+            fi
+            entries="${entries}{\"rid\":\"$rid\",\"os\":\"$os\"},"
+            echo "  $rid on $os"
+          done
+
+          echo "matrix=[${entries%,}]" >> "$GITHUB_OUTPUT"
+
   desktop:
+    needs: prepare
     name: ${{ matrix.rid }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - rid: win-x64
-            os: windows-latest
-          - rid: win-arm64
-            os: windows-11-arm
-          - rid: linux-x64
-            os: ubuntu-latest
-          - rid: linux-arm64
-            os: ubuntu-24.04-arm
-          - rid: osx-arm64
-            os: macos-14
-          - rid: osx-x64
-            os: macos-13
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     steps:
       - uses: actions/checkout@v6
