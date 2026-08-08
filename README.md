@@ -44,9 +44,6 @@ every release installs the `.nupkg` and drives a tileset to its root tile on eac
 failure stops the publish. WebAssembly is checked one step upstream instead — CesiumC publishes
 its archive only after linking it into a real .NET wasm application and running it under node.
 
-Intel macOS was dropped on 2026-08-08. Three attempts across two days never got a `macos-13`
-runner, which made it the one identifier being published without anything having ever run it.
-
 WebAssembly needs no extra setup on your side, but it does work differently: the archive is
 linked into your application at publish time rather than loaded at run time, and the generated
 `*CallbacksSet.ToNative` helpers cannot be used there — AOT rejects a managed method reached from
