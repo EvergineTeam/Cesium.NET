@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>28</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <ApplicationId>com.evergine.cesiumsmoketest</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+
+    <!--
+      One ABI, and the one CesiumC builds. Left to itself the Android SDK targets four, and the
+      three with no CesiumNativeC in the package would fail the packaging step for a reason that
+      has nothing to do with what is under test.
+    -->
+    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!--
+    A PackageReference on purpose, not a ProjectReference. What is under test is the package:
+    whether it carries a library for android-arm64 and whether the Android SDK finds it there and
+    puts it in the APK. A project reference bypasses the runtimes/ layout entirely and would pass
+    against a package shipping nothing at all.
+
+    The version is supplied by the workflow, which restores from the folder holding the .nupkg the
+    CD produced.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Evergine.Bindings.CesiumNative" Version="$(CesiumNativeVersion)" />
+  </ItemGroup>
+
+</Project>

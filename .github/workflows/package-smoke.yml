@@ -14,6 +14,12 @@
 # for weeks before this and no workflow ran it, which is how the same two mistakes went unnoticed
 # in Evergine.Bindings.JoltPhysics until somebody opened the published .nupkg by hand.
 #
+# android-arm64 is the one leg that asserts rather than runs. No runner can execute an APK
+# without an emulator, and standing one up per release was decided against, so instead the APK is
+# opened and lib/arm64-v8a/libCesiumNativeC.so has to be inside it. That is a real check and not
+# a consolation prize: it is exactly the mistake Evergine.Bindings.JoltPhysics shipped for months,
+# a native library present in the package and absent from where the platform looks for it.
+#
 # Intel macOS used to be the sixth. It was dropped on 2026-08-08 for the reason this file exists
 # to prevent: three attempts across two days never got a macos-13 runner, so it was the one
 # identifier shipping without anything having ever executed it.
@@ -229,3 +235,100 @@ jobs:
           set -euo pipefail
           dotnet publish -c Release -p:CesiumNativeVersion="$CESIUM_NATIVE_VERSION"
           node bin/Release/net10.0/browser-wasm/AppBundle/main.mjs
+
+  # Builds an APK against the package and then opens it. `dotnet build` succeeding proves the
+  # managed side compiled and says nothing about whether the native library travelled with it,
+  # which is the only question this leg exists to answer.
+  android:
+    name: android-arm64
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Install the android workload
+        run: dotnet workload install android
+
+      - name: Fetch the package from this run
+        if: inputs.cd-run-id == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: AndroidSmokeTest/local-packages
+
+      - name: Fetch the package from an earlier run
+        if: inputs.cd-run-id != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p AndroidSmokeTest/local-packages
+          gh run download "${{ inputs.cd-run-id }}" --repo "$GITHUB_REPOSITORY"             -n nuget-packages -D AndroidSmokeTest/local-packages
+
+      - name: Work out which version is under test
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -la AndroidSmokeTest/local-packages/
+
+          pkg=$(ls AndroidSmokeTest/local-packages/*.nupkg | head -1)
+          version=$(basename "$pkg" .nupkg | sed 's/^Evergine\.Bindings\.CesiumNative\.//')
+          echo "CESIUM_NATIVE_VERSION=$version" >> "$GITHUB_ENV"
+          echo "testing $version on android-arm64"
+
+      - name: Build an APK against the package
+        shell: bash
+        working-directory: AndroidSmokeTest
+        run: |
+          set -euo pipefail
+          dotnet build -c Release -p:CesiumNativeVersion="$CESIUM_NATIVE_VERSION"
+
+      # The assertion. A package can carry runtimes/android-arm64/native and still lose it on the
+      # way into the APK, and the build would be green either way.
+      - name: Check the native library is inside the APK
+        shell: bash
+        working-directory: AndroidSmokeTest
+        run: |
+          set -euo pipefail
+          apk=$(find bin -name '*-Signed.apk' | head -1)
+          [ -n "$apk" ] || { echo "::error::no APK was produced"; exit 1; }
+
+          echo "APK: $apk"
+          python3 - "$apk" <<'CHECK'
+          import sys, zipfile, os
+
+          apk = sys.argv[1]
+          z = zipfile.ZipFile(apk)
+          wanted = "lib/arm64-v8a/libCesiumNativeC.so"
+
+          libs = sorted(n for n in z.namelist() if n.startswith("lib/"))
+          print("  APK is %.1f MB and carries %d native libraries" % (os.path.getsize(apk) / 1e6, len(libs)))
+
+          if wanted not in libs:
+              print("::error::%s is not in the APK. The package carried it and the build dropped it." % wanted)
+              for n in libs:
+                  print("    has: %s" % n)
+              sys.exit(1)
+
+          size = z.getinfo(wanted).file_size
+          print("  ok    %s (%.1f MB uncompressed)" % (wanted, size / 1e6))
+
+          # A library that is present and empty would satisfy the check above and nothing else.
+          if size < 1_000_000:
+              print("::error::only %d bytes; that is not cesium-native." % size)
+              sys.exit(1)
+
+          # Every ABI here is one the package had to supply. Anything beyond arm64-v8a means the
+          # project asked for a runtime identifier CesiumC does not build.
+          abis = {n.split("/")[1] for n in libs}
+          if abis != {"arm64-v8a"}:
+              print("::error::unexpected ABIs in the APK: %s" % ", ".join(sorted(abis)))
+              sys.exit(1)
+
+          print("PASS")
+          CHECK
