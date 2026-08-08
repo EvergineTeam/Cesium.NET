@@ -1,9 +1,16 @@
 name: CD
 
 on:
-  # Monthly, so a new CesiumC release reaches the package without anybody asking. Previously
-  # dispatch-only, which is one reason the shipped binaries had no record of where they came
-  # from: nothing ran unless somebody remembered to run it.
+  # CesiumC says so itself, the moment it cuts a release. That is the trigger this repository
+  # always wanted: the cron below fires day 1 at 03:00 and CesiumC's porter agent runs day 2 at
+  # 05:00, so the monthly look happened 26 hours before there was anything to find -- and since
+  # cutting the release is a manual step after that, a version of cesium-native took two months
+  # to reach this package rather than one.
+  repository_dispatch:
+    types: [upstream-released]
+
+  # Kept as a safety net rather than as the mechanism. If a dispatch is ever lost, the chain
+  # recovers by itself next month instead of stopping forever.
   schedule:
     - cron: "0 3 1 * *"
   workflow_dispatch:
