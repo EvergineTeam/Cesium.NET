@@ -10,6 +10,23 @@
 name: Package smoke test
 
 on:
+  # Called by the CD, where it stands between packing and publishing, and dispatchable by hand
+  # against any past run's artifact.
+  workflow_call:
+    inputs:
+      cd-run-id:
+        description: >-
+          The CD run whose nuget-packages artifact to test. Leave empty when calling from the
+          run that produced it, which is the normal case.
+        required: false
+        type: string
+        default: ''
+      rids:
+        description: 'Comma-separated runtime identifiers to run. Empty means all six.'
+        required: false
+        type: string
+        default: ''
+
   workflow_dispatch:
     inputs:
       cd-run-id:
@@ -99,7 +116,19 @@ jobs:
 
       # From the CD run rather than packed here, so the thing under test is the artifact that
       # would be published, byte for byte.
-      - name: Fetch the package under test
+      # Two ways in, because the artifact lives in a different place depending on who is asking.
+      # Called from the CD it belongs to this same run, and download-artifact finds it with no
+      # id at all. Dispatched by hand it belongs to a run that finished days ago, which only
+      # `gh run download` can reach.
+      - name: Fetch the package from this run
+        if: inputs.cd-run-id == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: DesktopSmokeTest/local-packages
+
+      - name: Fetch the package from an earlier run
+        if: inputs.cd-run-id != ''
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -108,6 +137,11 @@ jobs:
           mkdir -p DesktopSmokeTest/local-packages
           gh run download "${{ inputs.cd-run-id }}" --repo "$GITHUB_REPOSITORY" \
             -n nuget-packages -D DesktopSmokeTest/local-packages
+
+      - name: Work out which version is under test
+        shell: bash
+        run: |
+          set -euo pipefail
           ls -la DesktopSmokeTest/local-packages/
 
           pkg=$(ls DesktopSmokeTest/local-packages/*.nupkg | head -1)

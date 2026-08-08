@@ -62,10 +62,47 @@ jobs:
       # what satisfies the CD's refusal to commit a source bump with no matching natives.
       force-publish: ${{ inputs.force-publish || false }}
       publish-only: ${{ inputs.publish-only || false }}
-      publish-enabled: ${{ !inputs.skip-assets-publishing }}
+      # Never from here. Publishing moved into its own job, behind the smoke test, so that no
+      # package reaches nuget.org without having been installed and run first. This used to be
+      # `!inputs.skip-assets-publishing`, which on a scheduled run has no inputs to negate and
+      # so evaluated true: the monthly cron published on its own, unverified, precisely when the
+      # generated API had moved and the risk was highest.
+      publish-enabled: false
       enable-email-notifications: true
     secrets:
       NUGET_UPLOAD_TOKEN: ${{ secrets.EVERGINE_NUGETORG_TOKEN }}
       WAVE_SENDGRID_TOKEN: ${{ secrets.WAVE_SENDGRID_TOKEN }}
       EVERGINE_EMAILREPORT_LIST: ${{ secrets.EVERGINE_EMAILREPORT_LIST }}
       EVERGINE_EMAIL: ${{ secrets.EVERGINE_EMAIL }}
+
+  # Installs the package that was just built on all six runtime identifiers and drives a tileset
+  # to its root tile from a host written in C#. Four things went wrong this week that only this
+  # can catch: an archive with no cesium-native in it, a generator emitting code that does not
+  # compile, a wasm archive .NET cannot link, and a callbacks helper that does not work on wasm.
+  # None of them were visible to the CD, which only proves the package builds.
+  smoke:
+    needs: cd
+    if: needs.cd.outputs.packaged == 'true'
+    uses: ./.github/workflows/package-smoke.yml
+    with:
+      cd-run-id: ''
+
+  # Only now, and only if every leg passed. `needs: smoke` is the gate: a red leg means this job
+  # never starts.
+  publish:
+    needs: [cd, smoke]
+    if: needs.cd.outputs.packaged == 'true' && !inputs.skip-assets-publishing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: nupkgs
+
+      - name: Publish to nuget.org
+        uses: EvergineTeam/Evergine.Bindings/.github/actions/nuget-publish@v1
+        with:
+          packages-folder: nupkgs
+          auth-token: ${{ secrets.EVERGINE_NUGETORG_TOKEN }}
