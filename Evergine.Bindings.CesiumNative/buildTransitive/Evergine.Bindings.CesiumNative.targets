@@ -30,10 +30,17 @@
 	  it into the bundle afterwards; an archive is linked and does not travel, so none of that
 	  applies here.
 
-	  ForceLoad because the archive is a library and the linker takes only the members something
-	  references. Almost every entry point here is reached through a P/Invoke rather than from
-	  native code, so without it the members carrying them are dropped and the application binds
-	  nothing.
+	  ForceLoad is off, and that was measured rather than chosen. With it on the link fails on
+	  duplicate symbols: the merged archive carries libjpeg.a and libturbojpeg.a, which are two
+	  APIs over one core, and libwebp.a and libwebpdecoder.a, where the decoder is a subset of
+	  the whole. ForceLoad pulls every member in, so both copies arrive and collide. Ordinary
+	  linking takes the first definition and moves on, which is what browser-wasm has always
+	  done with the same archive.
+
+	  What ForceLoad protects against is real, though: the linker keeps only the members
+	  something references, and a symbol reached solely through a P/Invoke could be dropped. The
+	  package smoke test is what makes this safe to turn off -- it reads the built executable
+	  and fails if cesium_async_system_create is not among its defined symbols.
 
 	  Which runtime identifier to pick is decided by the platform rather than by
 	  $(RuntimeIdentifier), unlike the wasm block above: an iOS build may be for a device or for
@@ -51,7 +58,7 @@
 		<ItemGroup>
 			<_FrameworkNativeReference Include="$(_CesiumNativeIosArchive)">
 				<Kind>Static</Kind>
-				<ForceLoad>true</ForceLoad>
+				<ForceLoad>false</ForceLoad>
 				<SmartLink>false</SmartLink>
 			</_FrameworkNativeReference>
 		</ItemGroup>
