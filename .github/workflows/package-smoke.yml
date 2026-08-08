@@ -64,7 +64,18 @@ jobs:
           # before it is pushed. Where each identifier is exercised is a fact worth stating
           # once: win-arm64 and osx-x64 are cross-compiled in CesiumC, so this workflow is the
           # only place their binaries ever execute.
-          ORDER="win-x64 win-arm64 linux-x64 linux-arm64 osx-arm64 osx-x64"
+          # osx-x64 is deliberately absent from the default set, and that is a decision rather
+          # than an oversight. It needs macos-13, the last Intel runner in the catalogue and one
+          # on its way out: three attempts on two different days never got a machine, twice
+          # waiting half an hour. Since the CD gates publishing on `needs: smoke`, and `needs`
+          # waits for every leg of the matrix, leaving it in would make every publish wait on the
+          # scarcest runner GitHub has. A gate that never opens does not protect anything.
+          #
+          # It is still reachable by dispatching this workflow with `rids: osx-x64`, and the
+          # README records that it is the one identifier nothing has ever executed -- CesiumC
+          # cross-compiles it on an arm64 mac, so not even the C++ tests touch it.
+          DEFAULT="win-x64 win-arm64 linux-x64 linux-arm64 osx-arm64"
+          ORDER="$DEFAULT osx-x64"
           runner_for() {
             case "$1" in
               win-x64)     echo windows-latest ;;
@@ -79,7 +90,7 @@ jobs:
 
           selected="${WANTED:-}"
           if [ -z "$selected" ]; then
-            selected="$ORDER"
+            selected="$DEFAULT"
           else
             selected=$(echo "$selected" | tr ',' ' ')
           fi
