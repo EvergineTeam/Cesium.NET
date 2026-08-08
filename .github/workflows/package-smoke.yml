@@ -7,6 +7,13 @@
 # win-arm64 is cross-compiled in CesiumC, on an x64 Windows runner, so its library is executed
 # nowhere else. This is the only thing that runs it.
 #
+# browser-wasm needs its own job rather than a row in the matrix, because nothing about it
+# resembles the others: the archive is linked into the application when it publishes instead of
+# being loaded out of runtimes/ at run time, so what makes it work is the package's
+# buildTransitive targets file and the name the archive is packed under. WasmSmokeTest existed
+# for weeks before this and no workflow ran it, which is how the same two mistakes went unnoticed
+# in Evergine.Bindings.JoltPhysics until somebody opened the published .nupkg by hand.
+#
 # Intel macOS used to be the sixth. It was dropped on 2026-08-08 for the reason this file exists
 # to prevent: three attempts across two days never got a macos-13 runner, so it was the one
 # identifier shipping without anything having ever executed it.
@@ -25,7 +32,9 @@ on:
         type: string
         default: ''
       rids:
-        description: 'Comma-separated runtime identifiers to run. Empty means all five.'
+        description: >-
+          Comma-separated desktop runtime identifiers to run. Empty means all five. The wasm leg
+          is a separate job and always runs.
         required: false
         type: string
         default: ''
@@ -40,8 +49,9 @@ on:
         type: string
       rids:
         description: >-
-          Comma-separated runtime identifiers to run, e.g. win-arm64. Leave empty for all five.
-          Retrying one identifier should not drag the four that already passed along with it.
+          Comma-separated desktop runtime identifiers to run, e.g. win-arm64. Leave empty for all
+          five. Retrying one identifier should not drag the four that already passed along with
+          it. This does not reach the wasm leg, which is a separate job and always runs.
         required: false
         type: string
 
@@ -156,3 +166,66 @@ jobs:
           set -euo pipefail
           dotnet run -c Release -r ${{ matrix.rid }} --self-contained false \
             -p:CesiumNativeVersion="$CESIUM_NATIVE_VERSION"
+
+  # Its own job rather than a row in the matrix above, because almost nothing is shared: there is
+  # no runtime identifier to select, the wasm workload has to be installed, publishing is not
+  # optional, and the thing that runs the result is node rather than the host.
+  #
+  # The fetch and the version parse are repeated from the desktop job instead of being hoisted
+  # into `prepare`. Hoisting would mean prepare downloading the artifact too, which trades a dozen
+  # duplicated lines for a coupling between a job that decides a matrix and the artifact under
+  # test. The duplication is the cheaper of the two.
+  wasm:
+    name: browser-wasm
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      # Not present on the runner by default, and without it WasmBuildNative has no Emscripten to
+      # link with.
+      - name: Install the wasm workload
+        run: dotnet workload install wasm-tools
+
+      - name: Fetch the package from this run
+        if: inputs.cd-run-id == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: WasmSmokeTest/local-packages
+
+      - name: Fetch the package from an earlier run
+        if: inputs.cd-run-id != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p WasmSmokeTest/local-packages
+          gh run download "${{ inputs.cd-run-id }}" --repo "$GITHUB_REPOSITORY" \
+            -n nuget-packages -D WasmSmokeTest/local-packages
+
+      - name: Work out which version is under test
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -la WasmSmokeTest/local-packages/
+
+          pkg=$(ls WasmSmokeTest/local-packages/*.nupkg | head -1)
+          version=$(basename "$pkg" .nupkg | sed 's/^Evergine\.Bindings\.CesiumNative\.//')
+          echo "CESIUM_NATIVE_VERSION=$version" >> "$GITHUB_ENV"
+          echo "testing $version on browser-wasm"
+
+      # Publish then node, not `dotnet run`: there is no host that runs a browser-wasm application,
+      # and the link that this whole leg exists to check only happens on publish.
+      - name: Run the package on browser-wasm
+        shell: bash
+        working-directory: WasmSmokeTest
+        run: |
+          set -euo pipefail
+          dotnet publish -c Release -p:CesiumNativeVersion="$CESIUM_NATIVE_VERSION"
+          node bin/Release/net10.0/browser-wasm/AppBundle/main.mjs
