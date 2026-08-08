@@ -4,12 +4,32 @@
 # produced, calls into the native library through it, drives a tileset to its root tile from a
 # host written in C#, and fails the job if any of that does not happen.
 #
-# Two of the six are cross-compiled in CesiumC -- win-arm64 is built on an x64 Windows runner
-# and osx-x64 on an arm64 mac -- so their libraries have never been executed anywhere. This is
-# the first thing that runs them.
+# win-arm64 is cross-compiled in CesiumC, on an x64 Windows runner, so its library is executed
+# nowhere else. This is the only thing that runs it.
+#
+# Intel macOS used to be the sixth. It was dropped on 2026-08-08 for the reason this file exists
+# to prevent: three attempts across two days never got a macos-13 runner, so it was the one
+# identifier shipping without anything having ever executed it.
 name: Package smoke test
 
 on:
+  # Called by the CD, where it stands between packing and publishing, and dispatchable by hand
+  # against any past run's artifact.
+  workflow_call:
+    inputs:
+      cd-run-id:
+        description: >-
+          The CD run whose nuget-packages artifact to test. Leave empty when calling from the
+          run that produced it, which is the normal case.
+        required: false
+        type: string
+        default: ''
+      rids:
+        description: 'Comma-separated runtime identifiers to run. Empty means all five.'
+        required: false
+        type: string
+        default: ''
+
   workflow_dispatch:
     inputs:
       cd-run-id:
@@ -20,10 +40,8 @@ on:
         type: string
       rids:
         description: >-
-          Comma-separated runtime identifiers to run, e.g. osx-x64. Leave empty for all six.
-          Retrying one identifier should not drag the five that already passed along with it,
-          and osx-x64 needs retrying because macos-13 is the last Intel runner in the catalogue
-          and is hard to get.
+          Comma-separated runtime identifiers to run, e.g. win-arm64. Leave empty for all five.
+          Retrying one identifier should not drag the four that already passed along with it.
         required: false
         type: string
 
@@ -44,10 +62,9 @@ jobs:
           set -euo pipefail
 
           # Plain shell rather than jq, so the whole thing can be run on a developer machine
-          # before it is pushed. Where each identifier is exercised is a fact worth stating
-          # once: win-arm64 and osx-x64 are cross-compiled in CesiumC, so this workflow is the
-          # only place their binaries ever execute.
-          ORDER="win-x64 win-arm64 linux-x64 linux-arm64 osx-arm64 osx-x64"
+          # before it is pushed. win-arm64 is cross-compiled in CesiumC, so this workflow is the
+          # only place its binary ever executes.
+          ORDER="win-x64 win-arm64 linux-x64 linux-arm64 osx-arm64"
           runner_for() {
             case "$1" in
               win-x64)     echo windows-latest ;;
@@ -55,7 +72,6 @@ jobs:
               linux-x64)   echo ubuntu-latest ;;
               linux-arm64) echo ubuntu-24.04-arm ;;
               osx-arm64)   echo macos-14 ;;
-              osx-x64)     echo macos-13 ;;
               *)           echo "" ;;
             esac
           }
@@ -97,9 +113,22 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      # From the CD run rather than packed here, so the thing under test is the artifact that
-      # would be published, byte for byte.
-      - name: Fetch the package under test
+      # The artifact the CD produced rather than one packed here, so the thing under test is
+      # what would be published, byte for byte.
+      #
+      # Two ways in, because the artifact lives in a different place depending on who is asking.
+      # Called from the CD it belongs to this same run, and download-artifact finds it with no
+      # id at all. Dispatched by hand it belongs to a run that finished days ago, which only
+      # `gh run download` can reach.
+      - name: Fetch the package from this run
+        if: inputs.cd-run-id == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: DesktopSmokeTest/local-packages
+
+      - name: Fetch the package from an earlier run
+        if: inputs.cd-run-id != ''
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -108,6 +137,11 @@ jobs:
           mkdir -p DesktopSmokeTest/local-packages
           gh run download "${{ inputs.cd-run-id }}" --repo "$GITHUB_REPOSITORY" \
             -n nuget-packages -D DesktopSmokeTest/local-packages
+
+      - name: Work out which version is under test
+        shell: bash
+        run: |
+          set -euo pipefail
           ls -la DesktopSmokeTest/local-packages/
 
           pkg=$(ls DesktopSmokeTest/local-packages/*.nupkg | head -1)
