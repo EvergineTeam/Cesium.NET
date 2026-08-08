@@ -4,9 +4,12 @@
 # produced, calls into the native library through it, drives a tileset to its root tile from a
 # host written in C#, and fails the job if any of that does not happen.
 #
-# Two of the six are cross-compiled in CesiumC -- win-arm64 is built on an x64 Windows runner
-# and osx-x64 on an arm64 mac -- so their libraries have never been executed anywhere. This is
-# the first thing that runs them.
+# win-arm64 is cross-compiled in CesiumC, on an x64 Windows runner, so its library is executed
+# nowhere else. This is the only thing that runs it.
+#
+# Intel macOS used to be the sixth. It was dropped on 2026-08-08 for the reason this file exists
+# to prevent: three attempts across two days never got a macos-13 runner, so it was the one
+# identifier shipping without anything having ever executed it.
 name: Package smoke test
 
 on:
@@ -22,7 +25,7 @@ on:
         type: string
         default: ''
       rids:
-        description: 'Comma-separated runtime identifiers to run. Empty means all six.'
+        description: 'Comma-separated runtime identifiers to run. Empty means all five.'
         required: false
         type: string
         default: ''
@@ -37,10 +40,8 @@ on:
         type: string
       rids:
         description: >-
-          Comma-separated runtime identifiers to run, e.g. osx-x64. Leave empty for all six.
-          Retrying one identifier should not drag the five that already passed along with it,
-          and osx-x64 needs retrying because macos-13 is the last Intel runner in the catalogue
-          and is hard to get.
+          Comma-separated runtime identifiers to run, e.g. win-arm64. Leave empty for all five.
+          Retrying one identifier should not drag the four that already passed along with it.
         required: false
         type: string
 
@@ -61,21 +62,9 @@ jobs:
           set -euo pipefail
 
           # Plain shell rather than jq, so the whole thing can be run on a developer machine
-          # before it is pushed. Where each identifier is exercised is a fact worth stating
-          # once: win-arm64 and osx-x64 are cross-compiled in CesiumC, so this workflow is the
-          # only place their binaries ever execute.
-          # osx-x64 is deliberately absent from the default set, and that is a decision rather
-          # than an oversight. It needs macos-13, the last Intel runner in the catalogue and one
-          # on its way out: three attempts on two different days never got a machine, twice
-          # waiting half an hour. Since the CD gates publishing on `needs: smoke`, and `needs`
-          # waits for every leg of the matrix, leaving it in would make every publish wait on the
-          # scarcest runner GitHub has. A gate that never opens does not protect anything.
-          #
-          # It is still reachable by dispatching this workflow with `rids: osx-x64`, and the
-          # README records that it is the one identifier nothing has ever executed -- CesiumC
-          # cross-compiles it on an arm64 mac, so not even the C++ tests touch it.
-          DEFAULT="win-x64 win-arm64 linux-x64 linux-arm64 osx-arm64"
-          ORDER="$DEFAULT osx-x64"
+          # before it is pushed. win-arm64 is cross-compiled in CesiumC, so this workflow is the
+          # only place its binary ever executes.
+          ORDER="win-x64 win-arm64 linux-x64 linux-arm64 osx-arm64"
           runner_for() {
             case "$1" in
               win-x64)     echo windows-latest ;;
@@ -83,14 +72,13 @@ jobs:
               linux-x64)   echo ubuntu-latest ;;
               linux-arm64) echo ubuntu-24.04-arm ;;
               osx-arm64)   echo macos-14 ;;
-              osx-x64)     echo macos-13 ;;
               *)           echo "" ;;
             esac
           }
 
           selected="${WANTED:-}"
           if [ -z "$selected" ]; then
-            selected="$DEFAULT"
+            selected="$ORDER"
           else
             selected=$(echo "$selected" | tr ',' ' ')
           fi
@@ -125,8 +113,9 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      # From the CD run rather than packed here, so the thing under test is the artifact that
-      # would be published, byte for byte.
+      # The artifact the CD produced rather than one packed here, so the thing under test is
+      # what would be published, byte for byte.
+      #
       # Two ways in, because the artifact lives in a different place depending on who is asking.
       # Called from the CD it belongs to this same run, and download-artifact finds it with no
       # id at all. Dispatched by hand it belongs to a run that finished days ago, which only
