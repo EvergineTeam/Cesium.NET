@@ -20,6 +20,11 @@
 # a consolation prize: it is exactly the mistake Evergine.Bindings.JoltPhysics shipped for months,
 # a native library present in the package and absent from where the platform looks for it.
 #
+# iossimulator-arm64 asserts too, and against the link rather than the package layout. There the
+# archive is linked into the executable, so what can go wrong is that the targets file never put
+# it on the link line, or that the DllImport name did not become "__Internal". Both leave a green
+# build behind, which is why the leg opens the binary and looks for the symbol.
+#
 # Intel macOS used to be the sixth. It was dropped on 2026-08-08 for the reason this file exists
 # to prevent: three attempts across two days never got a macos-13 runner, so it was the one
 # identifier shipping without anything having ever executed it.
@@ -332,3 +337,102 @@ jobs:
 
           print("PASS")
           CHECK
+
+  # The only thing in this repository that can say whether the package works on iOS.
+  #
+  # Nothing is loaded there: Apple only allows dynamic libraries that ship inside the app bundle
+  # as frameworks, so CesiumC builds a static archive and the package's targets file links it into
+  # the executable. Two things have to hold, and neither is visible on any other leg: the targets
+  # file has to put the archive on the link line, and Native.Dll has to have compiled to
+  # "__Internal", because once linked only that name reaches the symbols. Get either wrong and
+  # every build still succeeds; the failure arrives at the first P/Invoke in somebody's app.
+  #
+  # A build is the assertion. The linker resolving the P/Invokes against the archive is the
+  # property under test and it is checked at link time, so this is a result rather than a
+  # consolation prize.
+  #
+  # The simulator rather than the device, and it is a real limitation stated rather than hidden:
+  # a device build needs a signing identity and a provisioning profile that a runner does not
+  # have. Both identifiers link the same archive through the same targets file, so what this
+  # says about ios-arm64 is indirect.
+  ios:
+    name: iossimulator-arm64
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Install the ios workload
+        run: dotnet workload install ios
+
+      - name: Fetch the package from this run
+        if: inputs.cd-run-id == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: iOSSmokeTest/local-packages
+
+      - name: Fetch the package from an earlier run
+        if: inputs.cd-run-id != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p iOSSmokeTest/local-packages
+          gh run download "${{ inputs.cd-run-id }}" --repo "$GITHUB_REPOSITORY" \
+            -n nuget-packages -D iOSSmokeTest/local-packages
+
+      - name: Work out which version is under test
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -la iOSSmokeTest/local-packages/
+
+          pkg=$(ls iOSSmokeTest/local-packages/*.nupkg | head -1)
+          version=$(basename "$pkg" .nupkg | sed 's/^Evergine\.Bindings\.CesiumNative\.//')
+          echo "CESIUM_NATIVE_VERSION=$version" >> "$GITHUB_ENV"
+          echo "testing $version on iossimulator-arm64"
+
+      - name: Link an iOS application against the package
+        shell: bash
+        working-directory: iOSSmokeTest
+        run: |
+          set -euo pipefail
+          dotnet build -c Release -p:CesiumNativeVersion="$CESIUM_NATIVE_VERSION"
+
+      # Said out loud, because a build that quietly linked nothing would look identical from the
+      # outside. The archive is 61 MB and an application that took it cannot come out small.
+      - name: Check the archive actually reached the executable
+        shell: bash
+        working-directory: iOSSmokeTest
+        run: |
+          set -euo pipefail
+          app=$(find bin -name '*.app' -type d | head -1)
+          [ -n "$app" ] || { echo "::error::no .app bundle was produced"; exit 1; }
+
+          exe="$app/$(basename "$app" .app)"
+          [ -f "$exe" ] || { echo "::error::no executable at $exe"; ls -la "$app"; exit 1; }
+
+          size=$(stat -f%z "$exe")
+          echo "  executable: $((size / 1000000)) MB"
+
+          # cesium-native merged in is tens of megabytes. An executable that linked none of it
+          # comes out at a couple, which is the difference this catches.
+          if [ "$size" -lt 10000000 ]; then
+            echo "::error::only $((size / 1000000)) MB; the archive was not linked in"
+            exit 1
+          fi
+
+          # And the symbols themselves, which is what would be missing if Native.Dll had compiled
+          # to "CesiumNativeC" rather than "__Internal".
+          if ! nm -U "$exe" 2>/dev/null | grep -q "cesium_async_system_create"; then
+            echo "::error::cesium_async_system_create is not defined in the executable"
+            exit 1
+          fi
+          echo "  ok    cesium_async_system_create is defined in the executable"
+          echo "PASS"

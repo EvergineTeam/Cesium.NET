@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-ios</TargetFramework>
+    <SupportedOSPlatformVersion>14.0</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationId>com.evergine.cesiumsmoketest</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+
+    <!--
+      14.0 because CesiumC builds for 14.0, and it builds for 14.0 because
+      ThreadPoolTaskProcessor uses C++20 atomic waits that Apple marks as introduced there. An
+      application asking for less than the library it links is a link error, not a warning.
+    -->
+
+    <!--
+      The simulator, and not for symmetry. A device build needs a signing identity and a
+      provisioning profile, neither of which a runner has; a simulator build needs neither and
+      links the same archive through the same path. What this leg proves about ios-arm64 is
+      therefore indirect, and that is stated rather than hidden.
+    -->
+    <RuntimeIdentifier>iossimulator-arm64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <!--
+    A PackageReference on purpose, not a ProjectReference. What is under test is the package: its
+    targets file, whether Native.Dll resolved to "__Internal" in the iOS assembly, and whether the
+    two together make the linker take the archive. A project reference bypasses all three.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Evergine.Bindings.CesiumNative" Version="$(CesiumNativeVersion)" />
+  </ItemGroup>
+
+</Project>
