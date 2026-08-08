@@ -80,7 +80,7 @@ internal static unsafe class Program
         Console.WriteLine($"CesiumNativeC on {RuntimeInformation.RuntimeIdentifier}");
 
         AsyncSystem async = AsyncSystem.Create();
-        Check(async.Handle != IntPtr.Zero, "the async system was created, so the native library loaded");
+        Check(async.Handle == IntPtr.Zero, "DELIBERATELY BROKEN: proving that a red leg blocks publishing");
 
         // The generated helper, which is the point of this test.
         var callbacks = new AssetAccessorCallbacksSet
