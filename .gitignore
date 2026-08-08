@@ -16,6 +16,20 @@
 # manifest records, which is the moment it is actually needed: packing.
 Evergine.Bindings.CesiumNative/runtimes/browser-wasm/
 
+# The iOS archives, for the same reason and ten times over.
+#
+# They are static archives like the wasm one, so the coherence check cannot load them to look up
+# symbols and skips them either way. And they are far bigger: 60.9 MB for ios-arm64 and 61.0 MB
+# for iossimulator-arm64 against wasm's 12.8 MB, because each carries cesium-native and its 143
+# dependency archives merged in. At a release a month that is around 1.5 GB a year of history
+# for two files nothing reads.
+#
+# They arrived committed because the first CD run after iOS was added fetched them and this rule
+# did not exist yet. The CD fetches them from the CesiumC release the manifest records, which is
+# the moment they are actually needed: packing.
+Evergine.Bindings.CesiumNative/runtimes/ios-arm64/
+Evergine.Bindings.CesiumNative/runtimes/iossimulator-arm64/
+
 # The package under test is downloaded from a CD run, never committed. It is the whole
 # 67 MB NuGet, including all seven native runtimes.
 WasmSmokeTest/local-packages/
