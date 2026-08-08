@@ -35,5 +35,18 @@ Go to the original repository for more details: https://github.com/CesiumGS/cesi
 ## Supported Platforms
 
 - [x] Windows x64, ARM64
-- [ ] Linux x64, ARM64
-- [x] MacOS ARM64
+- [x] Linux x64, ARM64
+- [x] macOS ARM64
+- [x] Browser WebAssembly
+
+All six are executed before the package is published, not merely built: every release installs
+the `.nupkg` and drives a tileset to its root tile on each of them, and a failure stops the
+publish. WebAssembly is checked twice over, because it is the one that fails in a way nothing
+else would notice — CesiumC links its archive into a .NET application and runs it under node
+before publishing it as a release asset, and the package is then linked and run again here.
+
+WebAssembly needs no extra setup on your side, but it does work differently: the archive is
+linked into your application at publish time rather than loaded at run time, and the generated
+`*CallbacksSet.ToNative` helpers cannot be used there — AOT rejects a managed method reached from
+native code unless it is `[UnmanagedCallersOnly]`. See `WasmSmokeTest/` for a host that does it
+the way wasm requires.
