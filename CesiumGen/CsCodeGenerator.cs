@@ -943,7 +943,13 @@ namespace CesiumGen
 					var f = groupList[i];
 
 					Helpers.PrintComments(writer, f.Comment, "\t\t");
-					writer.WriteLine($"\t\t[DllImport(\"{DllName}\", CallingConvention = CallingConvention.Cdecl, EntryPoint = \"{f.Name}\")]");
+					// Native.Dll rather than the literal, because iOS needs a different name and
+					// there is nowhere else to put the difference. A library linked statically
+					// into a .NET iOS application is reached through "__Internal", not through
+					// its own name, so Native.cs switches on __IOS__ and every declaration reads
+					// the constant. Evergine.Bindings.Vuforia does the same and is the one
+					// package in the fleet confirmed to work on iOS in a real Evergine project.
+					writer.WriteLine($"\t\t[DllImport(Native.Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = \"{f.Name}\")]");
 
 					var returnType = Helpers.ConvertToCSharpType(f.ReturnType);
 					var parameters = BuildFunctionParameters(f);

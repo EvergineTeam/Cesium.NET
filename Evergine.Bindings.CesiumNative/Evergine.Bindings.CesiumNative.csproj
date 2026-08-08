@@ -1,6 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
+		<!--
+		  Two targets, and net10.0-ios is not there to add API. It is there so `__IOS__` is
+		  defined when the assembly is compiled for iOS, which is what makes Native.Dll resolve
+		  to "__Internal", the only name that reaches a library linked into the application
+		  rather than loaded beside it. Without the second target every DllImport would compile
+		  to "CesiumNativeC" and fail to bind on a device.
+
+		  Evergine.Bindings.Vuforia multi-targets for the same reason and is the one package in
+		  this fleet confirmed to work on iOS in a real Evergine project.
+		-->
+		<TargetFrameworks>net10.0;net10.0-ios</TargetFrameworks>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<Copyright>Copyright (c) Evergine 2026</Copyright>
 		<Authors>Evergine Team</Authors>

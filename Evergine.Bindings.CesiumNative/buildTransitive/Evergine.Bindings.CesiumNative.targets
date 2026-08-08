@@ -20,4 +20,41 @@
 		                     ScanForPInvokes="true" />
 	</ItemGroup>
 
+	<!--
+	  iOS is linked rather than loaded too, and for a different reason: Apple only lets an
+	  application load dynamic libraries that ship inside its own bundle as frameworks. So
+	  CesiumC builds a static archive there and this links it into the application.
+
+	  Kind=Static and not Framework, which is where this parts company with
+	  Evergine.Bindings.Vuforia. Vuforia ships a dynamic VuforiaEngine.framework and has to copy
+	  it into the bundle afterwards; an archive is linked and does not travel, so none of that
+	  applies here.
+
+	  ForceLoad because the archive is a library and the linker takes only the members something
+	  references. Almost every entry point here is reached through a P/Invoke rather than from
+	  native code, so without it the members carrying them are dropped and the application binds
+	  nothing.
+
+	  Which runtime identifier to pick is decided by the platform rather than by
+	  $(RuntimeIdentifier), unlike the wasm block above: an iOS build may be for a device or for
+	  the simulator, they are different architectures, and only $(RuntimeIdentifier) says which.
+	-->
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+		<_CesiumNativeIosRid Condition="'$(_CesiumNativeIosRid)' == ''">$(RuntimeIdentifier)</_CesiumNativeIosRid>
+		<_CesiumNativeIosRid Condition="'$(_CesiumNativeIosRid)' == ''">ios-arm64</_CesiumNativeIosRid>
+		<_CesiumNativeIosArchive>$(MSBuildThisFileDirectory)../runtimes/$(_CesiumNativeIosRid)/native/libCesiumNativeC.a</_CesiumNativeIosArchive>
+	</PropertyGroup>
+
+	<Target Name="EvergineCesiumNativeAddIosNativeReference"
+	        BeforeTargets="_ComputeLinkNativeExecutableInputs"
+	        Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' And Exists('$(_CesiumNativeIosArchive)')">
+		<ItemGroup>
+			<_FrameworkNativeReference Include="$(_CesiumNativeIosArchive)">
+				<Kind>Static</Kind>
+				<ForceLoad>true</ForceLoad>
+				<SmartLink>false</SmartLink>
+			</_FrameworkNativeReference>
+		</ItemGroup>
+	</Target>
+
 </Project>
