@@ -30,17 +30,21 @@
 	  it into the bundle afterwards; an archive is linked and does not travel, so none of that
 	  applies here.
 
-	  ForceLoad is off, and that was measured rather than chosen. With it on the link fails on
-	  duplicate symbols: the merged archive carries libjpeg.a and libturbojpeg.a, which are two
-	  APIs over one core, and libwebp.a and libwebpdecoder.a, where the decoder is a subset of
-	  the whole. ForceLoad pulls every member in, so both copies arrive and collide. Ordinary
-	  linking takes the first definition and moves on, which is what browser-wasm has always
-	  done with the same archive.
+	  ForceLoad is on, and both settings were tried against a real link before this one stayed.
 
-	  What ForceLoad protects against is real, though: the linker keeps only the members
-	  something references, and a symbol reached solely through a P/Invoke could be dropped. The
-	  package smoke test is what makes this safe to turn off rather than hopeful: it reads the
-	  built executable and fails if cesium_async_system_create is not among its defined symbols.
+	  Without it the linker keeps only the members something references, and every entry point
+	  here is reached from managed code rather than from native. The application built, weighed
+	  30 MB, and did not define cesium_async_system_create at all: the member carrying it had
+	  been dropped. A P/Invoke into it would have failed on a device, in somebody else's app,
+	  long after every build went green.
+
+	  With it, the link used to die on duplicate symbols, because the archive carried libjpeg.a
+	  beside libturbojpeg.a and libwebpdecoder.a beside libwebp.a. That is fixed where it
+	  belonged, in the merge in CesiumC, which no longer takes archives nothing links.
+
+	  The package smoke test is what turned this from an argument into a measurement: it reads
+	  the built executable and fails if cesium_async_system_create is not among its defined
+	  symbols, which is exactly how the dropped member was found.
 
 	  Which runtime identifier to pick is decided by the platform rather than by
 	  $(RuntimeIdentifier), unlike the wasm block above: an iOS build may be for a device or for
@@ -58,7 +62,7 @@
 		<ItemGroup>
 			<_FrameworkNativeReference Include="$(_CesiumNativeIosArchive)">
 				<Kind>Static</Kind>
-				<ForceLoad>false</ForceLoad>
+				<ForceLoad>true</ForceLoad>
 				<SmartLink>false</SmartLink>
 			</_FrameworkNativeReference>
 		</ItemGroup>
