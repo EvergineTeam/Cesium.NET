@@ -44,7 +44,19 @@ jobs:
       # Off for now. The upstream here is EvergineTeam/CesiumC, a C wrapper we own, so a
       # regeneration can carry a deliberate API change rather than only an upstream spec bump.
       # Turn it on after the chain has run cleanly a few times, as with ImGui.Net.
-      auto-merge: false
+      # On, now that the agents are installed and something opens pull requests without a human
+      # in the loop. The risk is not the usual one: binding-updater regenerates C# from a C
+      # header, it does not write the C. So the failure it could introduce is a binding that
+      # disagrees with the library, which is exactly what this gate measures -- the API delta,
+      # plus every P/Invoke resolving in all nine shipped libraries.
+      #
+      # What the gate cannot judge is whether the C wrapper itself is right, and that is
+      # answered upstream in CesiumC, where a bump builds on nine platforms and links a real
+      # .NET application before a release is cut.
+      #
+      # Merging is not publishing. The eight-leg package smoke test stands between a merge and
+      # nuget.org, and a version there can be unlisted but never deleted.
+      auto-merge: true
       app-client-id: ${{ vars.APP_CLIENT_ID }}
     secrets:
       APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}

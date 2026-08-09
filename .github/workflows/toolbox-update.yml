@@ -1,0 +1,21 @@
+# Keeps the installed agentic workflows pinned to the current toolbox release.
+#
+# Moving the `v1` tag does not update anything on its own: a repository keeps the commit
+# its workflows were compiled against until something recompiles them. This is that
+# something. Deliberately not an agent -- comparing two SHAs and running `gh aw add
+# --force` is entirely deterministic, and paying inference for it would be waste.
+
+name: Toolbox update
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+jobs:
+  update:
+    uses: EvergineTeam/Evergine.Bindings/.github/workflows/toolbox-updater.yml@v1
+    with:
+      app-client-id: ${{ vars.APP_CLIENT_ID }}
+    secrets:
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
