@@ -440,11 +440,20 @@ jobs:
             exit 1
           fi
 
-          # And the symbols themselves, which is what would be missing if Native.Dll had compiled
-          # to "CesiumNativeC" rather than "__Internal".
-          if ! nm -U "$exe" 2>/dev/null | grep -q "cesium_async_system_create"; then
-            echo "::error::cesium_async_system_create is not defined in the executable"
+          # Types, not a count, and the difference matters more than it looks. iOS links with
+          # -dead_strip, so an entry point reached only from managed code can be present as an
+          # unresolved reference and absent as a definition. A grep for the name matches both,
+          # which is how three rounds were spent reading 297 unchanged matches while the symbols
+          # underneath went from references to definitions.
+          echo "  cesium_ symbols by type:"
+          nm "$exe" 2>/dev/null | grep cesium_ | awk '{print $(NF-1)}' | sort | uniq -c | sed 's/^/    /'
+
+          # T is a defined global. U would mean the linker never resolved it, which is what a
+          # missing SmartLink produces and what a P/Invoke would then fail on at run time.
+          if ! nm "$exe" 2>/dev/null | grep -qE "T _?cesium_async_system_create$"; then
+            echo "::error::cesium_async_system_create is not a defined symbol in the executable"
+            nm "$exe" 2>/dev/null | grep cesium_async_system_create | sed 's/^/    /'
             exit 1
           fi
-          echo "  ok    cesium_async_system_create is defined in the executable"
+          echo "  ok    cesium_async_system_create is defined (T) in the executable"
           echo "PASS"
