@@ -37,13 +37,25 @@ Go to the original repository for more details: https://github.com/CesiumGS/cesi
 - [x] Windows x64, ARM64
 - [x] Linux x64, ARM64
 - [x] macOS ARM64
+- [x] Android ARM64
+- [x] iOS ARM64, simulator ARM64
 - [x] Browser WebAssembly
 
-All six are executed before the package is published, not merely built: every release installs
-the `.nupkg` and drives a tileset to its root tile on each of them, and a failure stops the
-publish. WebAssembly is checked twice over, because it is the one that fails in a way nothing
-else would notice — CesiumC links its archive into a .NET application and runs it under node
-before publishing it as a release asset, and the package is then linked and run again here.
+Nine runtime identifiers, and every release checks each of them against the real `.nupkg` before
+publishing — a failure stops the publish. What that check is worth differs by platform, and the
+difference is worth knowing rather than glossing:
+
+| | how it is checked |
+|---|---|
+| the five desktop identifiers | the package is installed and drives a tileset to its root tile |
+| `browser-wasm` | the same, under node, and CesiumC also links its archive into a .NET application before publishing it as a release asset |
+| `android-arm64` | an APK is built against the package and opened, and `lib/arm64-v8a/libCesiumNativeC.so` has to be inside it |
+| `iossimulator-arm64` | an application is linked against the package and its executable has to define the entry points, not merely reference them |
+| `ios-arm64` | **not verified directly.** A device build needs a signing identity CI does not have. It links the same archive through the same targets file as the simulator, so the evidence is indirect |
+
+Mobile is loaded differently from the desktop identifiers, and you do not have to do anything
+about it: Android carries an ordinary shared library, while iOS links a static archive into your
+application, which is why the package ships a `buildTransitive` targets file.
 
 WebAssembly needs no extra setup on your side, but it does work differently: the archive is
 linked into your application at publish time rather than loaded at run time, and the generated
