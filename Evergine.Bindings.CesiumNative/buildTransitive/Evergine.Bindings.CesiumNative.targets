@@ -30,7 +30,21 @@
 	  it into the bundle afterwards; an archive is linked and does not travel, so none of that
 	  applies here.
 
-	  ForceLoad is on, and both settings were tried against a real link before this one stayed.
+	  SmartLink is what actually keeps the symbols, and it took three measured rounds to find out.
+
+	  iOS links with -dead_strip. ForceLoad pulls every member of the archive in and the strip
+	  then takes back out whatever nothing references, and nothing does: these entry points are
+	  reached from managed code at run time, which the linker cannot see. So the archive arrived,
+	  the executable grew from 30 MB to 32, and cesium_async_system_create was not defined in it.
+
+	  SmartLink has the SDK read the assembly's P/Invokes and pass -u for each, which names them
+	  as roots the strip must keep. Proved by passing one such flag by hand: the executable went
+	  to 45 MB and the 297 cesium_ symbols went from unresolved references to 175 T definitions,
+	  the exact number the generator emits.
+
+	  ForceLoad stays on. It is what puts the members within reach in the first place, and it is
+	  safe now that CesiumC no longer merges libjpeg.a beside libturbojpeg.a or libwebpdecoder.a
+	  beside libwebp.a, which used to make the link fail on duplicate symbols.
 
 	  Without it the linker keeps only the members something references, and every entry point
 	  here is reached from managed code rather than from native. The application built, weighed
@@ -63,7 +77,7 @@
 			<_FrameworkNativeReference Include="$(_CesiumNativeIosArchive)">
 				<Kind>Static</Kind>
 				<ForceLoad>true</ForceLoad>
-				<SmartLink>false</SmartLink>
+				<SmartLink>true</SmartLink>
 			</_FrameworkNativeReference>
 		</ItemGroup>
 	</Target>
