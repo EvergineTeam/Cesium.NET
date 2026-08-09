@@ -445,14 +445,22 @@ jobs:
           # unresolved reference and absent as a definition. A grep for the name matches both,
           # which is how three rounds were spent reading 297 unchanged matches while the symbols
           # underneath went from references to definitions.
+          # Dumped to a file first, and not piped into grep, which is not style. With
+          # `set -o pipefail`, `nm ... | grep -q` reports the opposite of the truth on an input
+          # this size: grep exits at the first match, nm dies of SIGPIPE with status 141, pipefail
+          # propagates it, and the negation reads a found symbol as a missing one. It cost a run
+          # to see, and it only appears at volume -- a three-line reproduction passes, a
+          # two-hundred-thousand-line one fails.
+          nm "$exe" 2>/dev/null > symbols.txt
+
           echo "  cesium_ symbols by type:"
-          nm "$exe" 2>/dev/null | grep cesium_ | awk '{print $(NF-1)}' | sort | uniq -c | sed 's/^/    /'
+          awk '/cesium_/ {print $(NF-1)}' symbols.txt | sort | uniq -c | sed 's/^/    /'
 
           # T is a defined global. U would mean the linker never resolved it, which is what a
           # missing SmartLink produces and what a P/Invoke would then fail on at run time.
-          if ! nm "$exe" 2>/dev/null | grep -qE "T _?cesium_async_system_create$"; then
+          if ! grep -qE "T _?cesium_async_system_create$" symbols.txt; then
             echo "::error::cesium_async_system_create is not a defined symbol in the executable"
-            nm "$exe" 2>/dev/null | grep cesium_async_system_create | sed 's/^/    /'
+            grep cesium_async_system_create symbols.txt | sed 's/^/    /' || true
             exit 1
           fi
           echo "  ok    cesium_async_system_create is defined (T) in the executable"
