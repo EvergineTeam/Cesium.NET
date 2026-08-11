@@ -5,7 +5,7 @@
 # something. Deliberately not an agent -- comparing two SHAs and running `gh aw add
 # --force` is entirely deterministic, and paying inference for it would be waste.
 
-name: Toolbox update
+name: Toolbox Updater
 
 on:
   schedule:
