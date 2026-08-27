@@ -818,6 +818,15 @@ namespace Evergine.Bindings.CesiumNative
 		public static extern ViewUpdateResult TilesetUpdateView(Tileset tileset, ViewState* viewStates, int viewStateCount, float deltaTime);
 
 		/// <summary>
+		/// @brief Unloads all tile content that is currently eligible for unloading.
+		/// Tiles that are in use or are loading asynchronously will not be unloaded.
+		/// This function must be called from the main thread.
+		/// @param tileset The tileset to trim.
+		/// </summary>
+		[DllImport(Native.Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_trim_memory")]
+		public static extern void TilesetTrimMemory(Tileset tileset);
+
+		/// <summary>
 		/// @brief Gets the root tile, or NULL if not yet available.
 		/// </summary>
 		[DllImport(Native.Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "cesium_tileset_get_root_tile")]

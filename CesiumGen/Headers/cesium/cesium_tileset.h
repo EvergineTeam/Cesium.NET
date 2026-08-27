@@ -657,6 +657,16 @@ CESIUM_API const CesiumViewUpdateResult* cesium_tileset_update_view(
     float deltaTime);
 
 /**
+ * @brief Unloads all tile content that is currently eligible for unloading.
+ *
+ * Tiles that are in use or are loading asynchronously will not be unloaded.
+ * This function must be called from the main thread.
+ *
+ * @param tileset The tileset to trim.
+ */
+CESIUM_API void cesium_tileset_trim_memory(CesiumTileset* tileset);
+
+/**
  * @brief Gets the root tile, or NULL if not yet available.
  */
 CESIUM_API const CesiumTile* cesium_tileset_get_root_tile(const CesiumTileset* tileset);

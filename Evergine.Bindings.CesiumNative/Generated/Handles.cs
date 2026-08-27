@@ -823,6 +823,15 @@ namespace Evergine.Bindings.CesiumNative
 			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetUpdateView(this, viewStates, viewStateCount, deltaTime);
 
 		/// <summary>
+		/// @brief Unloads all tile content that is currently eligible for unloading.
+		/// Tiles that are in use or are loading asynchronously will not be unloaded.
+		/// This function must be called from the main thread.
+		/// @param tileset The tileset to trim.
+		/// </summary>
+		public void TrimMemory()
+			=> Evergine.Bindings.CesiumNative.CesiumAPI.TilesetTrimMemory(this);
+
+		/// <summary>
 		/// @brief Returns 1 if the root tile is available, 0 otherwise (polling).
 		/// </summary>
 		public bool IsRootTileAvailable()
