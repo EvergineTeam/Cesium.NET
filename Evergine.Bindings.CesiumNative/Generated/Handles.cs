@@ -825,10 +825,6 @@ namespace Evergine.Bindings.CesiumNative
 		/// <summary>
 		/// @brief Unloads all tile content that is currently eligible for unloading.
 		/// Tiles that are in use or are loading asynchronously will not be unloaded.
-		/// Raster overlays are deactivated and immediately reactivated, releasing their
-		/// renderer resources. Raster imagery needed by visible tiles will be loaded
-		/// again during subsequent view updates. Resources for raster loads already in
-		/// flight are released when those loads complete.
 		/// This function must be called from the main thread.
 		/// @param tileset The tileset to trim.
 		/// </summary>
