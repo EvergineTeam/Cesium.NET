@@ -77,7 +77,6 @@ jobs:
       publish-enabled: false
       enable-email-notifications: true
     secrets:
-      NUGET_UPLOAD_TOKEN: ${{ secrets.EVERGINE_NUGETORG_TOKEN }}
       WAVE_SENDGRID_TOKEN: ${{ secrets.WAVE_SENDGRID_TOKEN }}
       EVERGINE_EMAILREPORT_LIST: ${{ secrets.EVERGINE_EMAILREPORT_LIST }}
       EVERGINE_EMAIL: ${{ secrets.EVERGINE_EMAIL }}
@@ -100,6 +99,9 @@ jobs:
     needs: [cd, smoke]
     if: needs.cd.outputs.packaged == 'true' && !inputs.skip-assets-publishing
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
 
@@ -108,8 +110,13 @@ jobs:
           name: nuget-packages
           path: nupkgs
 
+      - uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ vars.EVERGINE_NUGETORG_USER }}
+
       - name: Publish to nuget.org
         uses: EvergineTeam/Evergine.Bindings/.github/actions/nuget-publish@v1
         with:
           packages-folder: nupkgs
-          auth-token: ${{ secrets.EVERGINE_NUGETORG_TOKEN }}
+          auth-token: ${{ steps.login.outputs.NUGET_API_KEY }}
